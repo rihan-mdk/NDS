@@ -270,7 +270,7 @@ export function TiltedGridHero({
                 <div
                   key={k}
                   className={cn(
-                    "absolute top-0 overflow-hidden bg-[#F5F3F0]",
+                    "absolute top-0 overflow-hidden bg-transparent",
                     k === 0 && "rounded-l-lg",
                     k === SLICES - 1 && "rounded-r-lg",
                   )}
@@ -280,9 +280,9 @@ export function TiltedGridHero({
                     left: u((aspectRatio - share) / 2),
                     // A pixel wider than its share, so neighbouring facets
                     // overlap and no hairline opens between them. The last
-                    // has no neighbour to cover.
-                    width:
-                      k === SLICES - 1 ? u(share) : `calc(${u(share)} + 1px)`,
+                    // slice also gets +1px so sub-pixel gaps from 3D rotation
+                    // don't expose the background on the right edge.
+                    width: `calc(${u(share)} + 1px)`,
                     height: u(1),
                     transform: turn(
                       (aspectRatio / 2 - (k + 0.5) * share) * unit,
