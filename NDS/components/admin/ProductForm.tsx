@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Product } from "@/lib/products-data";
@@ -14,6 +14,9 @@ import {
   Image as ImageIcon,
   Check,
   AlertCircle,
+  FolderOpen,
+  UploadCloud,
+  Loader2,
 } from "lucide-react";
 
 interface ProductFormProps {
@@ -108,6 +111,67 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
       setSizes(sizes.filter((s) => s !== size));
     } else {
       setSizes([...sizes, size]);
+    }
+  };
+
+  const [mainUploading, setMainUploading] = useState(false);
+  const [additionalUploading, setAdditionalUploading] = useState(false);
+
+  const mainFileInputRef = useRef<HTMLInputElement>(null);
+  const additionalFileInputRef = useRef<HTMLInputElement>(null);
+
+  // File upload helper
+  const uploadFile = async (file: File): Promise<string> => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) return data.url;
+      }
+    } catch (e) {
+      console.warn("Upload API error, falling back to data URL:", e);
+    }
+
+    // Fallback: Read as base64 data URL
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleMainFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMainUploading(true);
+    try {
+      const url = await uploadFile(file);
+      setMainImage(url);
+    } finally {
+      setMainUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleAdditionalFilesSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setAdditionalUploading(true);
+    try {
+      const newUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const url = await uploadFile(files[i]);
+        newUrls.push(url);
+      }
+      setAdditionalImages((prev) => [...prev, ...newUrls]);
+    } finally {
+      setAdditionalUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -441,59 +505,129 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
 
       {/* ── SECTION 3: Imagery ── */}
       <div className="bg-[#FFFFFF] border border-[#EAE5DF] p-6 sm:p-8 space-y-6 shadow-xs">
-        <h2 className="font-serif text-lg text-[#191919] font-normal border-b border-[#EAE5DF] pb-3">
-          3. Imagery (4:5 Ratio Recommended)
-        </h2>
+        <div className="border-b border-[#EAE5DF] pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+          <h2 className="font-serif text-lg text-[#191919] font-normal">
+            3. Imagery (Upload from Device or Paste URL)
+          </h2>
+          <span className="text-[11px] text-[#77716D]">
+            Supports local files (.jpg, .png, .webp) & web URLs
+          </span>
+        </div>
+
+        {/* Hidden File Inputs */}
+        <input
+          ref={mainFileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleMainFileSelect}
+          className="hidden"
+        />
+        <input
+          ref={additionalFileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleAdditionalFilesSelect}
+          className="hidden"
+        />
 
         {/* Main Product Image */}
-        <div>
-          <label className="block text-[10px] uppercase tracking-wider text-[#191919] font-semibold mb-2">
-            Main Primary Image URL *
-          </label>
-          <div className="flex gap-3 items-center">
-            <input
-              type="url"
-              required
-              value={mainImage}
-              onChange={(e) => setMainImage(e.target.value)}
-              placeholder="https://... image URL (or public path /images/...)"
-              className="flex-1 bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
-            />
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="block text-[10px] uppercase tracking-wider text-[#191919] font-semibold">
+              Main Primary Image * (Portrait 4:5 Recommended)
+            </label>
+            {mainUploading && (
+              <span className="text-xs text-[#7B5644] flex items-center gap-1.5 font-medium animate-pulse">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading image...
+              </span>
+            )}
+          </div>
+
+          {/* Upload / URL Controls */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-stretch">
+            {/* File explorer button */}
+            <button
+              type="button"
+              disabled={mainUploading}
+              onClick={() => mainFileInputRef.current?.click()}
+              className="sm:col-span-5 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-xs font-semibold uppercase tracking-wider transition-colors disabled:opacity-50"
+            >
+              <FolderOpen className="w-4 h-4" />
+              <span>Browse from Device</span>
+            </button>
+
+            {/* Direct URL input */}
+            <div className="sm:col-span-7 flex items-center">
+              <input
+                type="text"
+                required
+                value={mainImage}
+                onChange={(e) => setMainImage(e.target.value)}
+                placeholder="Or paste image URL (e.g. /images/... or https://...)"
+                className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
+              />
+            </div>
           </div>
 
           {/* Main image preview */}
           {mainImage && (
-            <div className="mt-3 flex items-center gap-3">
-              <div className="w-16 h-20 bg-[#F5F3F0] border border-[#EAE5DF] overflow-hidden aspect-[4/5]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={mainImage}
-                  alt="Main Preview"
-                  className="w-full h-full object-cover object-top"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src =
-                      "https://placehold.co/400x500/EFEEEB/77716D?text=Invalid+Image";
-                  }}
-                />
+            <div className="mt-2 p-3 bg-[#FBF9F6] border border-[#EAE5DF] flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-16 h-20 bg-[#F5F3F0] border border-[#EAE5DF] overflow-hidden aspect-[4/5] shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={mainImage}
+                    alt="Main Preview"
+                    className="w-full h-full object-cover object-top"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        "https://placehold.co/400x500/EFEEEB/77716D?text=Invalid+Image";
+                    }}
+                  />
+                </div>
+                <div className="overflow-hidden text-left">
+                  <p className="text-xs font-medium text-[#191919] truncate max-w-[220px] sm:max-w-md">
+                    {mainImage}
+                  </p>
+                  <p className="text-[11px] text-[#77716D] mt-0.5">
+                    Primary portrait cover shown on collection cards & product details
+                  </p>
+                </div>
               </div>
-              <span className="text-[11px] text-[#77716D]">
-                Main portrait gallery image
-              </span>
+              <button
+                type="button"
+                onClick={() => setMainImage("")}
+                className="p-2 text-[#77716D] hover:text-[#B91C1C] transition-colors shrink-0"
+                title="Remove main image"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           )}
         </div>
 
         {/* Additional Images (Optional) */}
-        <div>
-          <label className="block text-[10px] uppercase tracking-wider text-[#191919] font-semibold mb-2">
-            Additional Gallery Images (Optional)
-          </label>
+        <div className="space-y-3 pt-4 border-t border-[#EAE5DF]">
+          <div className="flex items-center justify-between">
+            <label className="block text-[10px] uppercase tracking-wider text-[#191919] font-semibold">
+              Additional Gallery Images (Optional angles, craftsmanship details)
+            </label>
+            {additionalUploading && (
+              <span className="text-xs text-[#7B5644] flex items-center gap-1.5 font-medium animate-pulse">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading files...
+              </span>
+            )}
+          </div>
 
           {/* List of current additional images */}
           {additionalImages.length > 0 && (
-            <div className="flex flex-wrap gap-3 mb-3">
+            <div className="flex flex-wrap gap-3 mb-2">
               {additionalImages.map((img, idx) => (
-                <div key={idx} className="relative group w-16 h-20 bg-[#F5F3F0] border border-[#EAE5DF] overflow-hidden aspect-[4/5]">
+                <div
+                  key={idx}
+                  className="relative group w-16 h-20 bg-[#F5F3F0] border border-[#EAE5DF] overflow-hidden aspect-[4/5]"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={img}
@@ -504,30 +638,54 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
                     type="button"
                     onClick={() => handleRemoveImage(idx)}
                     className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Remove image"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
+                  <span className="absolute bottom-1 right-1 bg-black/70 text-[9px] text-white px-1 font-mono">
+                    #{idx + 1}
+                  </span>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Add image row */}
-          <div className="flex gap-2">
-            <input
-              type="url"
-              value={newImageUrl}
-              onChange={(e) => setNewImageUrl(e.target.value)}
-              placeholder="Paste additional image URL and click Add"
-              className="flex-1 bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
-            />
+          {/* Add additional image controls */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-stretch">
+            {/* Browse multiple from device */}
             <button
               type="button"
-              onClick={handleAddImage}
-              className="px-4 py-2 bg-[#F5F3F0] hover:bg-[#EAE8E5] text-[#191919] text-xs font-semibold uppercase tracking-wider border border-[#EAE5DF] transition-colors"
+              disabled={additionalUploading}
+              onClick={() => additionalFileInputRef.current?.click()}
+              className="sm:col-span-5 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F5F3F0] hover:bg-[#EAE8E5] text-[#191919] text-xs font-semibold uppercase tracking-wider border border-[#EAE5DF] transition-colors disabled:opacity-50"
             >
-              Add Image
+              <FolderOpen className="w-4 h-4" />
+              <span>Browse Multiple from Device</span>
             </button>
+
+            {/* Direct URL input + Add button */}
+            <div className="sm:col-span-7 flex gap-2">
+              <input
+                type="text"
+                value={newImageUrl}
+                onChange={(e) => setNewImageUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddImage();
+                  }
+                }}
+                placeholder="Or paste additional URL and click Add"
+                className="flex-1 bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
+              />
+              <button
+                type="button"
+                onClick={handleAddImage}
+                className="px-4 py-2 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-xs font-semibold uppercase tracking-wider transition-colors shrink-0"
+              >
+                Add URL
+              </button>
+            </div>
           </div>
         </div>
       </div>
