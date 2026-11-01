@@ -192,10 +192,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 3: Our Gallery — TiltedGridHero Animation */}
-      <section className="w-full py-10 sm:py-16 lg:py-20 bg-[#F5F3F0] overflow-hidden">
+      {/* SECTION 3: Our Gallery — TiltedGridHero Animation, fits one viewport */}
+      <section className="w-full h-dvh flex flex-col bg-[#F5F3F0] overflow-hidden py-8 sm:py-10 lg:py-12">
         {/* Section Header */}
-        <div className="px-4 sm:px-10 lg:px-14 mb-6 sm:mb-10 border-b border-[#EAE5DF] pb-4 sm:pb-5">
+        <div className="px-4 sm:px-10 lg:px-14 mb-4 sm:mb-6 border-b border-[#EAE5DF] pb-4 sm:pb-5 flex-shrink-0">
           <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-[#7B5644] block mb-1.5 font-semibold">
             THE ATELIER JOURNAL
           </span>
@@ -204,7 +204,7 @@ export default function HomePage() {
           </h2>
         </div>
 
-        {/* TiltedGridHero Band */}
+        {/* TiltedGridHero Band — fills remaining viewport height */}
         <TiltedGridHero
           images={GALLERY_IMAGES}
           aspectRatio={3 / 4}
@@ -214,7 +214,7 @@ export default function HomePage() {
           curve={72}
           fade={14}
           axis={50}
-          className="h-[420px] sm:h-[500px] lg:h-[560px] w-full"
+          className="flex-1 w-full min-h-0"
         />
       </section>
 
