@@ -6,32 +6,25 @@ import { PRODUCTS, Product } from "@/lib/products-data";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { TiltedGridHero } from "@/components/ui/tilted-grid-hero";
 
-const GALLERY_EDITIONS = [
-  {
-    title: "THE BRIDAL EDIT",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuA32m-r1djVXMtzSCI3FDkCQ9alqyAkExyQ34QuMXyoB0s3yxu_8PKsJZyhxNw265oJgmChAHITV8hMVZgr5BCmudXFSlpTsb-dRAL_GnOw1JmrJEk9f84dgPMr_Cc3F5sPu9NCphUnQAmD3Wn4xuzZjbssHOBwvplF5CPOlHfHjWHVYsDx7maH3RkjIjDsJioNuw5GTQIBlQjPMXM2YPy-khRSRq-D7PL5Xi2a1uRf",
-    alt: "The Bridal Edit — Royal Zardozi Masterpiece",
-  },
-  {
-    title: "ATELIER MOMENTS",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuD1aHgUGiTM73In2sKqPHO9aD1Bc9_sDtarUYinm5NbKPdbyEX4QJdIzPQczgLKewNXfSDWigUPmGx-AsXntvUZpa1eNPRz1-JD3wlL1VeovytKEmLGoeG0dgyT8LwOnFSZmcGa6lxicezOd1-Qpx49pslGwl-V3knaAiQC8fTQVv78m-aVzAhTub9AWAW78pByB9u2KO1MTY74KMKPmsaeWpCJadYasRnGhYfeQlaE",
-    alt: "Atelier Moments — Architectural Silhouette in Natural Daylight",
-  },
-  {
-    title: "HANDCRAFTED DETAILS",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuASHD09KDCCwgkrK5sxWXyxHucm6-wc3lG0GN4jwpjs4rURnpoPFEVc5kQxxg577s7skgvHB0hob-vSBGgg8lsG0ysDaKkznLvjh_GlVgL2wL6-HSLnDYih87v0M1d83xg3FeVCCQEleGLVT_o6kABiuPqxd1jULWnL3V7W9lcvxvCB7jR58x9wyhQZ_NwkjNNVF-qMPZFGGViRyx4j3NWKIJ0HYZcAE6AeZc7BkWqk",
-    alt: "Handcrafted Details — Tactile Gold Wire & Raw Silk Weave",
-  },
-  {
-    title: "MODERN HERITAGE",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBP1jB0EnAx5-BWz9llTztchW9JV99Bp_6dxn81cecC2scMHD66B601WWnTHDJ9y8ruH5ihhMgw3ix-IWsvbE1vnMvvfavusPQxKnbJZt7vJ8_BRAOalr-mnZ6canprIG7eGUo6-1cxUSvUVpgzJaAL3JoXMyiCUjzf-lpXL5YR6fMA6XRzy5TEJ82yzFxULcxWn2u8BMKvvlBEiZMhfcoNNPZgfkAqg6Svb-KNkJxI",
-    alt: "Modern Heritage — Sculptural Contemporary Drape Gown",
-  },
+const GALLERY_IMAGES = [
+  { src: "/images/gallery/gallery-01.jpeg", alt: "Neel's Designer Studio — Atelier Creation 1" },
+  { src: "/images/gallery/gallery-02.jpeg", alt: "Neel's Designer Studio — Atelier Creation 2" },
+  { src: "/images/gallery/gallery-03.jpeg", alt: "Neel's Designer Studio — Atelier Creation 3" },
+  { src: "/images/gallery/gallery-04.jpeg", alt: "Neel's Designer Studio — Atelier Creation 4" },
+  { src: "/images/gallery/gallery-05.jpeg", alt: "Neel's Designer Studio — Atelier Creation 5" },
+  { src: "/images/gallery/gallery-06.jpeg", alt: "Neel's Designer Studio — Atelier Creation 6" },
+  { src: "/images/gallery/gallery-07.jpeg", alt: "Neel's Designer Studio — Atelier Creation 7" },
+  { src: "/images/gallery/gallery-08.jpeg", alt: "Neel's Designer Studio — Atelier Creation 8" },
+  { src: "/images/gallery/gallery-09.jpeg", alt: "Neel's Designer Studio — Atelier Creation 9" },
+  { src: "/images/gallery/gallery-10.jpeg", alt: "Neel's Designer Studio — Atelier Creation 10" },
+  { src: "/images/gallery/gallery-11.jpeg", alt: "Neel's Designer Studio — Atelier Creation 11" },
+  { src: "/images/gallery/gallery-12.jpeg", alt: "Neel's Designer Studio — Atelier Creation 12" },
+  { src: "/images/gallery/gallery-13.jpeg", alt: "Neel's Designer Studio — Atelier Creation 13" },
+  { src: "/images/gallery/gallery-14.jpeg", alt: "Neel's Designer Studio — Atelier Creation 14" },
+  { src: "/images/gallery/gallery-15.jpeg", alt: "Neel's Designer Studio — Atelier Creation 15" },
+  { src: "/images/gallery/gallery-16.jpeg", alt: "Neel's Designer Studio — Atelier Creation 16" },
 ];
 
 const CURATED_CATEGORIES = [
@@ -168,9 +161,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 3: Our Gallery (PURE EDITORIAL VISUAL GALLERY — NO COMMERCE/PRICING) */}
-      <section className="w-full px-4 sm:px-10 lg:px-14 py-10 sm:py-16 lg:py-20 bg-[#F5F3F0]">
-        <div className="mb-6 sm:mb-10 border-b border-[#EAE5DF] pb-4 sm:pb-5">
+      {/* SECTION 3: Our Gallery — TiltedGridHero Animation */}
+      <section className="w-full py-10 sm:py-16 lg:py-20 bg-[#F5F3F0] overflow-hidden">
+        {/* Section Header */}
+        <div className="px-4 sm:px-10 lg:px-14 mb-6 sm:mb-10 border-b border-[#EAE5DF] pb-4 sm:pb-5">
           <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-[#7B5644] block mb-1.5 font-semibold">
             THE ATELIER JOURNAL
           </span>
@@ -179,32 +173,18 @@ export default function HomePage() {
           </h2>
         </div>
 
-        {/* Mobile: 2 columns · Desktop: 4 columns */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-          {GALLERY_EDITIONS.map((item, index) => (
-            <div
-              key={index}
-              className="group relative flex flex-col bg-transparent overflow-hidden"
-            >
-              {/* Large Portrait Image Container */}
-              <div className="relative aspect-[3/4] w-full bg-[#EFEEEB] overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={item.image}
-                  alt={item.alt}
-                  className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
-                />
-              </div>
-
-              {/* Minimal Editorial Caption */}
-              <div className="pt-3 pb-1">
-                <span className="text-[10px] uppercase tracking-[0.25em] text-[#77716D] font-medium group-hover:text-[#191919] transition-colors">
-                  {item.title}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* TiltedGridHero Band */}
+        <TiltedGridHero
+          images={GALLERY_IMAGES}
+          aspectRatio={3 / 4}
+          tileHeight={55}
+          gap={6}
+          speed={5}
+          curve={72}
+          fade={14}
+          axis={50}
+          className="h-[420px] sm:h-[500px] lg:h-[560px] w-full"
+        />
       </section>
 
       {/* SECTION 4: Category / Collection Discovery */}
