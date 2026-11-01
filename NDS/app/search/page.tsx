@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PRODUCTS, getProductsByCategory, Product } from "@/lib/products-data";
+import { useLiveProducts } from "@/lib/products-store";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { Search as SearchIcon, X, RotateCcw, Sparkles } from "lucide-react";
@@ -40,6 +41,7 @@ export default function SearchPage() {
     "Bridal Lehenga",
   ]);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const allLiveProducts = useLiveProducts();
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -116,7 +118,7 @@ export default function SearchPage() {
   // Filtered Results
   const results = useMemo(() => {
     const q = query.toLowerCase().trim();
-    let pool = getProductsByCategory("all") || PRODUCTS;
+    let pool = allLiveProducts;
 
     if (activeFilter !== "all") {
       if (activeFilter === "accessories") {
@@ -137,7 +139,7 @@ export default function SearchPage() {
         p.subCategory.toLowerCase().includes(q) ||
         p.embroidery.toLowerCase().includes(q)
     );
-  }, [query, activeFilter]);
+  }, [query, activeFilter, allLiveProducts]);
 
   const featuredCurations = useMemo(() => {
     return PRODUCTS.filter((p) => p.featured || p.newArrival).slice(0, 4);

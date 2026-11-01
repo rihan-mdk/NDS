@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { PRODUCTS, getProductBySlug, Product } from "@/lib/products-data";
+import { getLiveProductBySlug } from "@/lib/products-store";
 import { ProductCard } from "@/components/ProductCard";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -28,7 +29,18 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const slug = (params.slug as string) || "zari-embroidered-azure-silk-kurti";
 
-  const product: Product = getProductBySlug(slug) || PRODUCTS[0];
+  const [product, setProduct] = useState<Product>(() => getProductBySlug(slug) || PRODUCTS[0]);
+
+  useEffect(() => {
+    const live = getLiveProductBySlug(slug);
+    if (live) {
+      setProduct(live);
+      if (live.sizes && live.sizes.length > 0) {
+        setSelectedSize(live.sizes[0]);
+      }
+    }
+  }, [slug]);
+
   const isAccessory = Boolean(
     product.isAccessory ||
     ["bracelets", "clutches", "rings"].includes(product.category) ||

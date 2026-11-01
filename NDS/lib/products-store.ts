@@ -95,12 +95,13 @@ export function deleteProductFromStorage(id: string) {
 
 /**
  * React hook to subscribe to live product updates
+ * SSR and initial client hydration start with base PRODUCTS to guarantee zero hydration mismatch,
+ * then cleanly synchronize live products from client storage in useEffect.
  */
 export function useLiveProducts(categoryFilter?: string): Product[] {
   const [products, setProducts] = useState<Product[]>(() => {
-    const all = getAllLiveProducts();
-    if (!categoryFilter || categoryFilter === "all") return all;
-    return all.filter((p) => p.category === categoryFilter);
+    if (!categoryFilter || categoryFilter === "all") return PRODUCTS;
+    return PRODUCTS.filter((p) => p.category === categoryFilter);
   });
 
   useEffect(() => {
@@ -113,7 +114,7 @@ export function useLiveProducts(categoryFilter?: string): Product[] {
       }
     }
 
-    // Initial sync
+    // Initial client sync after hydration
     update();
 
     // Listen to local update events
@@ -128,3 +129,4 @@ export function useLiveProducts(categoryFilter?: string): Product[] {
 
   return products;
 }
+

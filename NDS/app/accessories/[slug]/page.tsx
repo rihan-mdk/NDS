@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { PRODUCTS, ACCESSORIES_CATEGORIES, getProductsByCategory, Product } from "@/lib/products-data";
+import { useLiveProducts } from "@/lib/products-store";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { SlidersHorizontal, ArrowLeft } from "lucide-react";
@@ -29,9 +30,10 @@ export default function AccessoryCategoryDetailPage() {
       "Handcrafted heirloom accessories designed to accompany imperial couture.",
   };
 
-  let items = getProductsByCategory(slug);
+  const allLiveProducts = useLiveProducts();
+  let items = allLiveProducts.filter((p) => p.category === slug);
   if (items.length === 0) {
-    items = getProductsByCategory("all").filter((p) => p.isAccessory || ["bracelets", "clutches", "rings"].includes(p.category));
+    items = allLiveProducts.filter((p) => p.isAccessory || ["bracelets", "clutches", "rings"].includes(p.category));
   }
 
   if (sortBy === "price-low") {
