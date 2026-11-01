@@ -178,7 +178,7 @@ export default function HomePage() {
           images={GALLERY_IMAGES}
           aspectRatio={3 / 4}
           tileHeight={55}
-          gap={6}
+          gap={-4}
           speed={5}
           curve={72}
           fade={14}
