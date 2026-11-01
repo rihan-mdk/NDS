@@ -14,11 +14,21 @@ export default function CategoryDetailPage() {
   const [sortBy, setSortBy] = useState<string>("price-low");
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
-  const categoryMeta = CATEGORIES_LIST.find((c) => c.slug === slug) || {
+  // Use slug to derive a clean "[Category] Collection" display name
+  // Keep CATEGORIES_LIST only for the description
+  const categoryMetaFromList = CATEGORIES_LIST.find((c) => c.slug === slug);
+  const displayName =
+    slug
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ") + " Collection";
+  const categoryMeta = {
     slug,
-    name: slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " ") + " Collection",
-    count: 12,
-    description: "Exclusive handcrafted silhouettes, luxury embroidery, and imperial couture.",
+    name: displayName,
+    count: categoryMetaFromList?.count ?? 12,
+    description:
+      categoryMetaFromList?.description ??
+      "Exclusive handcrafted silhouettes, luxury embroidery, and imperial couture.",
   };
 
   let items = PRODUCTS.filter((p) => p.category === slug);
