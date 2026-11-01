@@ -7,6 +7,7 @@ import type { User, Session } from "@supabase/supabase-js";
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  isAdmin: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
@@ -17,6 +18,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
+  isAdmin: false,
   loading: true,
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
@@ -27,13 +29,34 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
-    // Check active session from Supabase
+    // Check active session from Supabase & verify admin session
     async function getInitialSession() {
       try {
+        // 1. Check server-side admin session
+        const adminRes = await fetch("/api/admin/auth");
+        if (adminRes.ok) {
+          const adminData = await adminRes.json();
+          if (adminData.authenticated && adminData.user) {
+            setIsAdmin(true);
+            setUser({
+              id: "admin-usr-neels",
+              email: adminData.user.email,
+              user_metadata: {
+                full_name: adminData.user.fullName,
+                role: "admin",
+              },
+            } as any);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // 2. Check Supabase session
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
@@ -59,6 +82,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+
+      // If logging in as designated admin, verify via secure server route
+      if (normalizedEmail === "neels9589@gmail.com") {
+        const res = await fetch("/api/admin/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: normalizedEmail, password }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const adminUser: any = {
+            id: "admin-usr-neels",
+            email: normalizedEmail,
+            user_metadata: {
+              full_name: data.user.fullName,
+              role: "admin",
+            },
+          };
+          setUser(adminUser);
+          setIsAdmin(true);
+          return { error: null };
+        } else {
+          return { error: new Error(data.error || "Invalid administrator credentials") };
+        }
+      }
+
       const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -73,6 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             user_metadata: { full_name: email.split("@")[0] },
           };
           setUser(mockUser);
+          setIsAdmin(false);
           return { error: null };
         }
         return { error };
@@ -80,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(data.user);
       setSession(data.session);
+      setIsAdmin(false);
       return { error: null };
     } catch (err: any) {
       if (email && password.length >= 6) {
@@ -89,6 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           user_metadata: { full_name: email.split("@")[0] },
         };
         setUser(mockUser);
+        setIsAdmin(false);
         return { error: null };
       }
       return { error: err };
@@ -139,12 +193,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      if (isAdmin) {
+        await fetch("/api/admin/auth", { method: "DELETE" });
+      }
       await supabase.auth.signOut();
     } catch (err) {
       console.warn("SignOut notice:", err);
     }
     setUser(null);
     setSession(null);
+    setIsAdmin(false);
   };
 
   const resetPassword = async (email: string) => {
@@ -157,7 +215,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, resetPassword }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, loading, signIn, signUp, signOut, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

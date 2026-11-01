@@ -57,7 +57,7 @@ interface Measurements {
 }
 
 export default function AccountProfilePage() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const { totalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
   const router = useRouter();
@@ -243,6 +243,25 @@ export default function AccountProfilePage() {
         </section>
 
         {/* Primary Menu Items Card */}
+        {isAdmin && (
+          <div className="mb-5 p-4 bg-[#191919] text-[#FDFBF8] rounded-xl shadow-xs flex items-center justify-between">
+            <div>
+              <span className="text-[9px] uppercase tracking-[0.25em] text-[#C9A96E] font-semibold block">
+                ADMIN PRIVILEGES
+              </span>
+              <p className="font-serif text-sm text-[#FDFBF8] mt-0.5">
+                Atelier Management Portal
+              </p>
+            </div>
+            <Link
+              href="/admin"
+              className="px-3.5 py-2 bg-[#C9A96E] text-[#191919] text-[10px] uppercase tracking-wider font-semibold hover:bg-white transition-colors rounded-xs"
+            >
+              Open Dashboard
+            </Link>
+          </div>
+        )}
+
         <section className="mb-5">
           <div className="bg-white rounded-xl shadow-xs border border-[#EAE5DF]/70 overflow-hidden divide-y divide-[#EAE5DF]/70">
             {/* My Orders */}
@@ -514,6 +533,15 @@ export default function AccountProfilePage() {
               aria-label="Account Navigation"
               className="flex flex-col border border-[#EAE5DF] bg-white divide-y divide-[#EAE5DF]/60 shadow-xs rounded-sm overflow-hidden"
             >
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-3 px-5 py-4 text-xs uppercase tracking-widest font-semibold transition-colors text-left bg-[#191919] text-[#C9A96E] hover:bg-[#25221D]"
+                >
+                  <ShieldCheck className="w-[18px] h-[18px] text-[#C9A96E]" />
+                  <span>Admin Dashboard</span>
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={() => setActiveDesktopTab("personal")}

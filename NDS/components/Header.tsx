@@ -10,7 +10,7 @@ import { Search, Heart, ShoppingBag, User as UserIcon } from "lucide-react";
 
 export function Header() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { totalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
 
@@ -26,6 +26,7 @@ export function Header() {
     { name: "CATEGORIES", href: "/categories" },
     { name: "ACCESSORIES", href: "/accessories" },
     { name: "ABOUT US", href: "/about" },
+    ...(isAdmin ? [{ name: "ADMIN", href: "/admin" }] : []),
   ];
 
   const LOGO_SRC =

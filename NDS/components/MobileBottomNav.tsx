@@ -8,6 +8,11 @@ import { Home, LayoutGrid, Sparkles, User } from "lucide-react";
 export function MobileBottomNav() {
   const pathname = usePathname();
 
+  // Hide customer bottom nav on admin routes
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   const navItems = [
     { label: "Home", href: "/", icon: Home },
     { label: "Categories", href: "/categories", icon: LayoutGrid },

@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
   const { signIn } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -26,7 +28,9 @@ export default function LoginPage() {
       if (error) {
         setErrorMsg(error.message || "Failed to sign in. Please verify your credentials.");
       } else {
-        router.push("/account");
+        const isAdminUser = email.trim().toLowerCase() === "neels9589@gmail.com";
+        const target = redirectParam || (isAdminUser ? "/admin" : "/account");
+        router.push(target);
       }
     } catch (err: any) {
       setErrorMsg(err.message || "An unexpected error occurred.");
@@ -163,6 +167,14 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FDFBF8]" />}>
+      <LoginForm />
+    </Suspense>
   );
 }
 

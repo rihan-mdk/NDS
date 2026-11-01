@@ -546,14 +546,57 @@ export const PRODUCTS: Product[] = [
 ];
 
 export function getProductBySlug(slug: string): Product | undefined {
+  if (typeof window !== "undefined") {
+    try {
+      const customRaw = localStorage.getItem("nds_custom_products_v1");
+      const deletedRaw = localStorage.getItem("nds_deleted_products_v1");
+      const deletedIds = new Set(deletedRaw ? JSON.parse(deletedRaw) : []);
+
+      if (customRaw) {
+        const custom: Product[] = JSON.parse(customRaw);
+        const match = custom.find((p) => p.slug === slug);
+        if (match && !deletedIds.has(match.id)) return match;
+      }
+
+      const baseMatch = PRODUCTS.find((p) => p.slug === slug);
+      if (baseMatch && !deletedIds.has(baseMatch.id)) return baseMatch;
+      return undefined;
+    } catch (e) {}
+  }
   return PRODUCTS.find((p) => p.slug === slug);
 }
 
 export function getProductsByCategory(category: string): Product[] {
-  if (category === 'all' || !category) return PRODUCTS;
-  return PRODUCTS.filter((p) => p.category === category);
+  let all = PRODUCTS;
+  if (typeof window !== "undefined") {
+    try {
+      const customRaw = localStorage.getItem("nds_custom_products_v1");
+      const deletedRaw = localStorage.getItem("nds_deleted_products_v1");
+      const deletedIds = new Set(deletedRaw ? JSON.parse(deletedRaw) : []);
+      const custom: Product[] = customRaw ? JSON.parse(customRaw) : [];
+      const customIds = new Set(custom.map((p) => p.id));
+      const base = PRODUCTS.filter((p) => !deletedIds.has(p.id) && !customIds.has(p.id));
+      all = [...custom.filter((p) => !deletedIds.has(p.id)), ...base];
+    } catch (e) {}
+  }
+
+  if (category === 'all' || !category) return all;
+  return all.filter((p) => p.category === category);
 }
 
 export function getAccessories(): Product[] {
-  return PRODUCTS.filter((p) => p.isAccessory || ['bracelets', 'clutches', 'rings'].includes(p.category));
+  let all = PRODUCTS;
+  if (typeof window !== "undefined") {
+    try {
+      const customRaw = localStorage.getItem("nds_custom_products_v1");
+      const deletedRaw = localStorage.getItem("nds_deleted_products_v1");
+      const deletedIds = new Set(deletedRaw ? JSON.parse(deletedRaw) : []);
+      const custom: Product[] = customRaw ? JSON.parse(customRaw) : [];
+      const customIds = new Set(custom.map((p) => p.id));
+      const base = PRODUCTS.filter((p) => !deletedIds.has(p.id) && !customIds.has(p.id));
+      all = [...custom.filter((p) => !deletedIds.has(p.id)), ...base];
+    } catch (e) {}
+  }
+
+  return all.filter((p) => p.isAccessory || ['bracelets', 'clutches', 'rings'].includes(p.category));
 }

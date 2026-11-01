@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { PRODUCTS, Product } from "@/lib/products-data";
+import { PRODUCTS, getProductsByCategory, Product } from "@/lib/products-data";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
@@ -64,7 +64,7 @@ const CURATED_CATEGORIES = [
 export default function HomePage() {
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
-  const newArrivals = PRODUCTS.filter((p) => p.newArrival).slice(0, 4);
+  const newArrivals = (getProductsByCategory("all") || PRODUCTS).filter((p) => p.newArrival).slice(0, 4);
 
   // Hero animation variants — typed as const so framer-motion's Easing type is satisfied
   const heroTextContainer = {

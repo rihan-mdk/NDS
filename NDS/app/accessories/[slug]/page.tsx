@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { PRODUCTS, ACCESSORIES_CATEGORIES, Product } from "@/lib/products-data";
+import { PRODUCTS, ACCESSORIES_CATEGORIES, getProductsByCategory, Product } from "@/lib/products-data";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { SlidersHorizontal, ArrowLeft } from "lucide-react";
@@ -29,9 +29,9 @@ export default function AccessoryCategoryDetailPage() {
       "Handcrafted heirloom accessories designed to accompany imperial couture.",
   };
 
-  let items = PRODUCTS.filter((p) => p.category === slug || (slug === "all" && p.isAccessory));
+  let items = getProductsByCategory(slug);
   if (items.length === 0) {
-    items = PRODUCTS.filter((p) => p.isAccessory || ["bracelets", "clutches", "rings"].includes(p.category));
+    items = getProductsByCategory("all").filter((p) => p.isAccessory || ["bracelets", "clutches", "rings"].includes(p.category));
   }
 
   if (sortBy === "price-low") {

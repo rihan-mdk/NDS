@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { PRODUCTS, CATEGORIES_LIST, Product } from "@/lib/products-data";
+import { PRODUCTS, CATEGORIES_LIST, getProductsByCategory, Product } from "@/lib/products-data";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { SlidersHorizontal, ArrowLeft } from "lucide-react";
@@ -31,10 +31,9 @@ export default function CategoryDetailPage() {
       "Exclusive handcrafted silhouettes, luxury embroidery, and imperial couture.",
   };
 
-  let items = PRODUCTS.filter((p) => p.category === slug);
+  let items = getProductsByCategory(slug);
   if (items.length === 0) {
-    // If fewer items in specific mock category, show full collection filtered
-    items = PRODUCTS;
+    items = getProductsByCategory("all");
   }
 
   if (sortBy === "price-low") {

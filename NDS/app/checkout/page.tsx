@@ -44,6 +44,15 @@ export default function CheckoutPage() {
         items: [...items],
         total,
         shippingAddress: `${formData.fullName}, ${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
+        customer: {
+          name: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+        },
         paymentMethod: paymentMethod.toUpperCase(),
       };
       localStorage.setItem("nds_orders_history", JSON.stringify([newOrder, ...existingOrders]));

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PRODUCTS, Product } from "@/lib/products-data";
+import { PRODUCTS, getProductsByCategory, Product } from "@/lib/products-data";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { Search as SearchIcon, X, RotateCcw, Sparkles } from "lucide-react";
@@ -116,7 +116,7 @@ export default function SearchPage() {
   // Filtered Results
   const results = useMemo(() => {
     const q = query.toLowerCase().trim();
-    let pool = PRODUCTS;
+    let pool = getProductsByCategory("all") || PRODUCTS;
 
     if (activeFilter !== "all") {
       if (activeFilter === "accessories") {
