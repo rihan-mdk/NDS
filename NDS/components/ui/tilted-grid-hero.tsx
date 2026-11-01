@@ -270,7 +270,7 @@ export function TiltedGridHero({
                 <div
                   key={k}
                   className={cn(
-                    "absolute top-0 overflow-hidden bg-transparent",
+                    "absolute top-0 overflow-hidden bg-[#191919]",
                     k === 0 && "rounded-l-lg",
                     k === SLICES - 1 && "rounded-r-lg",
                   )}
@@ -278,11 +278,10 @@ export function TiltedGridHero({
                     // Every strip starts at the tile's centre and is turned
                     // round the axis to its own place on the arc.
                     left: u((aspectRatio - share) / 2),
-                    // A pixel wider than its share, so neighbouring facets
-                    // overlap and no hairline opens between them. The last
-                    // slice also gets +1px so sub-pixel gaps from 3D rotation
-                    // don't expose the background on the right edge.
-                    width: `calc(${u(share)} + 1px)`,
+                    // 2px wider than its share so neighbouring facets overlap
+                    // enough to close sub-pixel gaps that appear under 3D
+                    // perspective rotation at any point along the cylinder arc.
+                    width: `calc(${u(share)} + 2px)`,
                     height: u(1),
                     transform: turn(
                       (aspectRatio / 2 - (k + 0.5) * share) * unit,
