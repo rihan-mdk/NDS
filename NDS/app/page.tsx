@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { TiltedGridHero } from "@/components/ui/tilted-grid-hero";
+import { motion } from "framer-motion";
 
 const GALLERY_IMAGES = [
   { src: "/images/gallery/gallery-01.jpeg", alt: "Neel's Designer Studio — Atelier Creation 1" },
@@ -65,18 +66,32 @@ export default function HomePage() {
 
   const newArrivals = PRODUCTS.filter((p) => p.newArrival).slice(0, 4);
 
+  // Hero animation variants — typed as const so framer-motion's Easing type is satisfied
+  const heroTextContainer = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.13 as number, delayChildren: 0.55 as number } },
+  };
+  const heroItem = (yOffset: number, dur: number) =>
+    ({
+      hidden: { y: yOffset, opacity: 0 },
+      visible: { y: 0, opacity: 1, transition: { duration: dur, ease: [0.25, 0, 0, 1] as [number, number, number, number] } },
+    }) as const;
+
   return (
     <div className="flex flex-col w-full bg-[#FDFBF8]">
-      {/* SECTION 1: Editorial Hero — Fully Visible in Mobile Viewport (No Scroll Required), Full Viewport on Desktop */}
+      {/* SECTION 1: Editorial Hero — Animated with framer-motion */}
       {/* To swap the hero image: replace /images/hero.jpg with your new image path in public/images/ */}
       <section className="relative w-full h-[calc(100dvh-7rem)] sm:h-screen sm:-mt-14 overflow-hidden bg-[#1A1712] flex items-end sm:items-center">
 
-        {/* Full-width hero image */}
+        {/* Full-width hero image — clip-path wipe reveal from bottom-right */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <motion.img
           src="/images/hero.jpg"
           alt="NEEL'S DESIGNER STUDIO — Luxury Fashion Editorial"
           className="absolute inset-0 w-full h-full object-cover object-top"
+          initial={{ clipPath: "inset(0 100% 0 0)" }}
+          animate={{ clipPath: "inset(0 0% 0 0)" }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
         />
 
         {/* Mobile overlay: soft bottom-up gradient keeping the model and outfit visible */}
@@ -103,30 +118,46 @@ export default function HomePage() {
           }}
         />
 
-        {/* Hero text overlay — beautifully proportioned inside the 4:5 mobile frame */}
-        <div className="relative z-10 w-full px-4 sm:px-12 lg:px-20 pb-5 sm:pb-12 pt-0 sm:pt-16 flex flex-col items-start">
+        {/* Hero text overlay — staggered fade-up entrance */}
+        <motion.div
+          className="relative z-10 w-full px-4 sm:px-12 lg:px-20 pb-5 sm:pb-12 pt-0 sm:pt-16 flex flex-col items-start"
+          initial="hidden"
+          animate="visible"
+          variants={heroTextContainer}
+        >
           <div className="max-w-[260px] sm:max-w-xl">
             {/* Eyebrow */}
-            <span className="block font-sans text-[8px] sm:text-[10px] uppercase tracking-[0.25em] sm:tracking-[0.35em] text-[#C9A96E] mb-1 sm:mb-4 font-semibold">
-              NEEL&apos;S DESIGNER STUDIO
-            </span>
-            {/* Heading */}
-            <h1 className="font-serif text-[1.45rem] sm:text-5xl lg:text-6xl text-[#FDFBF8] tracking-tight leading-[1.1] mb-1.5 sm:mb-5 font-normal">
-              Style Beyond<br />Trends.
-            </h1>
-            {/* Subtext */}
-            <p className="font-sans text-[11px] sm:text-[15px] text-[#D6D0C8] max-w-[230px] sm:max-w-md mb-3 sm:mb-8 leading-snug font-light">
-              Discover fashion beyond the ordinary.
-            </p>
-            {/* CTA */}
-            <Link
-              href="/categories"
-              className="inline-flex items-center justify-center bg-[#FDFBF8] text-[#191919] text-[9px] sm:text-[11px] font-semibold px-5 py-2.5 sm:px-9 sm:py-3.5 uppercase tracking-[0.2em] sm:tracking-[0.22em] hover:bg-[#C9A96E] hover:text-[#FDFBF8] transition-colors duration-300 shadow-md"
+            <motion.span
+              className="block font-sans text-[8px] sm:text-[10px] uppercase tracking-[0.25em] sm:tracking-[0.35em] text-[#C9A96E] mb-1 sm:mb-4 font-semibold"
+              variants={heroItem(18, 0.55)}
             >
-              EXPLORE COLLECTION
-            </Link>
+              NEEL&apos;S DESIGNER STUDIO
+            </motion.span>
+            {/* Heading */}
+            <motion.h1
+              className="font-serif text-[1.45rem] sm:text-5xl lg:text-6xl text-[#FDFBF8] tracking-tight leading-[1.1] mb-1.5 sm:mb-5 font-normal"
+              variants={heroItem(22, 0.6)}
+            >
+              Style Beyond<br />Trends.
+            </motion.h1>
+            {/* Subtext */}
+            <motion.p
+              className="font-sans text-[11px] sm:text-[15px] text-[#D6D0C8] max-w-[230px] sm:max-w-md mb-3 sm:mb-8 leading-snug font-light"
+              variants={heroItem(16, 0.5)}
+            >
+              Discover fashion beyond the ordinary.
+            </motion.p>
+            {/* CTA */}
+            <motion.div variants={heroItem(16, 0.5)}>
+              <Link
+                href="/categories"
+                className="inline-flex items-center justify-center bg-[#FDFBF8] text-[#191919] text-[9px] sm:text-[11px] font-semibold px-5 py-2.5 sm:px-9 sm:py-3.5 uppercase tracking-[0.2em] sm:tracking-[0.22em] hover:bg-[#C9A96E] hover:text-[#FDFBF8] transition-colors duration-300 shadow-md"
+              >
+                EXPLORE COLLECTION
+              </Link>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* SECTION 2: New Arrivals (4-Column Grid) */}
@@ -178,7 +209,7 @@ export default function HomePage() {
           images={GALLERY_IMAGES}
           aspectRatio={3 / 4}
           tileHeight={55}
-          gap={-4}
+          gap={6}
           speed={5}
           curve={72}
           fade={14}
