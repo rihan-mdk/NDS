@@ -6,18 +6,17 @@ import { useParams } from "next/navigation";
 import { PRODUCTS, CATEGORIES_LIST, Product } from "@/lib/products-data";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
-import { SlidersHorizontal, ArrowLeft, Grid3X3, LayoutGrid } from "lucide-react";
+import { SlidersHorizontal, ArrowLeft } from "lucide-react";
 
 export default function CategoryDetailPage() {
   const params = useParams();
   const slug = (params.slug as string) || "lehenga";
-  const [sortBy, setSortBy] = useState<string>("featured");
-  const [gridColumns, setGridColumns] = useState<3 | 4>(4);
+  const [sortBy, setSortBy] = useState<string>("price-low");
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   const categoryMeta = CATEGORIES_LIST.find((c) => c.slug === slug) || {
     slug,
-    name: slug.charAt(0).toUpperCase() + slug.slice(1).replace("-", " ") + " Collection",
+    name: slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " ") + " Collection",
     count: 12,
     description: "Exclusive handcrafted silhouettes, luxury embroidery, and imperial couture.",
   };
@@ -67,52 +66,11 @@ export default function CategoryDetailPage() {
             </p>
           </div>
 
-          {/* Grid Layout Toggle — desktop only */}
-          <div className="hidden sm:flex items-center space-x-3 self-start md:self-end">
-            <span className="text-[10px] text-[#77716D] uppercase tracking-widest hidden sm:inline">
-              Grid Layout
-            </span>
-            <div className="flex items-center bg-[#F5F3F0] p-1 gap-1 border border-[#EAE5DF]">
-              <button
-                onClick={() => setGridColumns(3)}
-                aria-label="3 Columns View"
-                className={`p-1.5 transition-colors ${
-                  gridColumns === 3 ? "bg-[#FDFBF8] text-[#191919] shadow-xs" : "text-[#77716D] hover:text-[#191919]"
-                }`}
-              >
-                <Grid3X3 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setGridColumns(4)}
-                aria-label="4 Columns View"
-                className={`p-1.5 transition-colors ${
-                  gridColumns === 4 ? "bg-[#FDFBF8] text-[#191919] shadow-xs" : "text-[#77716D] hover:text-[#191919]"
-                }`}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+          {/* Grid Layout Toggle removed */}
         </div>
 
-        {/* Filter Bar — horizontal scroll on mobile, wrap on desktop */}
-        <div className="pt-3 sm:pt-4 flex items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap flex-nowrap scrollbar-hide">
-            {CATEGORIES_LIST.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/collections/${cat.slug}`}
-                className={`px-3 sm:px-4 py-2 text-[10px] uppercase tracking-widest font-semibold transition-colors whitespace-nowrap flex-shrink-0 ${
-                  cat.slug === slug
-                    ? "bg-[#191919] text-[#FDFBF8]"
-                    : "bg-[#F5F3F0] text-[#191919] hover:bg-[#EFEEEB]"
-                }`}
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </div>
-
+        {/* Filter Bar — sort only, no collection pills */}
+        <div className="pt-3 sm:pt-4 flex items-center justify-end gap-3 sm:gap-4">
           {/* Sort Selector */}
           <div className="flex items-center space-x-2 flex-shrink-0">
             <SlidersHorizontal className="w-4 h-4 text-[#77716D] hidden sm:block" />
@@ -121,7 +79,6 @@ export default function CategoryDetailPage() {
               onChange={(e) => setSortBy(e.target.value)}
               className="bg-[#F5F3F0] border border-[#EAE5DF] text-[10px] sm:text-xs py-2 px-2 sm:px-3 focus:outline-none uppercase tracking-wider text-[#191919]"
             >
-              <option value="featured">Featured</option>
               <option value="price-low">Price ↑</option>
               <option value="price-high">Price ↓</option>
             </select>
@@ -131,14 +88,8 @@ export default function CategoryDetailPage() {
 
       {/* Product Grid */}
       <section className="w-full px-4 sm:px-10 lg:px-14 py-6 sm:py-12">
-        {/* Mobile: always 2 columns · Desktop: respects toggle */}
-        <div
-          className={`grid gap-3 sm:gap-6 grid-cols-2 ${
-            gridColumns === 3
-              ? "sm:grid-cols-2 lg:grid-cols-3"
-              : "sm:grid-cols-2 lg:grid-cols-4"
-          }`}
-        >
+        {/* Mobile: always 2 columns · Desktop: 4 columns */}
+        <div className="grid gap-3 sm:gap-6 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4">
           {items.map((product) => (
             <ProductCard
               key={product.id}
