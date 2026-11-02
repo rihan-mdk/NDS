@@ -81,9 +81,9 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col w-full bg-[#FDFBF8]">
-      {/* SECTION 1: Editorial Hero — Animated with framer-motion */}
+      {/* SECTION 1: Editorial Hero — Static sticky layer for page overlap effect */}
       {/* To swap the hero image: replace /images/hero.jpg with your new image path in public/images/ */}
-      <section className="relative w-full h-[calc(100dvh-7rem)] sm:h-screen sm:-mt-14 overflow-hidden bg-[#1A1712] flex items-end sm:items-center">
+      <section className="sticky top-14 sm:top-0 z-0 w-full h-[calc(100dvh-7rem)] sm:h-screen sm:-mt-14 overflow-hidden bg-[#1A1712] flex items-end sm:items-center">
 
         {/* Full-width hero image — clip-path wipe reveal from bottom-right */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -162,8 +162,10 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* SECTION 2: New Arrivals (4-Column Grid) */}
-      <section className="w-full px-4 sm:px-10 lg:px-14 py-10 sm:py-16 lg:py-20 bg-[#FDFBF8]">
+      {/* OVERLAPPING CONTENT — Smoothly slides up over the static hero with square edges */}
+      <div className="relative z-10 bg-[#FDFBF8] shadow-[0_-12px_32px_rgba(0,0,0,0.18)] border-t border-[#EAE5DF]/70">
+        {/* SECTION 2: New Arrivals (4-Column Grid) */}
+        <section className="w-full px-4 sm:px-10 lg:px-14 py-10 sm:py-16 lg:py-20 bg-[#FDFBF8]">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-10 border-b border-[#EAE5DF] pb-4 sm:pb-5">
           <div>
             <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-[#7B5644] block mb-1.5 font-semibold">
@@ -273,6 +275,7 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+      </div>
 
       {/* Quick View Modal */}
       <QuickViewModal
