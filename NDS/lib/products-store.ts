@@ -94,9 +94,9 @@ export function deleteProductFromStorage(id: string) {
 }
 
 /**
- * React hook to subscribe to live product updates
+ * React hook to subscribe to live product updates.
  * SSR and initial client hydration start with base PRODUCTS to guarantee zero hydration mismatch,
- * then cleanly synchronize live products from client storage in useEffect.
+ * then cleanly synchronize live products from Supabase and client storage in useEffect.
  */
 export function useLiveProducts(categoryFilter?: string): Product[] {
   const [products, setProducts] = useState<Product[]>(() => {
@@ -105,7 +105,7 @@ export function useLiveProducts(categoryFilter?: string): Product[] {
   });
 
   useEffect(() => {
-    function update() {
+    function updateLocal() {
       const all = getAllLiveProducts();
       if (!categoryFilter || categoryFilter === "all") {
         setProducts(all);
@@ -114,19 +114,38 @@ export function useLiveProducts(categoryFilter?: string): Product[] {
       }
     }
 
-    // Initial client sync after hydration
-    update();
+    async function syncFromCloud() {
+      try {
+        const res = await fetch("/api/admin/products");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.products) && data.products.length > 0) {
+            if (!categoryFilter || categoryFilter === "all") {
+              setProducts(data.products);
+            } else {
+              setProducts(data.products.filter((p: Product) => p.category === categoryFilter));
+            }
+            return;
+          }
+        }
+      } catch (e) {
+        // Fallback to local storage if API call fails
+      }
+      updateLocal();
+    }
 
-    // Listen to local update events
-    window.addEventListener(SYNC_EVENT, update);
-    window.addEventListener("storage", update);
+    // 1. Initial sync with cloud database (with local fallback)
+    syncFromCloud();
+
+    // 2. Listen to local update events (e.g. admin in current tab)
+    window.addEventListener(SYNC_EVENT, syncFromCloud);
+    window.addEventListener("storage", syncFromCloud);
 
     return () => {
-      window.removeEventListener(SYNC_EVENT, update);
-      window.removeEventListener("storage", update);
+      window.removeEventListener(SYNC_EVENT, syncFromCloud);
+      window.removeEventListener("storage", syncFromCloud);
     };
   }, [categoryFilter]);
 
   return products;
 }
-

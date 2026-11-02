@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import fs from "fs";
 import path from "path";
 import { PRODUCTS, Product } from "@/lib/products-data";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const FILE_PATH = path.join(DATA_DIR, "custom-products.json");
@@ -18,7 +19,7 @@ function ensureDataFile() {
   }
 }
 
-function readCustomProducts(): Product[] {
+function readCustomProductsFromFile(): Product[] {
   try {
     ensureDataFile();
     const data = fs.readFileSync(FILE_PATH, "utf-8");
@@ -29,7 +30,7 @@ function readCustomProducts(): Product[] {
   }
 }
 
-function writeCustomProducts(products: Product[]) {
+function writeCustomProductsToFile(products: Product[]) {
   try {
     ensureDataFile();
     fs.writeFileSync(FILE_PATH, JSON.stringify(products, null, 2), "utf-8");
@@ -38,22 +39,92 @@ function writeCustomProducts(products: Product[]) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToProduct(row: any): Product {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    category: row.category,
+    categoryLabel: row.category_label || "",
+    subCategory: row.sub_category || "",
+    price: Number(row.price),
+    originalPrice: row.original_price ? Number(row.original_price) : undefined,
+    images: Array.isArray(row.images) ? row.images : [],
+    description: row.description || "",
+    details: Array.isArray(row.details) ? row.details : [],
+    fabric: row.fabric || "",
+    embroidery: row.embroidery || "",
+    washCare: row.wash_care || "",
+    deliveryTime: row.delivery_time || "",
+    sizes: Array.isArray(row.sizes) ? row.sizes : [],
+    inStock: row.in_stock !== false,
+    featured: Boolean(row.featured),
+    newArrival: Boolean(row.new_arrival),
+    isAccessory: Boolean(row.is_accessory),
+  };
+}
+
+function productToRow(product: Product) {
+  return {
+    id: product.id,
+    slug: product.slug,
+    title: product.title,
+    category: product.category,
+    category_label: product.categoryLabel,
+    sub_category: product.subCategory,
+    price: product.price,
+    original_price: product.originalPrice ?? null,
+    images: product.images,
+    description: product.description,
+    details: product.details,
+    fabric: product.fabric,
+    embroidery: product.embroidery,
+    wash_care: product.washCare,
+    delivery_time: product.deliveryTime,
+    sizes: product.sizes,
+    in_stock: product.inStock,
+    featured: product.featured ?? false,
+    new_arrival: product.newArrival ?? false,
+    is_accessory: product.isAccessory ?? false,
+    updated_at: new Date().toISOString(),
+  };
+}
+
 async function verifyAdmin(): Promise<boolean> {
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_COOKIE_NAME);
   return session?.value === SESSION_SECRET_TOKEN;
 }
 
-// GET all products (base + custom overrides)
+// GET all products (Supabase + base catalog fallback)
 export async function GET() {
   try {
-    const custom = readCustomProducts();
+    const supabase = getSupabaseAdmin();
+
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        const custom = data.map(rowToProduct);
+        const customIds = new Set(custom.map((p) => p.id));
+        const base = PRODUCTS.filter((p) => !customIds.has(p.id));
+        const all = [...custom, ...base];
+        return NextResponse.json({ products: all, customCount: custom.length });
+      }
+    }
+
+    // Fallback to local file
+    const custom = readCustomProductsFromFile();
     const customIds = new Set(custom.map((p) => p.id));
-    // Base products excluding any that have custom overrides
     const base = PRODUCTS.filter((p) => !customIds.has(p.id));
     const all = [...custom, ...base];
     return NextResponse.json({ products: all, customCount: custom.length });
   } catch (error) {
+    console.error("GET /api/admin/products error:", error);
     return NextResponse.json({ error: "Failed to load products" }, { status: 500 });
   }
 }
@@ -94,7 +165,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const custom = readCustomProducts();
     const baseSlug = title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -102,7 +172,16 @@ export async function POST(request: Request) {
 
     let uniqueSlug = baseSlug;
     let counter = 1;
-    const existingSlugs = new Set([...PRODUCTS, ...custom].map((p) => p.slug));
+    const existingSlugs = new Set(PRODUCTS.map((p) => p.slug));
+
+    const supabase = getSupabaseAdmin();
+    if (supabase) {
+      const { data: slugCheck } = await supabase.from("products").select("slug");
+      if (slugCheck) {
+        slugCheck.forEach((r) => existingSlugs.add(r.slug));
+      }
+    }
+
     while (existingSlugs.has(uniqueSlug)) {
       uniqueSlug = `${baseSlug}-${counter++}`;
     }
@@ -129,8 +208,21 @@ export async function POST(request: Request) {
       isAccessory: Boolean(isAccessory),
     };
 
-    custom.unshift(newProduct);
-    writeCustomProducts(custom);
+    // 1. Save to Supabase if configured
+    if (supabase) {
+      const { error: insertError } = await supabase
+        .from("products")
+        .insert(productToRow(newProduct));
+
+      if (insertError) {
+        console.error("Supabase insert error:", insertError);
+      }
+    }
+
+    // 2. Also save to local file for backup
+    const fileCustom = readCustomProductsFromFile();
+    fileCustom.unshift(newProduct);
+    writeCustomProductsToFile(fileCustom);
 
     return NextResponse.json({ success: true, product: newProduct }, { status: 201 });
   } catch (error) {
@@ -153,24 +245,49 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Product ID required" }, { status: 400 });
     }
 
-    const custom = readCustomProducts();
-    const existingIndex = custom.findIndex((p) => p.id === id);
+    const supabase = getSupabaseAdmin();
+    let updatedProduct: Product | null = null;
 
-    let updatedProduct: Product;
-    if (existingIndex > -1) {
-      updatedProduct = { ...custom[existingIndex], ...body };
-      custom[existingIndex] = updatedProduct;
-    } else {
-      // If it was a base product being edited for the first time
-      const baseProduct = PRODUCTS.find((p) => p.id === id);
-      if (!baseProduct) {
-        return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    if (supabase) {
+      const { data: existingRow } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (existingRow) {
+        const merged = { ...rowToProduct(existingRow), ...body };
+        await supabase.from("products").update(productToRow(merged)).eq("id", id);
+        updatedProduct = merged;
       }
-      updatedProduct = { ...baseProduct, ...body };
-      custom.unshift(updatedProduct);
     }
 
-    writeCustomProducts(custom);
+    // Update local file backup
+    const custom = readCustomProductsFromFile();
+    const existingIndex = custom.findIndex((p) => p.id === id);
+
+    if (existingIndex > -1) {
+      const merged: Product = updatedProduct || { ...custom[existingIndex], ...body };
+      updatedProduct = merged;
+      custom[existingIndex] = merged;
+    } else {
+      const baseProduct = PRODUCTS.find((p) => p.id === id);
+      if (baseProduct) {
+        const merged: Product = updatedProduct || { ...baseProduct, ...body };
+        updatedProduct = merged;
+        custom.unshift(merged);
+        if (supabase) {
+          await supabase.from("products").upsert(productToRow(merged));
+        }
+      }
+    }
+
+    writeCustomProductsToFile(custom);
+
+    if (!updatedProduct) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
     return NextResponse.json({ success: true, product: updatedProduct });
   } catch (error) {
     console.error("Update product error:", error);
@@ -193,10 +310,15 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Product ID required" }, { status: 400 });
     }
 
-    let custom = readCustomProducts();
-    // Filter out of custom
+    const supabase = getSupabaseAdmin();
+    if (supabase) {
+      await supabase.from("products").delete().eq("id", id);
+    }
+
+    // Also remove from local file backup
+    let custom = readCustomProductsFromFile();
     custom = custom.filter((p) => p.id !== id);
-    writeCustomProducts(custom);
+    writeCustomProductsToFile(custom);
 
     return NextResponse.json({ success: true, deletedId: id });
   } catch (error) {

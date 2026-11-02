@@ -39,6 +39,24 @@ export default function ProductDetailPage() {
         setSelectedSize(live.sizes[0]);
       }
     }
+
+    // Also fetch from cloud API in case the product was created on another system
+    async function fetchCloudProduct() {
+      try {
+        const res = await fetch("/api/admin/products");
+        if (res.ok) {
+          const data = await res.json();
+          const match = data.products?.find((p: Product) => p.slug === slug);
+          if (match) {
+            setProduct(match);
+            if (match.sizes && match.sizes.length > 0) {
+              setSelectedSize(match.sizes[0]);
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    fetchCloudProduct();
   }, [slug]);
 
   const isAccessory = Boolean(

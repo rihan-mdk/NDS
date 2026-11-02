@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import fs from "fs";
 import path from "path";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 const SESSION_COOKIE_NAME = "nds_admin_session";
 const SESSION_SECRET_TOKEN = "nds_atelier_admin_token_v1";
@@ -37,8 +38,6 @@ export async function POST(request: Request) {
       );
     }
 
-    ensureUploadDir();
-
     // Sanitize file name
     const originalName = file.name || "atelier-image.jpg";
     const cleanName = originalName
@@ -48,13 +47,38 @@ export async function POST(request: Request) {
 
     const timestamp = Date.now();
     const fileName = `upload-${timestamp}-${cleanName}`;
-    const filePath = path.join(UPLOAD_DIR, fileName);
-
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    fs.writeFileSync(filePath, buffer);
+    // 1. Try uploading to Supabase Storage if configured
+    const supabase = getSupabaseAdmin();
+    if (supabase) {
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, buffer, {
+          contentType: file.type,
+          upsert: true,
+        });
 
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage
+          .from("product-images")
+          .getPublicUrl(fileName);
+
+        return NextResponse.json({
+          success: true,
+          url: publicUrlData.publicUrl,
+          fileName,
+        });
+      } else {
+        console.warn("Supabase storage upload failed, falling back to local:", uploadError);
+      }
+    }
+
+    // 2. Fallback to local public/uploads (for local development)
+    ensureUploadDir();
+    const filePath = path.join(UPLOAD_DIR, fileName);
+    fs.writeFileSync(filePath, buffer);
     const publicUrl = `/uploads/${fileName}`;
 
     return NextResponse.json({
@@ -67,4 +91,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to upload file." }, { status: 500 });
   }
 }
-
