@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -13,17 +13,54 @@ export default function CheckoutPage() {
   const { user } = useAuth();
 
   const [formData, setFormData] = useState({
-    email: user?.email || "client@neelsatelier.com",
-    phone: "+91 98765 43210",
-    fullName: "Aaradhya Singhania",
-    address: "Penthouse 14B, Imperial Residency, Marine Drive",
-    landmark: "Opposite Sea Face Promenade",
-    city: "Mumbai",
-    state: "Maharashtra",
-    pincode: "400020",
-    giftPackaging: true,
-    giftMessage: "With deepest love and compliments.",
+    email: user?.email || "",
+    phone: "",
+    fullName: user?.user_metadata?.full_name || (user?.email ? user.email.split("@")[0] : ""),
+    address: "",
+    landmark: "",
+    city: "",
+    state: "",
+    pincode: "",
+    giftPackaging: false,
+    giftMessage: "",
   });
+
+  useEffect(() => {
+    try {
+      const savedAddresses = localStorage.getItem("nds_saved_addresses");
+      const savedDetails = localStorage.getItem("nds_saved_details");
+      if (savedAddresses) {
+        const addrs = JSON.parse(savedAddresses);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const def = addrs.find((a: any) => a.isDefault) || addrs[0];
+        if (def) {
+          setFormData((prev) => ({
+            ...prev,
+            fullName: def.name || prev.fullName,
+            phone: def.phone || prev.phone,
+            address: def.street || prev.address,
+            landmark: def.area || prev.landmark,
+            city: def.city || prev.city,
+            state: def.state || prev.state,
+            pincode: def.pincode || prev.pincode,
+          }));
+        }
+      } else if (savedDetails) {
+        const details = JSON.parse(savedDetails);
+        setFormData((prev) => ({
+          ...prev,
+          fullName: details.fullName || prev.fullName,
+          email: details.email || prev.email,
+          phone: details.phone || prev.phone,
+          address: details.address || prev.address,
+          city: details.city || prev.city,
+          pincode: details.pincode || prev.pincode,
+        }));
+      }
+    } catch (e) {
+      console.warn("Could not load saved address in checkout:", e);
+    }
+  }, [user]);
 
   const [paymentMethod, setPaymentMethod] = useState<"upi" | "card" | "netbanking" | "cod">("upi");
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -57,59 +57,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         setItems(JSON.parse(saved));
       } else {
-        // Initialize with default items matching Stitch Shopping Bag screen
-        // (Zari Kurti & Ivory Gown)
-        setItems([
-          {
-            product: {
-              id: 'prod-001',
-              slug: 'zari-embroidered-azure-silk-kurti',
-              title: 'Zari Embroidered Azure Silk Kurti',
-              category: 'short-kurti',
-              categoryLabel: 'Short Kurti',
-              subCategory: 'Silk Separates',
-              price: 48000,
-              originalPrice: 54000,
-              images: [
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuBJpt-4xAPPD2y_sYhU90s1PyDcuMTlcdr7Tsgr9preP3ChZ-0YOqWHEimx4pGXvXZjLo_d_ZhlpbkbtVbTuPH8XinCqwqB1vRypf66P2pZbPkPoKq51i6CVsNm-nr-K90cOYZxiD6wfZjGgGEb9WtjCnGV3hseUUPqWPcQhymIdHMMSp-vMlKsWrT9ATqrIyMBU7i780F1l-UGP9W21ltdSNr5Cubb5s2xdK__NH_Qa-TAS0qC4fZWcQ'
-              ],
-              description: 'Pure Mulberry Chanderi Silk with scallop zari needlework.',
-              details: ['Pure Mulberry Silk', 'Scallop border'],
-              fabric: 'Chanderi Silk',
-              embroidery: 'Hand Needle Zari',
-              washCare: 'Dry Clean Only',
-              deliveryTime: '3-5 business days',
-              sizes: ['XS', 'S', 'M', 'L', 'XL'],
-              inStock: true
-            },
-            quantity: 1,
-            selectedSize: 'M'
-          },
-          {
-            product: {
-              id: 'prod-002',
-              slug: 'ivory-architectural-drape-gown',
-              title: 'Ivory Architectural Drape Gown',
-              category: 'gown',
-              categoryLabel: 'Gown',
-              subCategory: 'Evening Couture',
-              price: 125000,
-              images: [
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuBP1jB0EnAx5-BWz9llTztchW9JV99Bp_6dxn81cecC2scMHD66B601WWnTHDJ9y8ruH5ihhMgw3ix-IWsvbE1vnMvvfavusPQxKnbJZt7vJ8_BRAOalr-mnZ6canprIG7eGUo6-1cxUSvUVpgzJaAL3JoXMyiCUjzf-lpXL5YR6fMA6XRzy5TEJ82yzFxULcxWn2u8BMKvvlBEiZMhfcoNNPZgfkAqg6Svb-KNkJxI'
-              ],
-              description: 'Raw matka silk with sculptural pleats.',
-              details: ['Matka Silk', 'Draped cape'],
-              fabric: 'Matka Silk',
-              embroidery: 'Tonal Cord',
-              washCare: 'Dry clean only',
-              deliveryTime: '7-10 business days',
-              sizes: ['XS', 'S', 'M', 'L'],
-              inStock: true
-            },
-            quantity: 1,
-            selectedSize: 'S'
-          }
-        ]);
+        setItems([]);
       }
     } catch (e) {
       console.warn("Could not read cart from localStorage:", e);

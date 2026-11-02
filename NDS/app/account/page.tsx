@@ -68,38 +68,26 @@ export default function AccountProfilePage() {
   >(null);
 
   const [savedDetails, setSavedDetails] = useState<SavedDetails>({
-    fullName: "Priya Sharma",
-    email: "priya.sharma@example.com",
-    phone: "+91 98765 43210",
-    address: "Villa 14, The Grand Regency, Golf Course Road",
-    city: "Gurugram",
-    pincode: "122002",
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    pincode: "",
   });
 
-  const [addresses, setAddresses] = useState<AddressItem[]>([
-    {
-      id: "addr-1",
-      name: "Priya Sharma",
-      street: "Villa 14, The Grand Regency",
-      area: "Golf Course Road, DLF Phase 5",
-      city: "Gurugram",
-      state: "Haryana",
-      pincode: "122002",
-      phone: "+91 98765 43210",
-      isDefault: true,
-    },
-    {
-      id: "addr-2",
-      name: "Priya Sharma",
-      street: "Studio 402, Signature Towers",
-      area: "South City 1",
-      city: "Gurugram",
-      state: "Haryana",
-      pincode: "122001",
-      phone: "+91 98765 43210",
-      isDefault: false,
-    },
-  ]);
+  const [addresses, setAddresses] = useState<AddressItem[]>([]);
+
+  const [addressFormData, setAddressFormData] = useState({
+    name: "",
+    street: "",
+    area: "",
+    city: "",
+    state: "",
+    pincode: "",
+    phone: "",
+    isDefault: false,
+  });
 
   const [measurements, setMeasurements] = useState<Measurements>({
     height: "5' 7\"",
@@ -123,10 +111,15 @@ export default function AccountProfilePage() {
       if (storedDetails) {
         setSavedDetails(JSON.parse(storedDetails));
       } else if (user) {
+        const uName =
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          (user.email ? user.email.split("@")[0] : "");
+        const formatted = uName ? uName.charAt(0).toUpperCase() + uName.slice(1) : "";
         setSavedDetails((prev) => ({
           ...prev,
-          fullName: user.user_metadata?.full_name || user.email?.split("@")[0] || prev.fullName,
-          email: user.email || prev.email,
+          fullName: formatted,
+          email: user.email || "",
         }));
       }
 
@@ -194,7 +187,6 @@ export default function AccountProfilePage() {
   };
 
   const handleDeleteAddress = (id: string) => {
-    if (addresses.length <= 1) return;
     const updated = addresses.filter((addr) => addr.id !== id);
     if (!updated.some((a) => a.isDefault) && updated.length > 0) {
       updated[0].isDefault = true;
@@ -207,6 +199,56 @@ export default function AccountProfilePage() {
     }
   };
 
+  const handleSaveAddress = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addressFormData.street.trim() || !addressFormData.city.trim() || !addressFormData.pincode.trim()) {
+      return;
+    }
+
+    const newAddr: AddressItem = {
+      id: `addr-${Date.now()}`,
+      name: addressFormData.name.trim() || displayName,
+      street: addressFormData.street.trim(),
+      area: addressFormData.area.trim(),
+      city: addressFormData.city.trim(),
+      state: addressFormData.state.trim() || "India",
+      pincode: addressFormData.pincode.trim(),
+      phone: addressFormData.phone.trim() || displayPhone,
+      isDefault: addresses.length === 0 || addressFormData.isDefault,
+    };
+
+    let updated = [...addresses];
+    if (newAddr.isDefault) {
+      updated = updated.map((a) => ({ ...a, isDefault: false }));
+      updated.unshift(newAddr);
+    } else {
+      updated.push(newAddr);
+    }
+
+    setAddresses(updated);
+    try {
+      localStorage.setItem("nds_saved_addresses", JSON.stringify(updated));
+    } catch (err) {
+      console.warn("Could not save address:", err);
+    }
+
+    setSaveSuccess(true);
+    setTimeout(() => {
+      setSaveSuccess(false);
+      setActiveModal(null);
+      setAddressFormData({
+        name: "",
+        street: "",
+        area: "",
+        city: "",
+        state: "",
+        pincode: "",
+        phone: "",
+        isDefault: false,
+      });
+    }, 600);
+  };
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -216,9 +258,17 @@ export default function AccountProfilePage() {
     router.push("/");
   };
 
-  const displayName = savedDetails.fullName || user?.user_metadata?.full_name || "Priya Sharma";
-  const displayEmail = savedDetails.email || user?.email || "priya.sharma@example.com";
-  const displayPhone = savedDetails.phone || "+91 98765 43210";
+  const userFallbackName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    (user?.email ? user.email.split("@")[0] : "") ||
+    "Patron";
+  const formattedFallback =
+    userFallbackName.charAt(0).toUpperCase() + userFallbackName.slice(1);
+
+  const displayName = savedDetails.fullName || formattedFallback;
+  const displayEmail = savedDetails.email || user?.email || "";
+  const displayPhone = savedDetails.phone || "";
 
   return (
     <div className="w-full bg-[#FDFBF8] min-h-[calc(100vh-3.5rem)] text-[#191919]">
@@ -235,7 +285,7 @@ export default function AccountProfilePage() {
             <UserIcon className="w-10 h-10 text-[#7B5644] stroke-[1.2]" />
           </div>
           <h1 className="font-serif text-2xl text-[#191919] font-normal tracking-wide">
-            Client Profile
+            {displayName}
           </h1>
           <p className="font-sans text-[9px] text-[#7B5644] uppercase tracking-[0.25em] mt-1 font-semibold">
             NEEL&apos;S ATELIER
@@ -707,70 +757,108 @@ export default function AccountProfilePage() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
-                {addresses.map((addr) => (
-                  <div
-                    key={addr.id}
-                    className={`border border-[#EAE5DF] p-6 flex flex-col justify-between ${
-                      addr.isDefault ? "bg-[#F9F8F5]/80" : "bg-[#F9F8F5]/30"
-                    }`}
+              {addresses.length === 0 ? (
+                <div className="py-12 text-center space-y-3">
+                  <p className="text-sm text-[#77716D]">No saved delivery addresses yet.</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAddressFormData({
+                        name: displayName,
+                        street: "",
+                        area: "",
+                        city: "",
+                        state: "",
+                        pincode: "",
+                        phone: displayPhone,
+                        isDefault: true,
+                      });
+                      setActiveModal("address");
+                    }}
+                    className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-[#191919] text-white hover:bg-[#7B5644] transition-colors duration-200 text-xs uppercase tracking-widest font-medium"
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-[#191919] tracking-wide">
-                          {addr.name}
-                        </span>
-                        {addr.isDefault && (
-                          <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest font-semibold border border-[#191919] text-[#191919] bg-white">
-                            Default Address
+                    <Plus className="w-4 h-4" />
+                    <span>Add Delivery Address</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+                  {addresses.map((addr) => (
+                    <div
+                      key={addr.id}
+                      className={`border border-[#EAE5DF] p-6 flex flex-col justify-between ${
+                        addr.isDefault ? "bg-[#F9F8F5]/80" : "bg-[#F9F8F5]/30"
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-[#191919] tracking-wide">
+                            {addr.name}
+                          </span>
+                          {addr.isDefault && (
+                            <span className="px-2 py-0.5 text-[9px] uppercase tracking-widest font-semibold border border-[#191919] text-[#191919] bg-white">
+                              Default Address
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-[#77716D] leading-relaxed space-y-1">
+                          <p>{addr.street}</p>
+                          <p>{addr.area}</p>
+                          <p>
+                            {addr.city}, {addr.state} {addr.pincode}, India
+                          </p>
+                          <p className="pt-2 text-[#191919] font-medium">Phone: {addr.phone}</p>
+                        </div>
+                      </div>
+
+                      <div className="pt-6 mt-4 border-t border-[#EAE5DF] flex items-center justify-between text-xs">
+                        {!addr.isDefault ? (
+                          <button
+                            type="button"
+                            onClick={() => handleSetDefaultAddress(addr.id)}
+                            className="uppercase tracking-widest font-medium text-[#7B5644] hover:underline transition-colors"
+                          >
+                            Set as Default
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-[#77716D] uppercase tracking-wider">
+                            Primary
                           </span>
                         )}
-                      </div>
-                      <div className="text-xs text-[#77716D] leading-relaxed space-y-1">
-                        <p>{addr.street}</p>
-                        <p>{addr.area}</p>
-                        <p>
-                          {addr.city}, {addr.state} {addr.pincode}, India
-                        </p>
-                        <p className="pt-2 text-[#191919] font-medium">Phone: {addr.phone}</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-6 mt-4 border-t border-[#EAE5DF] flex items-center justify-between text-xs">
-                      {!addr.isDefault ? (
-                        <button
-                          type="button"
-                          onClick={() => handleSetDefaultAddress(addr.id)}
-                          className="uppercase tracking-widest font-medium text-[#7B5644] hover:underline transition-colors"
-                        >
-                          Set as Default
-                        </button>
-                      ) : (
-                        <span className="text-[10px] text-[#77716D] uppercase tracking-wider">
-                          Primary
-                        </span>
-                      )}
-                      <div className="flex items-center gap-4">
-                        <button
-                          type="button"
-                          onClick={() => setActiveModal("address")}
-                          className="uppercase tracking-widest font-medium text-[#191919] hover:text-[#7B5644] transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <span className="text-[#EAE5DF]">|</span>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteAddress(addr.id)}
-                          className="uppercase tracking-widest font-medium text-[#77716D] hover:text-[#BA1A1A] transition-colors"
-                        >
-                          Delete
-                        </button>
+                        <div className="flex items-center gap-4">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAddressFormData({
+                                name: addr.name,
+                                street: addr.street,
+                                area: addr.area,
+                                city: addr.city,
+                                state: addr.state,
+                                pincode: addr.pincode,
+                                phone: addr.phone,
+                                isDefault: addr.isDefault,
+                              });
+                              setActiveModal("address");
+                            }}
+                            className="uppercase tracking-widest font-medium text-[#191919] hover:text-[#7B5644] transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <span className="text-[#EAE5DF]">|</span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAddress(addr.id)}
+                            className="uppercase tracking-widest font-medium text-[#77716D] hover:text-[#BA1A1A] transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* SECTION 3: My Measurements */}
@@ -1048,14 +1136,7 @@ export default function AccountProfilePage() {
             <h3 className="font-serif text-2xl text-[#191919] mb-4">Add / Edit Address</h3>
 
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSaveSuccess(true);
-                setTimeout(() => {
-                  setSaveSuccess(false);
-                  setActiveModal(null);
-                }, 1000);
-              }}
+              onSubmit={handleSaveAddress}
               className="space-y-3.5"
             >
               <div>
@@ -1065,7 +1146,9 @@ export default function AccountProfilePage() {
                 <input
                   type="text"
                   required
-                  defaultValue={displayName}
+                  placeholder={displayName || "Full Name"}
+                  value={addressFormData.name}
+                  onChange={(e) => setAddressFormData({ ...addressFormData, name: e.target.value })}
                   className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"
                 />
               </div>
@@ -1077,7 +1160,9 @@ export default function AccountProfilePage() {
                 <input
                   type="text"
                   required
-                  defaultValue="Villa 14, The Grand Regency"
+                  placeholder="House/Flat No., Apartment, Street"
+                  value={addressFormData.street}
+                  onChange={(e) => setAddressFormData({ ...addressFormData, street: e.target.value })}
                   className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"
                 />
               </div>
@@ -1088,8 +1173,9 @@ export default function AccountProfilePage() {
                 </label>
                 <input
                   type="text"
-                  required
-                  defaultValue="Golf Course Road, DLF Phase 5"
+                  placeholder="Area, Colony or Landmark"
+                  value={addressFormData.area}
+                  onChange={(e) => setAddressFormData({ ...addressFormData, area: e.target.value })}
                   className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"
                 />
               </div>
@@ -1102,7 +1188,9 @@ export default function AccountProfilePage() {
                   <input
                     type="text"
                     required
-                    defaultValue="Gurugram"
+                    placeholder="City"
+                    value={addressFormData.city}
+                    onChange={(e) => setAddressFormData({ ...addressFormData, city: e.target.value })}
                     className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"
                   />
                 </div>
@@ -1114,11 +1202,36 @@ export default function AccountProfilePage() {
                     type="text"
                     maxLength={6}
                     required
-                    defaultValue="122002"
+                    placeholder="6-digit PIN"
+                    value={addressFormData.pincode}
+                    onChange={(e) => setAddressFormData({ ...addressFormData, pincode: e.target.value })}
                     className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-[10px] text-[#77716D] uppercase tracking-wider font-semibold mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  placeholder={displayPhone || "+91 Phone Number"}
+                  value={addressFormData.phone}
+                  onChange={(e) => setAddressFormData({ ...addressFormData, phone: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 pt-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={addressFormData.isDefault}
+                  onChange={(e) => setAddressFormData({ ...addressFormData, isDefault: e.target.checked })}
+                  className="accent-[#191919] w-3.5 h-3.5"
+                />
+                <span className="text-[11px] text-[#77716D]">Make this my default delivery address</span>
+              </label>
 
               <div className="pt-3 flex items-center justify-end gap-3">
                 <button

@@ -8,6 +8,30 @@ import { CheckCircle2, PackageCheck, Truck, Home, Download, ArrowRight } from "l
 function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId") || "NDS-2025-849201";
+  const [orderDetails, setOrderDetails] = React.useState<{
+    id?: string;
+    shippingAddress?: {
+      name?: string;
+      address?: string;
+      apartment?: string;
+      city?: string;
+      state?: string;
+      pincode?: string;
+    };
+  } | null>(null);
+
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem("nds_orders_history");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const match = Array.isArray(parsed) ? parsed.find((o: any) => o.id === orderId) || parsed[0] : null;
+        if (match) setOrderDetails(match);
+      }
+    } catch (e) {
+      console.warn("Could not load order:", e);
+    }
+  }, [orderId]);
 
   return (
     <div className="w-full bg-[#FDFBF8] min-h-screen">
@@ -80,12 +104,23 @@ function OrderConfirmationContent() {
             <h3 className="text-xs uppercase tracking-[0.2em] font-semibold text-[#191919] mb-4">
               Delivery Destination
             </h3>
-            <p className="text-sm font-semibold text-[#191919] mb-1">Aaradhya Singhania</p>
-            <p className="text-xs text-[#77716D] leading-relaxed mb-4">
-              Penthouse 14B, Imperial Residency, Marine Drive<br />
-              Opposite Sea Face Promenade<br />
-              Mumbai, Maharashtra - 400020
-            </p>
+            {orderDetails?.shippingAddress ? (
+              <>
+                <p className="text-sm font-semibold text-[#191919] mb-1">
+                  {orderDetails.shippingAddress.name || "Customer"}
+                </p>
+                <p className="text-xs text-[#77716D] leading-relaxed mb-4">
+                  {orderDetails.shippingAddress.address}
+                  {orderDetails.shippingAddress.apartment ? `, ${orderDetails.shippingAddress.apartment}` : ""}
+                  <br />
+                  {orderDetails.shippingAddress.city}, {orderDetails.shippingAddress.state} - {orderDetails.shippingAddress.pincode}
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-[#77716D] leading-relaxed mb-4">
+                Delivery details dispatched to your registered contact info.
+              </p>
+            )}
             <p className="text-xs text-[#77716D]">
               <strong>Courier Partner:</strong> BlueDart Insured Air Express
             </p>

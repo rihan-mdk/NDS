@@ -51,3 +51,4 @@ export default function EditProductPage() {
 
   return <ProductForm initialData={product} isEdit={true} />;
 }
+

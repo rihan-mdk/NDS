@@ -31,12 +31,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         setItems(JSON.parse(saved));
       } else {
-        // Initialize with default items from Stitch Wishlist screen
-        // (Noorani Lehenga & The Noor Kundan Ring)
-        setItems([
-          PRODUCTS[2], // Noorani Zardozi Bridal Lehenga
-          PRODUCTS[3], // The Noor Kundan Statement Ring
-        ].filter(Boolean));
+        setItems([]);
       }
     } catch (e) {
       console.warn("Could not load wishlist from localStorage:", e);

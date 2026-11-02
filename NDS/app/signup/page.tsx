@@ -116,7 +116,7 @@ export default function SignupPage() {
                 type="text"
                 required
                 autoComplete="name"
-                placeholder="Aaradhya Singhania"
+                placeholder="e.g. Your Full Name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="w-full px-4 py-3.5 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:bg-[#FFFFFF] focus:outline-none transition-colors"
