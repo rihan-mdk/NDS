@@ -6,6 +6,7 @@ import {
   getAllLiveProducts,
   saveProductToStorage,
   deleteProductFromStorage,
+  getDeletedIdsFromStorage,
 } from "@/lib/products-store";
 import { Product } from "@/lib/products-data";
 import {
@@ -36,8 +37,23 @@ export default function AdminProductsPage() {
     loadProducts();
   }, []);
 
-  const loadProducts = () => {
+  const loadProducts = async () => {
+    // 1. Immediate local state for instant rendering
     setProducts(getAllLiveProducts());
+
+    // 2. Fetch live data from Supabase API
+    try {
+      const res = await fetch("/api/admin/products");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.products)) {
+          const deletedIds = new Set(getDeletedIdsFromStorage());
+          setProducts(data.products.filter((p: Product) => !deletedIds.has(p.id)));
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load products from API:", e);
+    }
   };
 
   const handleToggleStock = async (product: Product) => {
@@ -62,11 +78,14 @@ export default function AdminProductsPage() {
     if (!productToDelete) return;
     setIsDeleting(true);
 
-    deleteProductFromStorage(productToDelete.id);
+    const deleteId = productToDelete.id;
 
-    // Also delete on server
+    // 1. Remove from local storage immediately
+    deleteProductFromStorage(deleteId);
+
+    // 2. Delete on server (Supabase & local backup)
     try {
-      await fetch(`/api/admin/products?id=${productToDelete.id}`, {
+      await fetch(`/api/admin/products?id=${deleteId}`, {
         method: "DELETE",
       });
     } catch (e) {
@@ -75,7 +94,7 @@ export default function AdminProductsPage() {
 
     setIsDeleting(false);
     setProductToDelete(null);
-    loadProducts();
+    await loadProducts();
   };
 
   // Filter products
@@ -472,3 +491,4 @@ export default function AdminProductsPage() {
     </div>
   );
 }
+

@@ -120,10 +120,12 @@ export function useLiveProducts(categoryFilter?: string): Product[] {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.products) && data.products.length > 0) {
+            const deletedIds = new Set(getDeletedIdsFromStorage());
+            const liveOnly = data.products.filter((p: Product) => !deletedIds.has(p.id));
             if (!categoryFilter || categoryFilter === "all") {
-              setProducts(data.products);
+              setProducts(liveOnly);
             } else {
-              setProducts(data.products.filter((p: Product) => p.category === categoryFilter));
+              setProducts(liveOnly.filter((p: Product) => p.category === categoryFilter));
             }
             return;
           }
