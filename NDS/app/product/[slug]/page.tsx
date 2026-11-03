@@ -173,8 +173,17 @@ export default function ProductDetailPage() {
   };
 
   const handleBuyNow = () => {
-    addToCart(product, quantity, selectedSize);
-    router.push("/checkout");
+    try {
+      const directItem = {
+        product,
+        quantity,
+        selectedSize,
+      };
+      sessionStorage.setItem("nds_direct_checkout", JSON.stringify(directItem));
+    } catch (e) {
+      console.warn("Could not set direct checkout session:", e);
+    }
+    router.push("/checkout?buyNow=true");
   };
 
   const handleWishlistToggle = (e: React.MouseEvent) => {

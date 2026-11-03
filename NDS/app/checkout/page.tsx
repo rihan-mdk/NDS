@@ -1,16 +1,51 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCart } from "@/context/CartContext";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCart, CartItem } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { ShieldCheck, Truck, CreditCard, Smartphone, Building, Banknote, ArrowLeft, CheckCircle2 } from "lucide-react";
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter();
-  const { items, subtotal, tax, shipping, discount, total, clearCart } = useCart();
+  const searchParams = useSearchParams();
+  const isBuyNow = searchParams.get("buyNow") === "true";
+
+  const { items: cartItems, subtotal: cartSubtotal, tax: cartTax, shipping: cartShipping, discount: cartDiscount, total: cartTotal, clearCart } = useCart();
   const { user } = useAuth();
+
+  const [directItem, setDirectItem] = useState<CartItem | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (isBuyNow) {
+      try {
+        const stored = sessionStorage.getItem("nds_direct_checkout");
+        if (stored) {
+          setDirectItem(JSON.parse(stored));
+        }
+      } catch (e) {
+        console.warn("Could not load direct checkout item:", e);
+      }
+    }
+  }, [isBuyNow]);
+
+  // Determine active checkout items
+  const items: CartItem[] = isBuyNow
+    ? (directItem ? [directItem] : [])
+    : cartItems;
+
+  // Calculate pricing
+  const subtotal = isBuyNow && directItem
+    ? directItem.product.price * directItem.quantity
+    : cartSubtotal;
+
+  const discount = isBuyNow && directItem ? 0 : cartDiscount;
+  const shipping = subtotal > 10000 || subtotal === 0 ? 0 : 1500;
+  const tax = Math.round((subtotal - discount) * 0.12);
+  const total = subtotal - discount + tax + shipping;
 
   const [formData, setFormData] = useState({
     email: user?.email || "",
@@ -133,18 +168,24 @@ export default function CheckoutPage() {
     }
 
     setTimeout(() => {
-      clearCart();
+      if (isBuyNow) {
+        try {
+          sessionStorage.removeItem("nds_direct_checkout");
+        } catch {}
+      } else {
+        clearCart();
+      }
       router.push(`/order-confirmation?orderId=${generatedOrderId}`);
     }, 1200);
   };
 
-  if (items.length === 0) {
+  if (mounted && items.length === 0) {
     return (
       <div className="w-full min-h-[60vh] bg-[#FDFBF8] flex flex-col items-center justify-center px-6 py-20 text-center">
         <h2 className="font-serif text-2xl text-[#191919] mb-4">No items in your bag to checkout</h2>
         <Link
           href="/categories"
-          className="px-6 py-3 bg-[#191919] text-[#FDFBF8] text-xs uppercase tracking-widest"
+          className="px-6 py-3 bg-[#191919] text-[#FDFBF8] text-xs uppercase tracking-widest font-semibold hover:bg-[#7B5644] transition-colors"
         >
           Return to Collections
         </Link>
@@ -157,15 +198,15 @@ export default function CheckoutPage() {
       {/* Header */}
       <section className="w-full px-6 sm:px-10 lg:px-14 pt-8 pb-6 border-b border-[#EAE5DF]">
         <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-[10px] uppercase tracking-widest text-[#77716D] mb-3">
-          <Link href="/cart" className="hover:text-[#191919] transition-colors flex items-center gap-1">
+          <Link href={isBuyNow ? "/categories" : "/cart"} className="hover:text-[#191919] transition-colors flex items-center gap-1">
             <ArrowLeft className="w-3 h-3" />
-            <span>Return to Bag</span>
+            <span>{isBuyNow ? "Return to Collections" : "Return to Bag"}</span>
           </Link>
           <span>/</span>
           <span className="text-[#191919]">Secure Checkout</span>
         </nav>
         <h1 className="font-serif text-3xl sm:text-4xl text-[#191919]">
-          Checkout &amp; Order Placement
+          {isBuyNow ? "Direct Purchase & Order Placement" : "Checkout & Order Placement"}
         </h1>
       </section>
 
@@ -178,135 +219,122 @@ export default function CheckoutPage() {
             <div className="bg-[#FDFBF8] border border-[#EAE5DF] p-6 sm:p-8">
               <h2 className="font-serif text-xl text-[#191919] uppercase tracking-wider mb-6 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-[#191919] text-[#FDFBF8] text-xs flex items-center justify-center font-sans font-medium">1</span>
-                <span>Contact Details</span>
+                Contact &amp; Identification
               </h2>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-[#77716D] font-semibold mb-2">
-                    Email Address
+                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                    Email Address *
                   </label>
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-3 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:outline-none"
+                    className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                    placeholder="patron@domain.com"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-[#77716D] font-semibold mb-2">
-                    Phone (for Delivery SMS)
+                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                    Phone Number (for Courier SMS) *
                   </label>
                   <input
                     type="tel"
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-4 py-3 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:outline-none"
+                    className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                    placeholder="+91 98765 43210"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Step 2: Delivery Address */}
+            {/* Step 2: Shipping Destination */}
             <div className="bg-[#FDFBF8] border border-[#EAE5DF] p-6 sm:p-8">
               <h2 className="font-serif text-xl text-[#191919] uppercase tracking-wider mb-6 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-[#191919] text-[#FDFBF8] text-xs flex items-center justify-center font-sans font-medium">2</span>
-                <span>Shipping Address</span>
+                Shipping Destination
               </h2>
-
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-[#77716D] font-semibold mb-2">
-                    Full Recipient Name
+                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                    Recipient Full Name *
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full px-4 py-3 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:outline-none"
+                    className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                    placeholder="Aditi Roy Kapoor"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-[#77716D] font-semibold mb-2">
-                    Street Address &amp; Villa/Apartment
+                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                    Street Address / Apartment Suite *
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full px-4 py-3 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:outline-none"
+                    className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                    placeholder="Bunglow 4, Malabar Hill, Ridge Road"
                   />
                 </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-[#77716D] font-semibold mb-2">
-                      City
+                    <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                      City *
                     </label>
                     <input
                       type="text"
                       required
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-4 py-3 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:outline-none"
+                      className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                      placeholder="Mumbai"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-[#77716D] font-semibold mb-2">
-                      State
+                    <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                      State *
                     </label>
                     <input
                       type="text"
                       required
                       value={formData.state}
                       onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      className="w-full px-4 py-3 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:outline-none"
+                      className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                      placeholder="Maharashtra"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase tracking-widest text-[#77716D] font-semibold mb-2">
-                      PIN Code
+                    <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                      Postal Code / PIN *
                     </label>
                     <input
                       type="text"
-                      maxLength={6}
                       required
                       value={formData.pincode}
                       onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                      className="w-full px-4 py-3 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:outline-none"
+                      className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                      placeholder="400006"
                     />
                   </div>
                 </div>
               </div>
-
-              {/* Express Shipping Radio */}
-              <div className="mt-6 p-4 bg-[#F5F3F0] border border-[#EAE5DF] flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Truck className="w-5 h-5 text-[#7B5644]" />
-                  <div>
-                    <p className="text-xs font-semibold text-[#191919]">BlueDart Insured Express Transit</p>
-                    <p className="text-[11px] text-[#77716D]">Estimated Delivery: 2-4 Business Days</p>
-                  </div>
-                </div>
-                <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
-                  Complimentary
-                </span>
-              </div>
             </div>
 
-            {/* Step 3: Payment Selection */}
+            {/* Step 3: Payment Preference */}
             <div className="bg-[#FDFBF8] border border-[#EAE5DF] p-6 sm:p-8">
               <h2 className="font-serif text-xl text-[#191919] uppercase tracking-wider mb-6 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-[#191919] text-[#FDFBF8] text-xs flex items-center justify-center font-sans font-medium">3</span>
-                <span>Payment Method</span>
+                Payment Method
               </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+              <div className="space-y-3 mb-6">
                 {/* UPI */}
                 <div
                   onClick={() => setPaymentMethod("upi")}
@@ -318,13 +346,13 @@ export default function CheckoutPage() {
                 >
                   <Smartphone className="w-5 h-5 text-[#7B5644]" />
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-[#191919]">Instant UPI / QR</p>
-                    <p className="text-[10px] text-[#77716D]">Google Pay, PhonePe, Paytm</p>
+                    <p className="text-xs font-semibold text-[#191919]">UPI Instant Transfer</p>
+                    <p className="text-[10px] text-[#77716D]">Google Pay, PhonePe, Paytm, BHIM</p>
                   </div>
                   {paymentMethod === "upi" && <CheckCircle2 className="w-4 h-4 text-[#191919]" />}
                 </div>
 
-                {/* Card */}
+                {/* Credit / Debit Cards */}
                 <div
                   onClick={() => setPaymentMethod("card")}
                   className={`p-4 border cursor-pointer transition-all flex items-center space-x-3 ${
@@ -336,12 +364,12 @@ export default function CheckoutPage() {
                   <CreditCard className="w-5 h-5 text-[#7B5644]" />
                   <div className="flex-1">
                     <p className="text-xs font-semibold text-[#191919]">Credit / Debit Card</p>
-                    <p className="text-[10px] text-[#77716D]">Visa, Mastercard, Amex</p>
+                    <p className="text-[10px] text-[#77716D]">Visa, Mastercard, Amex, Diners Club</p>
                   </div>
                   {paymentMethod === "card" && <CheckCircle2 className="w-4 h-4 text-[#191919]" />}
                 </div>
 
-                {/* NetBanking */}
+                {/* Net Banking */}
                 <div
                   onClick={() => setPaymentMethod("netbanking")}
                   className={`p-4 border cursor-pointer transition-all flex items-center space-x-3 ${
@@ -397,7 +425,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-5">
             <div className="p-6 sm:p-8 bg-[#F5F3F0] border border-[#EAE5DF] sticky top-28">
               <h2 className="font-serif text-xl text-[#191919] uppercase tracking-wider mb-6 pb-4 border-b border-[#EAE5DF]">
-                In Your Bag ({items.length})
+                {isBuyNow ? "Direct Order Item" : `In Your Bag (${items.length})`}
               </h2>
 
               {/* Items List Mini */}
@@ -484,3 +512,16 @@ export default function CheckoutPage() {
   );
 }
 
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full min-h-[70vh] bg-[#FDFBF8] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-[#EAE5DF] border-t-[#7B5644] rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
+  );
+}
