@@ -137,6 +137,10 @@ function OrdersManagementContent() {
         body: JSON.stringify({ id: selectedOrder.id, status: statusUpdating }),
       });
 
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("nds_orders_updated"));
+      }
+
       setSaveToast(true);
       setTimeout(() => setSaveToast(false), 2500);
     } catch (e) {

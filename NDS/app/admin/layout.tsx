@@ -27,6 +27,52 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState<number>(0);
+
+  const fetchOrdersCount = async () => {
+    try {
+      // 1. Instant check from localStorage
+      const local = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
+      const localPending = local.filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (o: any) => o.status === "Pending" || o.status === "Confirmed" || o.status === "Processing"
+      ).length;
+      setPendingOrdersCount(localPending);
+
+      // 2. Fetch fresh count from Supabase
+      const res = await fetch("/api/admin/orders");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.orders)) {
+          const pending = data.orders.filter(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (o: any) => o.status === "Pending" || o.status === "Confirmed" || o.status === "Processing"
+          ).length;
+          setPendingOrdersCount(pending);
+        }
+      }
+    } catch {
+      // noop
+    }
+  };
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    fetchOrdersCount();
+
+    // Poll every 20 seconds for newly placed customer orders
+    const interval = setInterval(fetchOrdersCount, 20000);
+
+    window.addEventListener("nds_orders_updated", fetchOrdersCount);
+    window.addEventListener("storage", fetchOrdersCount);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("nds_orders_updated", fetchOrdersCount);
+      window.removeEventListener("storage", fetchOrdersCount);
+    };
+  }, [isAdmin]);
 
   // Close mobile drawer upon route change
   useEffect(() => {
@@ -156,14 +202,24 @@ export default function AdminLayout({
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 text-xs tracking-wider uppercase transition-colors rounded-xs ${
+                className={`flex items-center justify-between px-4 py-3 text-xs tracking-wider uppercase transition-colors rounded-xs group ${
                   active
                     ? "bg-[#25221D] text-[#C9A96E] font-semibold border-l-2 border-[#C9A96E]"
                     : "text-[#A8A29E] hover:text-[#FDFBF8] hover:bg-[#25221D]/60"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${active ? "text-[#C9A96E]" : "text-[#77716D]"}`} />
-                <span>{item.name}</span>
+                <div className="flex items-center gap-3">
+                  <Icon className={`w-4 h-4 ${active ? "text-[#C9A96E]" : "text-[#77716D]"}`} />
+                  <span>{item.name}</span>
+                </div>
+                {item.href === "/admin/orders" && pendingOrdersCount > 0 && (
+                  <span
+                    className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold font-mono tracking-tight bg-[#C9A96E] text-[#191919] rounded-full shadow-xs"
+                    title={`${pendingOrdersCount} orders require fulfillment`}
+                  >
+                    {pendingOrdersCount}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -209,8 +265,11 @@ export default function AdminLayout({
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle Menu"
-          className="p-2 text-[#D6D0C8] hover:text-[#FDFBF8]"
+          className="relative p-2 text-[#D6D0C8] hover:text-[#FDFBF8]"
         >
+          {pendingOrdersCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#C9A96E] rounded-full ring-2 ring-[#191919]" />
+          )}
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </header>
@@ -229,12 +288,19 @@ export default function AdminLayout({
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 text-xs uppercase tracking-wider rounded-xs ${
+                className={`flex items-center justify-between px-3 py-2.5 text-xs uppercase tracking-wider rounded-xs ${
                   active ? "bg-[#25221D] text-[#C9A96E] font-semibold" : "text-[#D6D0C8] hover:text-[#FDFBF8]"
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span>{item.name}</span>
+                <div className="flex items-center gap-3">
+                  <Icon className="w-4 h-4" />
+                  <span>{item.name}</span>
+                </div>
+                {item.href === "/admin/orders" && pendingOrdersCount > 0 && (
+                  <span className="flex items-center justify-center min-w-[18px] h-4.5 px-1.5 text-[9px] font-bold font-mono bg-[#C9A96E] text-[#191919] rounded-full">
+                    {pendingOrdersCount}
+                  </span>
+                )}
               </Link>
             );
           })}

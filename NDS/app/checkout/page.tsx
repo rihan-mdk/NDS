@@ -130,6 +130,9 @@ function CheckoutContent() {
     try {
       const existingOrders = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
       localStorage.setItem("nds_orders_history", JSON.stringify([newOrder, ...existingOrders]));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("nds_orders_updated"));
+      }
     } catch (err) {
       console.warn("Could not save order history locally:", err);
     }
