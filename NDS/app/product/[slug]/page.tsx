@@ -15,6 +15,8 @@ import {
   Truck,
   ShieldCheck,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ArrowLeft,
   Sparkles,
   Star,
@@ -70,6 +72,65 @@ export default function ProductDetailPage() {
   );
 
   const [selectedImage, setSelectedImage] = useState<number>(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [dragOffset, setDragOffset] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+
+  const productImages =
+    product.images && product.images.length > 0 ? product.images : [FALLBACK_IMAGE];
+
+  useEffect(() => {
+    setSelectedImage(0);
+  }, [slug]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (productImages.length <= 1) return;
+    setTouchStart(e.targetTouches[0].clientX);
+    setTouchEnd(null);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart === null || productImages.length <= 1) return;
+    const currentX = e.targetTouches[0].clientX;
+    const diff = currentX - touchStart;
+    setTouchEnd(currentX);
+    if (
+      (selectedImage === 0 && diff > 0) ||
+      (selectedImage === productImages.length - 1 && diff < 0)
+    ) {
+      setDragOffset(diff * 0.3);
+    } else {
+      setDragOffset(diff);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    if (touchStart !== null && touchEnd !== null && productImages.length > 1) {
+      const distance = touchStart - touchEnd;
+      const threshold = 40;
+      if (distance > threshold && selectedImage < productImages.length - 1) {
+        setSelectedImage((prev) => prev + 1);
+      } else if (distance < -threshold && selectedImage > 0) {
+        setSelectedImage((prev) => prev - 1);
+      }
+    }
+    setDragOffset(0);
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+  const handlePrevImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setSelectedImage((prev) => (prev > 0 ? prev - 1 : productImages.length - 1));
+  };
+
+  const handleNextImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setSelectedImage((prev) => (prev < productImages.length - 1 ? prev + 1 : 0));
+  };
   const [selectedSize, setSelectedSize] = useState<string>(
     isAccessory
       ? product.category === "rings"
@@ -151,24 +212,37 @@ export default function ProductDetailPage() {
                 aspectRatio: "4 / 5",
                 height: "auto",
               }}
-              className="relative w-full aspect-[4/5] h-auto max-h-[70vh] bg-[#F5F3F0] border border-[#EAE5DF] overflow-hidden group"
+              className="relative w-full aspect-[4/5] h-auto max-h-[70vh] bg-[#F5F3F0] border border-[#EAE5DF] overflow-hidden group select-none touch-pan-y"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={product.images[selectedImage] || product.images[0] || FALLBACK_IMAGE}
-                alt={product.title}
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
-                }}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                }}
-                className={`w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.01] ${
-                  isAccessory ? "object-center" : "object-top"
+              {/* Sliding Carousel Track */}
+              <div
+                className={`flex w-full h-full ${
+                  isDragging ? "transition-none" : "transition-transform duration-300 ease-out"
                 }`}
-              />
+                style={{
+                  transform: `translateX(calc(-${selectedImage * 100}% + ${dragOffset}px))`,
+                }}
+              >
+                {productImages.map((img, idx) => (
+                  <div key={idx} className="w-full h-full flex-shrink-0 relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img || FALLBACK_IMAGE}
+                      alt={`${product.title} - View ${idx + 1}`}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
+                      }}
+                      className={`w-full h-full object-cover select-none pointer-events-none ${
+                        isAccessory ? "object-center" : "object-top"
+                      }`}
+                      draggable={false}
+                    />
+                  </div>
+                ))}
+              </div>
 
               {product.newArrival && (
                 <span className="absolute top-4 left-4 bg-[#191919] text-[#FDFBF8] text-[9px] uppercase tracking-widest px-2.5 py-1 font-semibold z-10">
@@ -189,15 +263,54 @@ export default function ProductDetailPage() {
                 />
               </button>
 
+              {/* Left / Right Navigation Chevrons */}
+              {productImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handlePrevImage}
+                    aria-label="Previous Image"
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/85 hover:bg-white text-[#191919] backdrop-blur-xs flex items-center justify-center shadow-xs transition-all z-10 active:scale-95 cursor-pointer opacity-90 hover:opacity-100"
+                  >
+                    <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextImage}
+                    aria-label="Next Image"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/85 hover:bg-white text-[#191919] backdrop-blur-xs flex items-center justify-center shadow-xs transition-all z-10 active:scale-95 cursor-pointer opacity-90 hover:opacity-100"
+                  >
+                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+                </>
+              )}
+
+              {/* Mobile image counter badge (e.g. 1 / 4) */}
+              {productImages.length > 1 && (
+                <div className="absolute top-3.5 left-3.5 z-10 bg-black/60 backdrop-blur-xs text-[#FDFBF8] text-[9px] px-2 py-0.5 rounded-full font-mono tracking-wider sm:hidden">
+                  {selectedImage + 1} / {productImages.length}
+                </div>
+              )}
+
+              {/* Mobile bottom vignette for pagination dot clarity */}
+              {productImages.length > 1 && (
+                <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-black/40 to-transparent pointer-events-none sm:hidden" />
+              )}
+
               {/* Mobile pagination dots */}
-              {product.images.length > 1 && (
+              {productImages.length > 1 && (
                 <div className="absolute bottom-3 inset-x-0 flex justify-center gap-1.5 sm:hidden z-10">
-                  {product.images.map((_, idx) => (
+                  {productImages.map((_, idx) => (
                     <button
                       key={idx}
-                      onClick={() => setSelectedImage(idx)}
-                      className={`h-1.5 rounded-full transition-all ${
-                        selectedImage === idx ? "bg-[#FDFBF8] w-4" : "bg-[#FDFBF8]/50 w-1.5"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedImage(idx);
+                      }}
+                      aria-label={`Go to slide ${idx + 1}`}
+                      className={`h-1.5 rounded-full transition-all shadow-xs ${
+                        selectedImage === idx ? "bg-white w-4" : "bg-white/60 w-1.5"
                       }`}
                     />
                   ))}
@@ -206,11 +319,12 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Thumbnail Strip (Desktop & Tablet only; on mobile, pagination dots keep the 4:5 image clean and direct) */}
-            {product.images.length > 1 && (
+            {productImages.length > 1 && (
               <div className="hidden sm:flex gap-2.5 sm:gap-3 overflow-x-auto pb-1 scrollbar-hide">
-                {product.images.map((img, idx) => (
+                {productImages.map((img, idx) => (
                   <button
                     key={idx}
+                    type="button"
                     onClick={() => setSelectedImage(idx)}
                     className={`w-16 h-20 sm:w-20 sm:h-24 flex-shrink-0 bg-[#F5F3F0] border overflow-hidden transition-all ${
                       selectedImage === idx
