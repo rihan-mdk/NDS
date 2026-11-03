@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { createClient } from "@/lib/supabase/client";
 import {
   User as UserIcon,
   ShoppingBag,
@@ -105,7 +106,7 @@ export default function AccountProfilePage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
-    // Load persisted patron details
+    // 1. Load from localStorage immediately (instant render)
     try {
       const storedDetails = localStorage.getItem("nds_saved_details");
       if (storedDetails) {
@@ -124,56 +125,146 @@ export default function AccountProfilePage() {
       }
 
       const storedAddresses = localStorage.getItem("nds_saved_addresses");
-      if (storedAddresses) {
-        setAddresses(JSON.parse(storedAddresses));
-      }
+      if (storedAddresses) setAddresses(JSON.parse(storedAddresses));
 
       const storedMeasurements = localStorage.getItem("nds_measurements");
-      if (storedMeasurements) {
-        setMeasurements(JSON.parse(storedMeasurements));
-      }
+      if (storedMeasurements) setMeasurements(JSON.parse(storedMeasurements));
     } catch (e) {
       console.warn("Could not load stored account data:", e);
     }
 
-    // Load orders count
+    // Load orders count from localStorage then refresh from Supabase
     try {
       const savedOrders = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
       setOrdersCount(savedOrders.length);
     } catch (e) {
       console.warn("Could not load orders count:", e);
     }
+
+    // 2. Sync from Supabase if logged in
+    if (!user?.id) return;
+
+    const supabase = createClient();
+
+    const syncFromSupabase = async () => {
+      // Fetch profile (name, phone, measurements)
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("full_name, phone, measurements")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (data) {
+          setSavedDetails((prev) => {
+            const updated = {
+              ...prev,
+              fullName: data.full_name || prev.fullName,
+              phone: data.phone || prev.phone,
+            };
+            try { localStorage.setItem("nds_saved_details", JSON.stringify(updated)); } catch { /* noop */ }
+            return updated;
+          });
+          if (data.measurements && Object.keys(data.measurements).length > 0) {
+            setMeasurements(data.measurements);
+            try { localStorage.setItem("nds_measurements", JSON.stringify(data.measurements)); } catch { /* noop */ }
+          }
+        }
+      } catch { /* noop */ }
+
+      // Fetch saved addresses
+      try {
+        const { data } = await supabase
+          .from("user_addresses")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: true });
+        if (data && data.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const mapped = data.map((a: any) => ({
+            id: a.id,
+            name: a.name || "",
+            street: a.street || "",
+            area: a.area || "",
+            city: a.city || "",
+            state: a.state || "",
+            pincode: a.pincode || "",
+            phone: a.phone || "",
+            isDefault: a.is_default || false,
+          }));
+          setAddresses(mapped);
+          try { localStorage.setItem("nds_saved_addresses", JSON.stringify(mapped)); } catch { /* noop */ }
+        }
+      } catch { /* noop */ }
+
+      // Fetch orders count from Supabase
+      try {
+        const { count } = await supabase
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id);
+        if (count !== null && count > 0) setOrdersCount(count);
+      } catch { /* noop */ }
+    };
+
+    syncFromSupabase();
   }, [user]);
 
-  const handleSaveDetails = (e: React.FormEvent) => {
+  const handleSaveDetails = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       localStorage.setItem("nds_saved_details", JSON.stringify(savedDetails));
-      setSaveSuccess(true);
-      setTimeout(() => {
-        setSaveSuccess(false);
-        setActiveModal(null);
-      }, 1000);
     } catch (e) {
-      console.warn("Could not save details:", e);
+      console.warn("Could not save details locally:", e);
     }
+    // Sync to Supabase profiles table
+    if (user?.id) {
+      try {
+        const supabase = createClient();
+        await supabase.from("profiles").upsert({
+          id: user.id,
+          full_name: savedDetails.fullName,
+          phone: savedDetails.phone,
+          updated_at: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.warn("Could not sync profile to cloud:", err);
+      }
+    }
+    setSaveSuccess(true);
+    setTimeout(() => {
+      setSaveSuccess(false);
+      setActiveModal(null);
+    }, 1000);
   };
 
-  const handleSaveMeasurements = (e: React.FormEvent) => {
+  const handleSaveMeasurements = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       localStorage.setItem("nds_measurements", JSON.stringify(measurements));
-      setSaveSuccess(true);
-      setTimeout(() => {
-        setSaveSuccess(false);
-        setActiveModal(null);
-      }, 1000);
     } catch (e) {
-      console.warn("Could not save measurements:", e);
+      console.warn("Could not save measurements locally:", e);
     }
+    // Sync to Supabase profiles table (measurements stored as JSONB)
+    if (user?.id) {
+      try {
+        const supabase = createClient();
+        await supabase.from("profiles").upsert({
+          id: user.id,
+          measurements,
+          updated_at: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.warn("Could not sync measurements to cloud:", err);
+      }
+    }
+    setSaveSuccess(true);
+    setTimeout(() => {
+      setSaveSuccess(false);
+      setActiveModal(null);
+    }, 1000);
   };
 
-  const handleSetDefaultAddress = (id: string) => {
+  const handleSetDefaultAddress = async (id: string) => {
     const updated = addresses.map((addr) => ({
       ...addr,
       isDefault: addr.id === id,
@@ -182,11 +273,28 @@ export default function AccountProfilePage() {
     try {
       localStorage.setItem("nds_saved_addresses", JSON.stringify(updated));
     } catch (e) {
-      console.warn("Could not save addresses:", e);
+      console.warn("Could not save addresses locally:", e);
+    }
+    // Sync default flag to Supabase
+    if (user?.id) {
+      try {
+        const supabase = createClient();
+        // Clear all defaults for this user, then set the chosen one
+        await supabase
+          .from("user_addresses")
+          .update({ is_default: false })
+          .eq("user_id", user.id);
+        await supabase
+          .from("user_addresses")
+          .update({ is_default: true })
+          .eq("id", id);
+      } catch (err) {
+        console.warn("Could not sync default address to cloud:", err);
+      }
     }
   };
 
-  const handleDeleteAddress = (id: string) => {
+  const handleDeleteAddress = async (id: string) => {
     const updated = addresses.filter((addr) => addr.id !== id);
     if (!updated.some((a) => a.isDefault) && updated.length > 0) {
       updated[0].isDefault = true;
@@ -195,11 +303,27 @@ export default function AccountProfilePage() {
     try {
       localStorage.setItem("nds_saved_addresses", JSON.stringify(updated));
     } catch (e) {
-      console.warn("Could not delete address:", e);
+      console.warn("Could not delete address locally:", e);
+    }
+    // Delete from Supabase
+    if (user?.id) {
+      try {
+        const supabase = createClient();
+        await supabase.from("user_addresses").delete().eq("id", id);
+        // If we promoted a new default, update it
+        if (updated.length > 0 && updated[0].isDefault) {
+          await supabase
+            .from("user_addresses")
+            .update({ is_default: true })
+            .eq("id", updated[0].id);
+        }
+      } catch (err) {
+        console.warn("Could not delete address from cloud:", err);
+      }
     }
   };
 
-  const handleSaveAddress = (e: React.FormEvent) => {
+  const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!addressFormData.street.trim() || !addressFormData.city.trim() || !addressFormData.pincode.trim()) {
       return;
@@ -229,7 +353,35 @@ export default function AccountProfilePage() {
     try {
       localStorage.setItem("nds_saved_addresses", JSON.stringify(updated));
     } catch (err) {
-      console.warn("Could not save address:", err);
+      console.warn("Could not save address locally:", err);
+    }
+
+    // Sync to Supabase user_addresses table
+    if (user?.id) {
+      try {
+        const supabase = createClient();
+        // If this is the new default, clear all existing defaults first
+        if (newAddr.isDefault) {
+          await supabase
+            .from("user_addresses")
+            .update({ is_default: false })
+            .eq("user_id", user.id);
+        }
+        await supabase.from("user_addresses").upsert({
+          id: newAddr.id,
+          user_id: user.id,
+          name: newAddr.name,
+          street: newAddr.street,
+          area: newAddr.area,
+          city: newAddr.city,
+          state: newAddr.state,
+          pincode: newAddr.pincode,
+          phone: newAddr.phone,
+          is_default: newAddr.isDefault,
+        });
+      } catch (err) {
+        console.warn("Could not sync address to cloud:", err);
+      }
     }
 
     setSaveSuccess(true);
