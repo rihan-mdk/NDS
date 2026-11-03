@@ -30,16 +30,13 @@ export default function AccessoryCategoryDetailPage() {
       "Handcrafted heirloom accessories designed to accompany imperial couture.",
   };
 
-  const allLiveProducts = useLiveProducts();
-  let items = allLiveProducts.filter((p) => p.category === slug);
-  if (items.length === 0) {
-    items = allLiveProducts.filter((p) => p.isAccessory || ["bracelets", "clutches", "rings"].includes(p.category));
-  }
+  const categoryProducts = useLiveProducts(slug);
+  let items = [...categoryProducts];
 
   if (sortBy === "price-low") {
-    items = [...items].sort((a, b) => a.price - b.price);
+    items.sort((a, b) => a.price - b.price);
   } else if (sortBy === "price-high") {
-    items = [...items].sort((a, b) => b.price - a.price);
+    items.sort((a, b) => b.price - a.price);
   }
 
   return (
@@ -98,15 +95,32 @@ export default function AccessoryCategoryDetailPage() {
 
       {/* Product Grid — Strict 2-column mobile grid, 4:5 image ratio cards */}
       <section className="w-full px-4 sm:px-10 lg:px-14 py-6 sm:py-12">
-        <div className="grid gap-3 sm:gap-6 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4">
-          {items.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onQuickView={(p) => setQuickViewProduct(p)}
-            />
-          ))}
-        </div>
+        {items.length === 0 ? (
+          <div className="py-20 text-center">
+            <p className="font-serif text-2xl text-[#191919] mb-2 font-normal">
+              No Pieces in this Category Yet
+            </p>
+            <p className="text-xs text-[#77716D] max-w-sm mx-auto mb-6">
+              Our master artisans are currently handcrafting new pieces for {categoryMeta.name}.
+            </p>
+            <Link
+              href="/accessories"
+              className="inline-block px-6 py-2.5 bg-[#191919] text-[#FDFBF8] text-[10px] uppercase tracking-widest font-semibold hover:bg-[#7B5644] transition-colors"
+            >
+              Explore All Accessories
+            </Link>
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:gap-6 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4">
+            {items.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onQuickView={(p) => setQuickViewProduct(p)}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Quick View Modal */}

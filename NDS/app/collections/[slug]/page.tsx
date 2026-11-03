@@ -32,16 +32,13 @@ export default function CategoryDetailPage() {
       "Exclusive handcrafted silhouettes, luxury embroidery, and imperial couture.",
   };
 
-  const allLiveProducts = useLiveProducts();
-  let items = allLiveProducts.filter((p) => p.category === slug);
-  if (items.length === 0) {
-    items = allLiveProducts;
-  }
+  const categoryProducts = useLiveProducts(slug);
+  let items = [...categoryProducts];
 
   if (sortBy === "price-low") {
-    items = [...items].sort((a, b) => a.price - b.price);
+    items.sort((a, b) => a.price - b.price);
   } else if (sortBy === "price-high") {
-    items = [...items].sort((a, b) => b.price - a.price);
+    items.sort((a, b) => b.price - a.price);
   }
 
   return (
@@ -99,16 +96,32 @@ export default function CategoryDetailPage() {
 
       {/* Product Grid */}
       <section className="w-full px-4 sm:px-10 lg:px-14 py-6 sm:py-12">
-        {/* Mobile: always 2 columns · Desktop: 4 columns */}
-        <div className="grid gap-3 sm:gap-6 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4">
-          {items.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onQuickView={(p) => setQuickViewProduct(p)}
-            />
-          ))}
-        </div>
+        {items.length === 0 ? (
+          <div className="py-20 text-center">
+            <p className="font-serif text-2xl text-[#191919] mb-2 font-normal">
+              No Pieces in this Collection Yet
+            </p>
+            <p className="text-xs text-[#77716D] max-w-sm mx-auto mb-6">
+              Our master ateliers are currently curating new creations for the {categoryMeta.name}.
+            </p>
+            <Link
+              href="/categories"
+              className="inline-block px-6 py-2.5 bg-[#191919] text-[#FDFBF8] text-[10px] uppercase tracking-widest font-semibold hover:bg-[#7B5644] transition-colors"
+            >
+              Explore Other Collections
+            </Link>
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:gap-6 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4">
+            {items.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onQuickView={(p) => setQuickViewProduct(p)}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Quick View Modal */}

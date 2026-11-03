@@ -100,8 +100,9 @@ export function deleteProductFromStorage(id: string) {
  */
 export function useLiveProducts(categoryFilter?: string): Product[] {
   const [products, setProducts] = useState<Product[]>(() => {
-    if (!categoryFilter || categoryFilter === "all") return PRODUCTS;
-    return PRODUCTS.filter((p) => p.category === categoryFilter);
+    const all = getAllLiveProducts();
+    if (!categoryFilter || categoryFilter === "all") return all;
+    return all.filter((p) => p.category === categoryFilter);
   });
 
   useEffect(() => {
@@ -114,6 +115,10 @@ export function useLiveProducts(categoryFilter?: string): Product[] {
       }
     }
 
+    // 1. Immediately sync with local storage on mount (0ms latency, eliminates glitch)
+    updateLocal();
+
+    // 2. Synchronize with cloud database in background
     async function syncFromCloud() {
       try {
         const res = await fetch("/api/admin/products");
@@ -122,6 +127,26 @@ export function useLiveProducts(categoryFilter?: string): Product[] {
           if (Array.isArray(data.products) && data.products.length > 0) {
             const deletedIds = new Set(getDeletedIdsFromStorage());
             const liveOnly = data.products.filter((p: Product) => !deletedIds.has(p.id));
+
+            // Sync custom products into localStorage so subsequent navigations are instant
+            const baseIds = new Set(PRODUCTS.map((p) => p.id));
+            const customFromCloud = liveOnly.filter((p: Product) => !baseIds.has(p.id));
+            if (typeof window !== "undefined" && customFromCloud.length > 0) {
+              try {
+                const currentLocal = getCustomProductsFromStorage();
+                const merged = [...currentLocal];
+                for (const cloudP of customFromCloud) {
+                  const idx = merged.findIndex((m) => m.id === cloudP.id);
+                  if (idx > -1) {
+                    merged[idx] = cloudP;
+                  } else {
+                    merged.push(cloudP);
+                  }
+                }
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+              } catch {}
+            }
+
             if (!categoryFilter || categoryFilter === "all") {
               setProducts(liveOnly);
             } else {
@@ -136,16 +161,15 @@ export function useLiveProducts(categoryFilter?: string): Product[] {
       updateLocal();
     }
 
-    // 1. Initial sync with cloud database (with local fallback)
     syncFromCloud();
 
-    // 2. Listen to local update events (e.g. admin in current tab)
-    window.addEventListener(SYNC_EVENT, syncFromCloud);
-    window.addEventListener("storage", syncFromCloud);
+    // Listen to local update events for instantaneous updates without network delay
+    window.addEventListener(SYNC_EVENT, updateLocal);
+    window.addEventListener("storage", updateLocal);
 
     return () => {
-      window.removeEventListener(SYNC_EVENT, syncFromCloud);
-      window.removeEventListener("storage", syncFromCloud);
+      window.removeEventListener(SYNC_EVENT, updateLocal);
+      window.removeEventListener("storage", updateLocal);
     };
   }, [categoryFilter]);
 

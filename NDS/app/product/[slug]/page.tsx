@@ -31,7 +31,9 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const slug = (params.slug as string) || "zari-embroidered-azure-silk-kurti";
 
-  const [product, setProduct] = useState<Product>(() => getProductBySlug(slug) || PRODUCTS[0]);
+  const [product, setProduct] = useState<Product>(
+    () => getLiveProductBySlug(slug) || getProductBySlug(slug) || PRODUCTS[0]
+  );
 
   useEffect(() => {
     const live = getLiveProductBySlug(slug);
