@@ -81,8 +81,8 @@ export default function WishlistPage() {
       </section>
 
       {/* Grid of Wishlist Items */}
-      <section className="w-full px-6 sm:px-10 lg:px-14 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <section className="w-full px-4 sm:px-10 lg:px-14 py-6 sm:py-12">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {items.map((product) => (
             <div
               key={product.id}
@@ -106,48 +106,48 @@ export default function WishlistPage() {
                 <button
                   onClick={() => removeFromWishlist(product.id)}
                   aria-label="Remove from wishlist"
-                  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[#FDFBF8]/90 flex items-center justify-center text-[#77716D] hover:text-[#BA1A1A] transition-colors"
+                  className="absolute top-2 right-2 sm:top-3 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FDFBF8]/90 flex items-center justify-center text-[#77716D] hover:text-[#BA1A1A] transition-colors"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
               </div>
 
               {/* Product Content */}
-              <div className="p-5 flex flex-col flex-1 justify-between bg-[#FDFBF8]">
+              <div className="p-3 sm:p-5 flex flex-col flex-1 justify-between bg-[#FDFBF8]">
                 <div>
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-[#7B5644] font-medium block mb-1">
+                  <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] sm:tracking-[0.2em] text-[#7B5644] font-medium block mb-0.5 sm:mb-1">
                     {product.categoryLabel}
                   </span>
                   <Link href={`/product/${product.slug}`}>
-                    <h3 className="font-serif text-base text-[#191919] hover:text-[#7B5644] transition-colors font-medium mb-1 line-clamp-1">
+                    <h3 className="font-serif text-sm sm:text-base text-[#191919] hover:text-[#7B5644] transition-colors font-medium mb-0.5 sm:mb-1 line-clamp-1">
                       {product.title}
                     </h3>
                   </Link>
-                  <p className="text-xs text-[#77716D] line-clamp-1 mb-3">
+                  <p className="text-[11px] sm:text-xs text-[#77716D] line-clamp-1 mb-2 sm:mb-3">
                     {product.fabric}
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-[#EAE5DF]">
-                  <div className="flex justify-between items-baseline mb-3">
-                    <span className="font-serif text-lg font-semibold text-[#191919]">
+                <div className="pt-2 sm:pt-3 border-t border-[#EAE5DF]">
+                  <div className="flex justify-between items-baseline mb-2 sm:mb-3">
+                    <span className="font-serif text-sm sm:text-lg font-semibold text-[#191919]">
                       ₹{product.price.toLocaleString("en-IN")}
                     </span>
                   </div>
 
                   <button
                     onClick={() => handleMoveToBag(product)}
-                    className="w-full py-2.5 px-4 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-[10px] uppercase tracking-widest font-semibold transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-2 sm:py-2.5 px-2 sm:px-4 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-[9px] sm:text-[10px] uppercase tracking-wider sm:tracking-widest font-semibold transition-colors flex items-center justify-center gap-1.5 sm:gap-2"
                   >
                     {movedId === product.id ? (
                       <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Transferred to Bag</span>
+                        <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" />
+                        <span className="truncate">Transferred</span>
                       </>
                     ) : (
                       <>
-                        <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>Move to Bag</span>
+                        <ShoppingBag className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        <span className="truncate">Move to Bag</span>
                       </>
                     )}
                   </button>
