@@ -471,7 +471,6 @@ export default function ProductDetailPage() {
                     <div className="px-4 sm:px-5 pb-4 pt-1 text-xs text-[#77716D] space-y-1.5 border-t border-[#EAE5DF]/60">
                       <p><strong className="text-[#191919]">Timeline:</strong> {product.deliveryTime}</p>
                       <p>Complimentary worldwide insured express delivery in signature archival packaging.</p>
-                      <p>Custom couture and bespoke jewelry qualify for complimentary virtual styling and adjustment consultation.</p>
                     </div>
                   )}
                 </div>
@@ -729,7 +728,6 @@ export default function ProductDetailPage() {
                     <div className="px-4 pb-4 pt-1 text-xs text-[#77716D] space-y-1.5 border-t border-[#EAE5DF]/60">
                       <p><strong className="text-[#191919]">Timeline:</strong> {product.deliveryTime}</p>
                       <p>Complimentary worldwide insured express delivery in signature archival packaging.</p>
-                      <p>Custom couture and bespoke jewelry qualify for complimentary virtual styling and adjustment consultation.</p>
                     </div>
                   )}
                 </div>

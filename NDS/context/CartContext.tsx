@@ -22,7 +22,7 @@ interface CartContextType {
   shipping: number;
   discount: number;
   promoCode: string;
-  applyPromoCode: (code: string) => { success: boolean; message: string };
+  applyPromoCode: (code: string) => Promise<{ success: boolean; message: string }>;
   removePromoCode: () => void;
   total: number;
 }
@@ -39,7 +39,7 @@ const CartContext = createContext<CartContextType>({
   shipping: 0,
   discount: 0,
   promoCode: "",
-  applyPromoCode: () => ({ success: false, message: "" }),
+  applyPromoCode: async () => ({ success: false, message: "" }),
   removePromoCode: () => {},
   total: 0,
 });
@@ -258,8 +258,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const applyPromoCode = (code: string) => {
+  const applyPromoCode = async (code: string): Promise<{ success: boolean; message: string }> => {
     const formatted = code.trim().toUpperCase();
+    try {
+      const res = await fetch("/api/promos/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: formatted }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.valid) {
+          setPromoCode(formatted);
+          setDiscountPercent(data.discountPercent);
+          return { success: true, message: data.message };
+        }
+        return { success: false, message: data.message || "Invalid voucher or promotion code." };
+      }
+    } catch {
+      // Network error — fall through to hardcoded fallback
+    }
+    // Hardcoded fallback when API is unavailable
     if (formatted === "ATELIER10" || formatted === "NEELS10") {
       setPromoCode(formatted);
       setDiscountPercent(10);

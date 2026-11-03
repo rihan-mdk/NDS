@@ -100,16 +100,6 @@ export function Footer() {
             <ul className="space-y-2.5 font-sans text-xs text-[#77716D]">
               <li>
                 <a
-                  href="https://wa.me/919999999999?text=Hello%20Neel%27s%20Designer%20Studio"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-[#191919] transition-colors capitalize"
-                >
-                  WhatsApp
-                </a>
-              </li>
-              <li>
-                <a
                   href="https://instagram.com"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -198,10 +188,10 @@ export function Footer() {
                     Standard sizes may be exchanged within 7 days of delivery in unused condition with security tags intact.
                   </p>
                   <p>
-                    <strong>Custom Tailored Pieces:</strong> Accompanied by complimentary lifetime fitting alterations through our WhatsApp Concierge.
+                    <strong>Custom Tailored Pieces:</strong> Accompanied by complimentary lifetime fitting alterations — contact our support team to arrange.
                   </p>
                   <p>
-                    To initiate an exchange or fitting adjustment, contact your dedicated concierge team with your order number.
+                    To initiate an exchange or fitting adjustment, contact our support team with your order number.
                   </p>
                 </div>
               </div>
@@ -215,7 +205,7 @@ export function Footer() {
                 <h3 className="font-serif text-2xl text-[#191919] mb-4">Privacy Policy</h3>
                 <div className="space-y-3 font-sans text-xs text-[#77716D] leading-relaxed">
                   <p>
-                    Neel&apos;s Designer Studio respects your personal discretion. We collect only essential information required for order fulfillment and personalized bespoke consultation.
+                    Neel&apos;s Designer Studio respects your personal discretion. We collect only essential information required for order fulfillment and personalized styling.
                   </p>
                   <p>
                     Your measurements, styling preferences, and payment details are securely encrypted and never shared with third parties.
@@ -235,7 +225,7 @@ export function Footer() {
                     All couture designs, textile motifs, and imagery shown on this platform are original intellectual creations of Neel&apos;s Designer Studio.
                   </p>
                   <p>
-                    Prices listed in INR are inclusive of applicable GST taxes. Bespoke tailoring orders commence once initial specifications are confirmed.
+                    Prices listed in INR are inclusive of applicable GST taxes. Orders commence once payment and sizing details are confirmed.
                   </p>
                 </div>
               </div>

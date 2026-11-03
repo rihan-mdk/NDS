@@ -24,7 +24,6 @@ import {
   Plus,
   X,
   Check,
-  MessageCircle,
 } from "lucide-react";
 
 interface SavedDetails {
@@ -680,18 +679,6 @@ export default function AccountProfilePage() {
             </span>
             <div className="flex items-center gap-3">
               {/* WhatsApp */}
-              <a
-                aria-label="WhatsApp"
-                href="https://wa.me/919999999999?text=Hello%20Neel%27s%20Designer%20Studio"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-[#F5F3F0] flex items-center justify-center text-[#191919] hover:text-[#25D366] hover:bg-[#25D366]/10 transition-colors"
-              >
-                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                  <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M9.53 7.33C9.35 7.33 9.05 7.4 8.8 7.67C8.55 7.94 7.85 8.6 7.85 9.94C7.85 11.28 8.83 12.57 8.97 12.75C9.11 12.94 10.9 15.68 13.64 16.86C14.29 17.14 14.8 17.31 15.2 17.44C15.86 17.65 16.46 17.62 16.93 17.55C17.46 17.47 18.56 16.88 18.79 16.24C19.02 15.6 19.02 15.05 18.95 14.94C18.88 14.83 18.7 14.77 18.42 14.63C18.15 14.5 16.85 13.86 16.61 13.77C16.38 13.69 16.21 13.64 16.05 13.91C15.88 14.19 15.4 14.77 15.25 14.94C15.11 15.11 14.97 15.13 14.69 15C14.42 14.86 13.54 14.57 12.49 13.64C11.68 12.92 11.13 12.03 10.97 11.76C10.81 11.48 10.95 11.34 11.09 11.2C11.22 11.07 11.38 10.86 11.51 10.7C11.65 10.54 11.7 10.42 11.79 10.24C11.88 10.06 11.83 9.91 11.76 9.77C11.7 9.63 11.19 8.38 10.97 7.88C10.77 7.39 10.56 7.45 10.4 7.45C10.24 7.44 10.05 7.44 9.87 7.44L9.53 7.33Z" />
-                </svg>
-              </a>
-
               {/* Instagram */}
               <a
                 aria-label="Instagram"
@@ -823,24 +810,7 @@ export default function AccountProfilePage() {
               </button>
             </nav>
 
-            {/* Atelier Concierge Prompt */}
-            <div className="border border-[#EAE5DF] bg-[#F5F3F0] p-5 rounded-sm">
-              <span className="text-[10px] uppercase tracking-widest text-[#7B5644] font-semibold block mb-1.5">
-                ATELIER CONCIERGE
-              </span>
-              <p className="text-xs text-[#77716D] leading-relaxed mb-3.5">
-                Need bespoke measurements or personal wedding styling? Our atelier masters are available.
-              </p>
-              <a
-                href="https://wa.me/919999999999?text=Hello%2C%20I%20would%20like%20to%20consult%20an%20atelier%20stylist"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#191919] hover:text-[#7B5644] transition-colors"
-              >
-                <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-                <span>WhatsApp Stylist</span>
-              </a>
-            </div>
+
           </aside>
 
           {/* ── Right Content Dossier (col-span-9) ── */}
@@ -1564,7 +1534,7 @@ export default function AccountProfilePage() {
                 All couture designs, textile motifs, and imagery shown on this platform are original intellectual creations of Neel&apos;s Designer Studio.
               </p>
               <p>
-                Prices listed in INR are inclusive of applicable GST taxes. Bespoke tailoring orders commence once initial specifications are confirmed.
+                Prices listed in INR are inclusive of applicable GST taxes. Orders commence once payment and sizing details are confirmed.
               </p>
               <p>
                 Orders may be cancelled within 24 hours of placement prior to master karigari cutting.
@@ -1607,13 +1577,13 @@ export default function AccountProfilePage() {
             <h3 className="font-serif text-2xl text-[#191919] mb-4">Privacy Policy</h3>
             <div className="space-y-3 text-xs text-[#77716D] leading-relaxed">
               <p>
-                Neel&apos;s Designer Studio respects your personal discretion. We collect only essential information required for order fulfillment and personalized bespoke consultation.
+                Neel&apos;s Designer Studio respects your personal discretion. We collect only essential information required for order fulfillment.
               </p>
               <p>
                 Your measurements, styling preferences, and payment details are securely encrypted and never shared with third parties.
               </p>
               <p>
-                You may request complete removal of your patron profile data at any time through our concierge.
+                You may request complete removal of your patron profile data at any time by contacting our support team.
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-[#EAE5DF] flex justify-end">
@@ -1656,10 +1626,10 @@ export default function AccountProfilePage() {
                 Standard size ready-to-wear pieces may be exchanged within 7 days of delivery in unused condition with atelier security tags intact.
               </p>
               <p>
-                <strong>Custom Tailored &amp; Bridal Couture:</strong> Accompanied by complimentary lifetime fitting alterations through our WhatsApp Concierge.
+                <strong>Custom Tailored &amp; Bridal Couture:</strong> Accompanied by complimentary lifetime fitting alterations — contact our support team to arrange.
               </p>
               <p>
-                To initiate an exchange or fitting adjustment, contact your dedicated concierge team with your order number.
+                To initiate an exchange or fitting adjustment, contact our support team with your order number.
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-[#EAE5DF] flex justify-end">

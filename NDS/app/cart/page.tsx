@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import { Trash2, ArrowRight, ShieldCheck, Tag, ArrowLeft, MessageCircle } from "lucide-react";
+import { Trash2, ArrowRight, ShieldCheck, Tag, ArrowLeft } from "lucide-react";
 
 export default function CartPage() {
   const {
@@ -23,10 +23,10 @@ export default function CartPage() {
   const [inputCode, setInputCode] = useState("");
   const [promoMessage, setPromoMessage] = useState<{ success: boolean; message: string } | null>(null);
 
-  const handleApplyPromo = (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputCode.trim()) return;
-    const res = applyPromoCode(inputCode);
+    const res = await applyPromoCode(inputCode);
     setPromoMessage(res);
   };
 
@@ -262,22 +262,6 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* Concierge Assistance */}
-            <div className="mt-6 p-4 border border-[#EAE5DF] bg-[#FDFBF8] flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-[#191919]">Need Assistance with Sizing?</p>
-                <p className="text-[11px] text-[#77716D]">Our atelier stylists are available 24/7 on WhatsApp.</p>
-              </div>
-              <a
-                href="https://wa.me/919999999999?text=Hello%2C%20I%20have%20questions%20about%20my%20bag"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 text-[#7B5644] hover:text-[#191919]"
-                aria-label="WhatsApp Concierge"
-              >
-                <MessageCircle className="w-5 h-5" />
-              </a>
-            </div>
           </div>
         </div>
       </section>

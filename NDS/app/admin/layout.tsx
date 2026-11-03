@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Sparkles,
   Users,
+  Tag,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -99,6 +100,12 @@ export default function AdminLayout({
       name: "Orders",
       href: "/admin/orders",
       icon: ShoppingBag,
+      exact: false,
+    },
+    {
+      name: "Promos",
+      href: "/admin/promos",
+      icon: Tag,
       exact: false,
     },
     {

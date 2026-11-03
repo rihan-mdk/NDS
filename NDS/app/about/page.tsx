@@ -84,10 +84,10 @@ export default function AboutPage() {
                 accent: "Varanasi · Lucknow · Jaipur",
               },
               {
-                title: "Bespoke Atelier Fitting",
+                title: "Master Atelier Tailoring",
                 description:
-                  "Every bridal ensemble is tailored to exact measurements provided by the client, with optional in-house fitting sessions conducted at our studio locations across India.",
-                accent: "Custom Silhouette · Master Tailoring",
+                  "Every bridal ensemble is tailored to precise specifications, crafted with master tailoring across our studio locations.",
+                accent: "Refined Silhouette · Master Tailoring",
               },
               {
                 title: "Sustainable Slow Fashion",
@@ -144,17 +144,17 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* SECTION 5: The Atelier Vision CTA Banner */}
+      {/* SECTION 5: Collections CTA Banner */}
       <section className="w-full bg-[#191919] text-[#FDFBF8] py-20 px-6 sm:px-10 lg:px-14">
         <div className="max-w-3xl mx-auto text-center">
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#B58A76] font-semibold block mb-3">
-            ATELIER CONCIERGE
+            EXPLORE THE ATELIER
           </span>
           <h2 className="font-serif text-3xl sm:text-4xl mb-6 font-normal">
-            Experience a Private Bridal Consultation
+            Discover Our Collections
           </h2>
           <p className="font-sans text-sm text-[#F5F3F0]/80 leading-relaxed mb-8 max-w-xl mx-auto">
-            Book a personal styling session with our master atelier team. We guide you through fabric selection, custom embroidery placement, and bespoke fitting — across all occasions.
+            From bridal couture to ready-to-wear — explore every piece crafted by our master karigars and find yours.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -164,14 +164,6 @@ export default function AboutPage() {
               <span>EXPLORE COLLECTIONS</span>
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
-            <a
-              href="https://wa.me/919999999999?text=Hello%2C%20I%20would%20like%20to%20book%20a%20private%20bridal%20consultation."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center px-8 py-4 bg-transparent border border-[#FDFBF8]/40 text-[#FDFBF8] text-[11px] font-semibold uppercase tracking-[0.2em] hover:border-[#FDFBF8] transition-all"
-            >
-              WHATSAPP CONSULTATION
-            </a>
           </div>
         </div>
       </section>
