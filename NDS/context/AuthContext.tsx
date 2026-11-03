@@ -60,6 +60,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
+
+        // 3. If Supabase user, check their role (may elevate to admin)
+        if (currentSession?.user?.id) {
+          try {
+            const roleRes = await fetch(`/api/user/role?userId=${currentSession.user.id}`);
+            if (roleRes.ok) {
+              const roleData = await roleRes.json();
+              if (roleData.role === "admin") setIsAdmin(true);
+            }
+          } catch { /* noop */ }
+        }
       } catch (err) {
         console.warn("Supabase auth session check notice:", err);
       } finally {
@@ -132,7 +143,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(data.user);
       setSession(data.session);
-      setIsAdmin(false);
+
+      // Check if this Supabase user has admin role in user_roles table
+      let elevatedToAdmin = false;
+      if (data.user?.id) {
+        try {
+          const roleRes = await fetch(`/api/user/role?userId=${data.user.id}`);
+          if (roleRes.ok) {
+            const roleData = await roleRes.json();
+            if (roleData.role === "admin") elevatedToAdmin = true;
+          }
+        } catch { /* noop */ }
+      }
+
+      setIsAdmin(elevatedToAdmin);
       return { error: null };
     } catch (err: any) {
       if (email && password.length >= 6) {
