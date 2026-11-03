@@ -97,12 +97,32 @@ async function verifyAdmin(): Promise<boolean> {
   return session?.value === SESSION_SECRET_TOKEN;
 }
 
-// GET all products (Supabase + base catalog fallback)
-export async function GET() {
+// GET all products or single product by ?id= / ?slug= (Supabase + base catalog fallback)
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const targetId = searchParams.get("id");
+    const targetSlug = searchParams.get("slug");
+    const identifier = targetId || targetSlug;
+
     const supabase = getSupabaseAdmin();
 
     if (supabase) {
+      // 1. If looking for a specific product by ID or slug, query Supabase directly
+      if (identifier) {
+        const { data: singleRow, error: singleError } = await supabase
+          .from("products")
+          .select("*")
+          .or(`id.eq.${identifier},slug.eq.${identifier}`)
+          .maybeSingle();
+
+        if (!singleError && singleRow) {
+          const product = rowToProduct(singleRow);
+          return NextResponse.json({ product, products: [product] });
+        }
+      }
+
+      // 2. Fetch full catalog from Supabase
       const { data, error } = await supabase
         .from("products")
         .select("*")
@@ -113,15 +133,33 @@ export async function GET() {
         const customIds = new Set(custom.map((p) => p.id));
         const base = PRODUCTS.filter((p) => !customIds.has(p.id));
         const all = [...custom, ...base];
+
+        if (identifier) {
+          const found = all.find((p) => p.id === identifier || p.slug === identifier);
+          if (found) {
+            return NextResponse.json({ product: found, products: [found] });
+          }
+          return NextResponse.json({ error: "Product not found" }, { status: 404 });
+        }
+
         return NextResponse.json({ products: all, customCount: custom.length });
       }
     }
 
-    // Fallback to local file
+    // Fallback to local file & base catalog
     const custom = readCustomProductsFromFile();
     const customIds = new Set(custom.map((p) => p.id));
     const base = PRODUCTS.filter((p) => !customIds.has(p.id));
     const all = [...custom, ...base];
+
+    if (identifier) {
+      const found = all.find((p) => p.id === identifier || p.slug === identifier);
+      if (found) {
+        return NextResponse.json({ product: found, products: [found] });
+      }
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
     return NextResponse.json({ products: all, customCount: custom.length });
   } catch (error) {
     console.error("GET /api/admin/products error:", error);
@@ -253,11 +291,16 @@ export async function PUT(request: Request) {
         .from("products")
         .select("*")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (existingRow) {
         const merged = { ...rowToProduct(existingRow), ...body };
         await supabase.from("products").update(productToRow(merged)).eq("id", id);
+        updatedProduct = merged;
+      } else {
+        // If not in Supabase yet, upsert full record
+        const merged = { ...body };
+        await supabase.from("products").upsert(productToRow(merged));
         updatedProduct = merged;
       }
     }

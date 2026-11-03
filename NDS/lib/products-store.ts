@@ -41,12 +41,12 @@ export function getAllLiveProducts(): Product[] {
 
 export function getLiveProductBySlug(slug: string): Product | undefined {
   const products = getAllLiveProducts();
-  return products.find((p) => p.slug === slug);
+  return products.find((p) => p.slug === slug || p.id === slug);
 }
 
 export function getLiveProductById(id: string): Product | undefined {
   const products = getAllLiveProducts();
-  return products.find((p) => p.id === id);
+  return products.find((p) => p.id === id || p.slug === id);
 }
 
 export function saveProductToStorage(product: Product) {

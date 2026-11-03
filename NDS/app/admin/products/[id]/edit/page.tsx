@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ProductForm } from "@/components/admin/ProductForm";
-import { getLiveProductById, getAllLiveProducts } from "@/lib/products-store";
+import { getAllLiveProducts, saveProductToStorage } from "@/lib/products-store";
 import { Product } from "@/lib/products-data";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 
@@ -15,10 +15,68 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const all = getAllLiveProducts();
-    const found = all.find((p) => p.id === id || p.slug === id);
-    setProduct(found || null);
-    setLoading(false);
+    let isMounted = true;
+
+    async function loadProduct() {
+      setLoading(true);
+
+      // 1. Instant check from local cache
+      const allLocal = getAllLiveProducts();
+      const localFound = allLocal.find((p) => p.id === id || p.slug === id);
+      if (localFound && isMounted) {
+        setProduct(localFound);
+        setLoading(false);
+      }
+
+      // 2. Fetch live authoritative product from Supabase / cloud API
+      try {
+        const res = await fetch(`/api/admin/products?id=${encodeURIComponent(id)}`);
+        if (res.ok) {
+          const data = await res.json();
+          const cloudProduct: Product | undefined =
+            data.product ||
+            (Array.isArray(data.products)
+              ? data.products.find((p: Product) => p.id === id || p.slug === id)
+              : undefined);
+
+          if (cloudProduct && isMounted) {
+            setProduct(cloudProduct);
+            saveProductToStorage(cloudProduct);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Fallback: fetch complete product list if single lookup wasn't matched
+        const resAll = await fetch("/api/admin/products");
+        if (resAll.ok) {
+          const data = await resAll.json();
+          if (Array.isArray(data.products)) {
+            const matched = data.products.find((p: Product) => p.id === id || p.slug === id);
+            if (matched && isMounted) {
+              setProduct(matched);
+              saveProductToStorage(matched);
+              setLoading(false);
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Error fetching product from cloud API:", err);
+      }
+
+      if (isMounted) {
+        setLoading(false);
+      }
+    }
+
+    if (id) {
+      loadProduct();
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   if (loading) {

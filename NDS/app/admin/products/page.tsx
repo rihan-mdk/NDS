@@ -48,7 +48,14 @@ export default function AdminProductsPage() {
         const data = await res.json();
         if (Array.isArray(data.products)) {
           const deletedIds = new Set(getDeletedIdsFromStorage());
-          setProducts(data.products.filter((p: Product) => !deletedIds.has(p.id)));
+          const validProducts = data.products.filter((p: Product) => !deletedIds.has(p.id));
+          setProducts(validProducts);
+          // Sync custom products into local storage for immediate access
+          validProducts.forEach((p: Product) => {
+            if (p.id.startsWith("prod-custom-")) {
+              saveProductToStorage(p);
+            }
+          });
         }
       }
     } catch (e) {

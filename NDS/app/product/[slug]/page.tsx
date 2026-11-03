@@ -45,10 +45,28 @@ export default function ProductDetailPage() {
     // Also fetch from cloud API in case the product was created on another system
     async function fetchCloudProduct() {
       try {
-        const res = await fetch("/api/admin/products");
+        const res = await fetch(`/api/admin/products?id=${encodeURIComponent(slug)}`);
         if (res.ok) {
           const data = await res.json();
-          const match = data.products?.find((p: Product) => p.slug === slug);
+          const match =
+            data.product ||
+            (Array.isArray(data.products)
+              ? data.products.find((p: Product) => p.slug === slug || p.id === slug)
+              : undefined);
+          if (match) {
+            setProduct(match);
+            if (match.sizes && match.sizes.length > 0) {
+              setSelectedSize(match.sizes[0]);
+            }
+            return;
+          }
+        }
+
+        // Fallback to full list if single lookup wasn't found
+        const resAll = await fetch("/api/admin/products");
+        if (resAll.ok) {
+          const data = await resAll.json();
+          const match = data.products?.find((p: Product) => p.slug === slug || p.id === slug);
           if (match) {
             setProduct(match);
             if (match.sizes && match.sizes.length > 0) {
