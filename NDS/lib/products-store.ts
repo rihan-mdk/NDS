@@ -131,19 +131,9 @@ export function useLiveProducts(categoryFilter?: string): Product[] {
             // Sync custom products into localStorage so subsequent navigations are instant
             const baseIds = new Set(PRODUCTS.map((p) => p.id));
             const customFromCloud = liveOnly.filter((p: Product) => !baseIds.has(p.id));
-            if (typeof window !== "undefined" && customFromCloud.length > 0) {
+            if (typeof window !== "undefined") {
               try {
-                const currentLocal = getCustomProductsFromStorage();
-                const merged = [...currentLocal];
-                for (const cloudP of customFromCloud) {
-                  const idx = merged.findIndex((m) => m.id === cloudP.id);
-                  if (idx > -1) {
-                    merged[idx] = cloudP;
-                  } else {
-                    merged.push(cloudP);
-                  }
-                }
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(customFromCloud));
               } catch {}
             }
 

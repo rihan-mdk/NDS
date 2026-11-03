@@ -51,11 +51,12 @@ export default function AdminProductsPage() {
           const validProducts = data.products.filter((p: Product) => !deletedIds.has(p.id));
           setProducts(validProducts);
           // Sync custom products into local storage for immediate access
-          validProducts.forEach((p: Product) => {
-            if (p.id.startsWith("prod-custom-")) {
-              saveProductToStorage(p);
-            }
-          });
+          const customOnly = validProducts.filter((p: Product) => p.id.startsWith("prod-custom-"));
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("nds_custom_products_v1", JSON.stringify(customOnly));
+            } catch {}
+          }
         }
       }
     } catch (e) {

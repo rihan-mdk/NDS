@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { getAllLiveProducts } from "@/lib/products-store";
+import { getAllLiveProducts, getDeletedIdsFromStorage } from "@/lib/products-store";
 import { Product } from "@/lib/products-data";
 import {
   Package,
@@ -40,9 +40,34 @@ export default function AdminDashboardPage() {
 
   const fetchLiveStats = async () => {
     setRefreshing(true);
+
+    // 0. Immediate local fallback
     setProducts(getAllLiveProducts());
 
-    // 1. Fetch Orders from Supabase admin API
+    // 1. Fetch live products from Supabase API (authoritative live count)
+    try {
+      const prodRes = await fetch("/api/admin/products");
+      if (prodRes.ok) {
+        const prodData = await prodRes.json();
+        if (Array.isArray(prodData.products)) {
+          const deletedIds = new Set(getDeletedIdsFromStorage());
+          const validProducts = prodData.products.filter((p: Product) => !deletedIds.has(p.id));
+          setProducts(validProducts);
+
+          // Synchronize local storage so stale deleted products are purged
+          if (typeof window !== "undefined") {
+            try {
+              const customOnly = validProducts.filter((p: Product) => p.id.startsWith("prod-custom-"));
+              localStorage.setItem("nds_custom_products_v1", JSON.stringify(customOnly));
+            } catch {}
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch live products for dashboard:", e);
+    }
+
+    // 2. Fetch Orders from Supabase admin API
     try {
       const res = await fetch("/api/admin/orders");
       if (res.ok) {
