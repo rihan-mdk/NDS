@@ -85,12 +85,29 @@ export default function HomePage() {
       {/* To swap the hero image: replace /images/hero.jpg with your new image path in public/images/ */}
       <section className="sticky top-14 sm:top-0 z-0 w-full h-[calc(100svh-7rem)] sm:h-screen sm:-mt-14 overflow-hidden bg-[#1A1712] flex items-end sm:items-center">
 
-        {/* Full-width hero image — clip-path wipe reveal from bottom-right */}
+        {/* Mobile hero image — custom high-res portrait editorial */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <motion.img
+          src="/images/hero-mobile.jpg"
+          alt="NEEL'S DESIGNER STUDIO — Luxury Fashion Editorial"
+          className="absolute inset-0 w-full h-full object-cover object-top sm:hidden pointer-events-none select-none"
+          style={{
+            transform: "translate3d(0, 0, 0)",
+            WebkitTransform: "translate3d(0, 0, 0)",
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+          }}
+          initial={{ clipPath: "inset(0 100% 0 0)" }}
+          animate={{ clipPath: "inset(0 0% 0 0)" }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+        />
+
+        {/* Desktop hero image */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <motion.img
           src="/images/hero.jpg"
           alt="NEEL'S DESIGNER STUDIO — Luxury Fashion Editorial"
-          className="absolute inset-0 w-full h-full object-cover object-top will-change-transform transform-gpu"
+          className="absolute inset-0 w-full h-full object-cover object-top hidden sm:block will-change-transform transform-gpu"
           style={{ transform: "translate3d(0, 0, 0)" }}
           initial={{ clipPath: "inset(0 100% 0 0)" }}
           animate={{ clipPath: "inset(0 0% 0 0)" }}
