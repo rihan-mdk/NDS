@@ -72,7 +72,8 @@ function OrdersManagementContent() {
     loadOrders();
   }, [initialSelectedId]);
 
-  const loadOrders = () => {
+  const loadOrders = async () => {
+    // 1. Instant render from localStorage
     try {
       const stored = JSON.parse(
         localStorage.getItem("nds_orders_history") || "[]"
@@ -87,7 +88,27 @@ function OrdersManagementContent() {
         }
       }
     } catch (e) {
-      console.warn("Could not load orders:", e);
+      console.warn("Could not load orders from localStorage:", e);
+    }
+
+    // 2. Fetch from Supabase and replace with fresh data
+    try {
+      const res = await fetch("/api/admin/orders");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.orders) && data.orders.length > 0) {
+          setOrders(data.orders);
+          if (initialSelectedId) {
+            const match = data.orders.find((o: OrderRecord) => o.id === initialSelectedId);
+            if (match) {
+              setSelectedOrder(match);
+              setStatusUpdating(match.status);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load orders from cloud:", e);
     }
   };
 
@@ -97,16 +118,25 @@ function OrdersManagementContent() {
     setSaveToast(false);
   };
 
-  const handleUpdateStatus = () => {
+  const handleUpdateStatus = async () => {
     if (!selectedOrder) return;
 
     try {
+      // Update local state and localStorage
       const updatedList = orders.map((o) =>
         o.id === selectedOrder.id ? { ...o, status: statusUpdating } : o
       );
       localStorage.setItem("nds_orders_history", JSON.stringify(updatedList));
       setOrders(updatedList);
       setSelectedOrder({ ...selectedOrder, status: statusUpdating });
+
+      // Persist to Supabase
+      await fetch("/api/admin/orders", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: selectedOrder.id, status: statusUpdating }),
+      });
+
       setSaveToast(true);
       setTimeout(() => setSaveToast(false), 2500);
     } catch (e) {

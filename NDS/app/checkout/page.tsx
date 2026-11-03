@@ -65,36 +65,71 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"upi" | "card" | "netbanking" | "cod">("upi");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmitOrder = (e: React.FormEvent) => {
+  const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     const generatedOrderId = `NDS-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // Store completed order in localStorage for orders page
+    // Build local order record
+    const newOrder = {
+      id: generatedOrderId,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      status: "Confirmed",
+      items: [...items],
+      total,
+      shippingAddress: `${formData.fullName}, ${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
+      customer: {
+        name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pincode,
+      },
+      paymentMethod: paymentMethod.toUpperCase(),
+    };
+
+    // 1. Save to localStorage as instant fallback cache
     try {
       const existingOrders = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
-      const newOrder = {
-        id: generatedOrderId,
-        date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-        status: "Confirmed",
-        items: [...items],
-        total,
-        shippingAddress: `${formData.fullName}, ${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
-        customer: {
-          name: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          pincode: formData.pincode,
-        },
-        paymentMethod: paymentMethod.toUpperCase(),
-      };
       localStorage.setItem("nds_orders_history", JSON.stringify([newOrder, ...existingOrders]));
     } catch (err) {
-      console.warn("Could not save order history:", err);
+      console.warn("Could not save order history locally:", err);
+    }
+
+    // 2. POST to Supabase via API route (non-blocking — failures don't stop checkout)
+    try {
+      await fetch("/api/admin/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: generatedOrderId,
+          userId: user?.id || null,
+          customerName: formData.fullName,
+          customerEmail: formData.email || user?.email,
+          customerPhone: formData.phone,
+          shippingAddress: formData.address,
+          shippingCity: formData.city,
+          shippingState: formData.state,
+          shippingPincode: formData.pincode,
+          paymentMethod: paymentMethod.toUpperCase(),
+          total,
+          giftPackaging: formData.giftPackaging,
+          giftMessage: formData.giftMessage,
+          items: items.map((item) => ({
+            productId: item.product.id,
+            productTitle: item.product.title,
+            productImage: item.product.images?.[0] || "",
+            size: item.selectedSize,
+            quantity: item.quantity,
+            unitPrice: item.product.price,
+          })),
+        }),
+      });
+    } catch (err) {
+      console.warn("Could not save order to cloud:", err);
     }
 
     setTimeout(() => {

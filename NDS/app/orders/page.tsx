@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Package, Truck, CheckCircle2, Home, ArrowLeft, ArrowRight } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface Order {
   id: string;
@@ -20,8 +21,10 @@ function OrdersContent() {
   const targetOrderId = searchParams.get("id");
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
+    // 1. Load from localStorage immediately (instant render)
     try {
       const saved = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
       setOrders(saved);
@@ -30,9 +33,25 @@ function OrdersContent() {
         if (found) setSelectedOrder(found);
       }
     } catch (e) {
-      console.warn("Could not load orders:", e);
+      console.warn("Could not load orders locally:", e);
     }
-  }, [targetOrderId]);
+
+    // 2. Fetch from Supabase if user is logged in
+    if (user?.id) {
+      fetch(`/api/admin/orders?userId=${user.id}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.orders?.length > 0) {
+            setOrders(data.orders);
+            if (targetOrderId) {
+              const found = data.orders.find((o: Order) => o.id === targetOrderId);
+              if (found) setSelectedOrder(found);
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [targetOrderId, user]);
 
   const statusColor = (status: string) => {
     switch (status) {
