@@ -50,6 +50,12 @@ export default function AdminDashboardPage() {
       if (prodRes.ok) {
         const prodData = await prodRes.json();
         if (Array.isArray(prodData.products)) {
+          if (Array.isArray(prodData.deletedIds) && typeof window !== "undefined") {
+            try {
+              const mergedDeleted = new Set([...getDeletedIdsFromStorage(), ...prodData.deletedIds]);
+              localStorage.setItem("nds_deleted_products_v1", JSON.stringify(Array.from(mergedDeleted)));
+            } catch {}
+          }
           const deletedIds = new Set(getDeletedIdsFromStorage());
           const validProducts = prodData.products.filter((p: Product) => !deletedIds.has(p.id));
           setProducts(validProducts);

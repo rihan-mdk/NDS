@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { PRODUCTS, getProductBySlug, Product } from "@/lib/products-data";
-import { getLiveProductBySlug } from "@/lib/products-store";
+import { getLiveProductBySlug, getAllLiveProducts } from "@/lib/products-store";
 import { ProductCard } from "@/components/ProductCard";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -31,9 +31,12 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const slug = (params.slug as string) || "zari-embroidered-azure-silk-kurti";
 
-  const [product, setProduct] = useState<Product>(
-    () => getLiveProductBySlug(slug) || getProductBySlug(slug) || PRODUCTS[0]
-  );
+  const [product, setProduct] = useState<Product>(() => {
+    const live = getLiveProductBySlug(slug);
+    if (live) return live;
+    const all = getAllLiveProducts();
+    return all[0] || PRODUCTS[0];
+  });
 
   useEffect(() => {
     const live = getLiveProductBySlug(slug);
@@ -193,13 +196,14 @@ export default function ProductDetailPage() {
     toggleWishlist(product);
   };
 
-  // Curated pair recommendations
-  let relatedProducts = PRODUCTS.filter(
+  // Curated pair recommendations (from live, non-deleted catalog)
+  const allLive = getAllLiveProducts();
+  let relatedProducts = allLive.filter(
     (p) => p.id !== product.id && (isAccessory ? p.isAccessory : !p.isAccessory)
   ).slice(0, 4);
 
   if (relatedProducts.length < 4) {
-    relatedProducts = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
+    relatedProducts = allLive.filter((p) => p.id !== product.id).slice(0, 4);
   }
 
   return (

@@ -142,8 +142,8 @@ export default function SearchPage() {
   }, [query, activeFilter, allLiveProducts]);
 
   const featuredCurations = useMemo(() => {
-    return PRODUCTS.filter((p) => p.featured || p.newArrival).slice(0, 4);
-  }, []);
+    return allLiveProducts.filter((p) => p.featured || p.newArrival).slice(0, 4);
+  }, [allLiveProducts]);
 
   const handleExecuteSearch = (term: string) => {
     setQuery(term);

@@ -7,6 +7,13 @@ const STORAGE_KEY = "nds_custom_products_v1";
 const DELETED_KEY = "nds_deleted_products_v1";
 const SYNC_EVENT = "nds_products_updated";
 
+export const KNOWN_DELETED_BASE_IDS: string[] = [
+  "prod-001", "prod-002", "prod-003", "prod-004",
+  "prod-005", "prod-006", "prod-007", "prod-008",
+  "prod-009", "prod-010", "prod-011", "prod-012",
+  "prod-013", "prod-014", "prod-015", "prod-016",
+];
+
 export function getCustomProductsFromStorage(): Product[] {
   if (typeof window === "undefined") return [];
   try {
@@ -18,12 +25,13 @@ export function getCustomProductsFromStorage(): Product[] {
 }
 
 export function getDeletedIdsFromStorage(): string[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return [...KNOWN_DELETED_BASE_IDS];
   try {
     const raw = localStorage.getItem(DELETED_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const stored: string[] = raw ? JSON.parse(raw) : [];
+    return Array.from(new Set([...KNOWN_DELETED_BASE_IDS, ...stored]));
   } catch (e) {
-    return [];
+    return [...KNOWN_DELETED_BASE_IDS];
   }
 }
 
@@ -124,7 +132,16 @@ export function useLiveProducts(categoryFilter?: string): Product[] {
         const res = await fetch("/api/admin/products");
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.products) && data.products.length > 0) {
+
+          // Synchronize server-tracked deleted IDs into localStorage
+          if (Array.isArray(data.deletedIds) && data.deletedIds.length > 0 && typeof window !== "undefined") {
+            try {
+              const currentDeleted = new Set([...getDeletedIdsFromStorage(), ...data.deletedIds]);
+              localStorage.setItem(DELETED_KEY, JSON.stringify(Array.from(currentDeleted)));
+            } catch {}
+          }
+
+          if (Array.isArray(data.products)) {
             const deletedIds = new Set(getDeletedIdsFromStorage());
             const liveOnly = data.products.filter((p: Product) => !deletedIds.has(p.id));
 

@@ -7,6 +7,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const FILE_PATH = path.join(DATA_DIR, "custom-products.json");
+const DELETED_FILE_PATH = path.join(DATA_DIR, "deleted-products.json");
 const SESSION_COOKIE_NAME = "nds_admin_session";
 const SESSION_SECRET_TOKEN = "nds_atelier_admin_token_v1";
 
@@ -15,6 +16,9 @@ function ensureDataFile() {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
   if (!fs.existsSync(FILE_PATH)) {
+    fs.writeFileSync(FILE_PATH, JSON.stringify([]), "utf-8");
+  }
+  if (!fs.existsSync(DELETED_FILE_PATH)) {
     fs.writeFileSync(FILE_PATH, JSON.stringify([]), "utf-8");
   }
 }
@@ -36,6 +40,26 @@ function writeCustomProductsToFile(products: Product[]) {
     fs.writeFileSync(FILE_PATH, JSON.stringify(products, null, 2), "utf-8");
   } catch (e) {
     console.error("Error writing custom-products.json:", e);
+  }
+}
+
+function readDeletedProductsFromFile(): string[] {
+  try {
+    ensureDataFile();
+    if (!fs.existsSync(DELETED_FILE_PATH)) return [];
+    const data = fs.readFileSync(DELETED_FILE_PATH, "utf-8");
+    return JSON.parse(data || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+
+function writeDeletedProductsToFile(deletedIds: string[]) {
+  try {
+    ensureDataFile();
+    fs.writeFileSync(DELETED_FILE_PATH, JSON.stringify(deletedIds, null, 2), "utf-8");
+  } catch (e) {
+    console.error("Error writing deleted-products.json:", e);
   }
 }
 
@@ -108,51 +132,66 @@ export async function GET(request: Request) {
     const supabase = getSupabaseAdmin();
 
     if (supabase) {
-      // 1. If looking for a specific product by ID or slug, query Supabase directly
-      if (identifier) {
-        const { data: singleRow, error: singleError } = await supabase
-          .from("products")
-          .select("*")
-          .or(`id.eq.${identifier},slug.eq.${identifier}`)
-          .maybeSingle();
-
-        if (!singleError && singleRow) {
-          const product = rowToProduct(singleRow);
-          return NextResponse.json({ product, products: [product] });
-        }
-      }
-
-      // 2. Fetch full catalog from Supabase
+      // 1. Fetch full catalog from Supabase
       const { data, error } = await supabase
         .from("products")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (!error && data) {
-        const custom = data.map(rowToProduct);
-        const customIds = new Set(custom.map((p) => p.id));
-        const base = PRODUCTS.filter((p) => !customIds.has(p.id));
-        const all = [...custom, ...base];
+        // Detect tombstones (rows marked as deleted)
+        const tombstoneRows = data.filter(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (r: any) => r.category === "deleted" || r.title === "__DELETED__" || r.slug?.startsWith("deleted-")
+        );
+        const serverDeletedIds = new Set(tombstoneRows.map((r) => r.id));
+
+        const activeRows = data.filter(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (r: any) => r.category !== "deleted" && r.title !== "__DELETED__" && !r.slug?.startsWith("deleted-")
+        );
 
         if (identifier) {
-          const found = all.find((p) => p.id === identifier || p.slug === identifier);
-          if (found) {
-            return NextResponse.json({ product: found, products: [found] });
+          if (serverDeletedIds.has(identifier)) {
+            return NextResponse.json({ error: "Product not found" }, { status: 404 });
+          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const foundRow = activeRows.find((r: any) => r.id === identifier || r.slug === identifier);
+          if (foundRow) {
+            const product = rowToProduct(foundRow);
+            return NextResponse.json({ product, products: [product] });
+          }
+          const baseMatch = PRODUCTS.find((p) => (p.id === identifier || p.slug === identifier) && !serverDeletedIds.has(p.id));
+          if (baseMatch) {
+            return NextResponse.json({ product: baseMatch, products: [baseMatch] });
           }
           return NextResponse.json({ error: "Product not found" }, { status: 404 });
         }
 
-        return NextResponse.json({ products: all, customCount: custom.length });
+        const custom = activeRows.map(rowToProduct);
+        const customIds = new Set(custom.map((p) => p.id));
+        const base = PRODUCTS.filter((p) => !customIds.has(p.id) && !serverDeletedIds.has(p.id));
+        const all = [...custom, ...base];
+
+        return NextResponse.json({
+          products: all,
+          customCount: custom.length,
+          deletedIds: Array.from(serverDeletedIds),
+        });
       }
     }
 
     // Fallback to local file & base catalog
     const custom = readCustomProductsFromFile();
+    const localDeletedIds = new Set(readDeletedProductsFromFile());
     const customIds = new Set(custom.map((p) => p.id));
-    const base = PRODUCTS.filter((p) => !customIds.has(p.id));
-    const all = [...custom, ...base];
+    const base = PRODUCTS.filter((p) => !customIds.has(p.id) && !localDeletedIds.has(p.id));
+    const all = [...custom.filter((p) => !localDeletedIds.has(p.id)), ...base];
 
     if (identifier) {
+      if (localDeletedIds.has(identifier)) {
+        return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      }
       const found = all.find((p) => p.id === identifier || p.slug === identifier);
       if (found) {
         return NextResponse.json({ product: found, products: [found] });
@@ -160,14 +199,18 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ products: all, customCount: custom.length });
+    return NextResponse.json({
+      products: all,
+      customCount: custom.length,
+      deletedIds: Array.from(localDeletedIds),
+    });
   } catch (error) {
     console.error("GET /api/admin/products error:", error);
     return NextResponse.json({ error: "Failed to load products" }, { status: 500 });
   }
 }
 
-// POST create new product
+// POST create new product or sync deleted IDs
 export async function POST(request: Request) {
   const isAdmin = await verifyAdmin();
   if (!isAdmin) {
@@ -176,6 +219,29 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+
+    // Support batch synchronization of deleted IDs into Supabase tombstones
+    if (body.action === "sync-deleted" && Array.isArray(body.deletedIds)) {
+      const supabase = getSupabaseAdmin();
+      if (supabase && body.deletedIds.length > 0) {
+        const tombstones = body.deletedIds.map((id: string) => ({
+          id,
+          slug: `deleted-${id}`,
+          title: "__DELETED__",
+          category: "deleted",
+          category_label: "Deleted",
+          sub_category: "Deleted",
+          price: 0,
+          images: [],
+          description: "__DELETED__",
+          in_stock: false,
+          updated_at: new Date().toISOString(),
+        }));
+        await supabase.from("products").upsert(tombstones);
+      }
+      return NextResponse.json({ success: true, syncedCount: body.deletedIds.length });
+    }
+
     const {
       title,
       category,
@@ -355,13 +421,35 @@ export async function DELETE(request: Request) {
 
     const supabase = getSupabaseAdmin();
     if (supabase) {
+      // 1. Delete standard row if it exists
       await supabase.from("products").delete().eq("id", id);
+
+      // 2. Upsert tombstone row to guarantee this ID is permanently tracked as deleted across all devices
+      await supabase.from("products").upsert({
+        id,
+        slug: `deleted-${id}`,
+        title: "__DELETED__",
+        category: "deleted",
+        category_label: "Deleted",
+        sub_category: "Deleted",
+        price: 0,
+        images: [],
+        description: "__DELETED__",
+        in_stock: false,
+        updated_at: new Date().toISOString(),
+      });
     }
 
-    // Also remove from local file backup
+    // Also remove from local file backup and record in deleted file
     let custom = readCustomProductsFromFile();
     custom = custom.filter((p) => p.id !== id);
     writeCustomProductsToFile(custom);
+
+    const deleted = readDeletedProductsFromFile();
+    if (!deleted.includes(id)) {
+      deleted.push(id);
+      writeDeletedProductsToFile(deleted);
+    }
 
     return NextResponse.json({ success: true, deletedId: id });
   } catch (error) {
