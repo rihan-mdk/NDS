@@ -7,7 +7,7 @@ import { useLiveProducts } from "@/lib/products-store";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { TiltedGridHero } from "@/components/ui/tilted-grid-hero";
+import ThreeDParallaxGallery from "@/components/ui/3d-parallax-unfurling-gallery";
 import { motion } from "framer-motion";
 
 const GALLERY_IMAGES = [
@@ -214,31 +214,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 3: Our Gallery — TiltedGridHero Animation, fits one viewport */}
-      <section className="w-full h-dvh flex flex-col bg-[#F5F3F0] overflow-hidden py-8 sm:py-10 lg:py-12">
-        {/* Section Header */}
-        <div className="px-4 sm:px-10 lg:px-14 mb-4 sm:mb-6 border-b border-[#EAE5DF] pb-4 sm:pb-5 flex-shrink-0">
-          <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-[#7B5644] block mb-1.5 font-semibold">
-            THE ATELIER JOURNAL
-          </span>
-          <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#191919] font-normal">
-            Our Gallery
-          </h2>
-        </div>
-
-        {/* TiltedGridHero Band — fills remaining viewport height */}
-        <TiltedGridHero
-          images={GALLERY_IMAGES}
-          aspectRatio={3 / 4}
-          tileHeight={55}
-          gap={6}
-          speed={5}
-          curve={72}
-          fade={14}
-          axis={50}
-          className="flex-1 w-full min-h-0"
-        />
-      </section>
+      {/* SECTION 3: Our Gallery — 3D Parallax Unfurling Gallery */}
+      <ThreeDParallaxGallery
+        images={GALLERY_IMAGES.map((img) => img.src)}
+        headerTitle="Our Gallery"
+        headerSubtitle="THE ATELIER JOURNAL"
+      />
 
       {/* SECTION 4: Category / Collection Discovery */}
       <section className="w-full px-4 sm:px-10 lg:px-14 py-10 sm:py-16 lg:py-20 bg-[#FDFBF8]">
