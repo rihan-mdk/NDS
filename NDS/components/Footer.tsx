@@ -100,12 +100,22 @@ export function Footer() {
             <ul className="space-y-2.5 font-sans text-xs text-[#77716D]">
               <li>
                 <a
-                  href="https://instagram.com"
+                  href="https://www.instagram.com/neels_designer_studio?obrf=aDk1emZ3aHVicDZl"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-[#191919] transition-colors capitalize"
                 >
                   Instagram
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://wa.me/919895303399?text=Hello%20Neel%27s%20Designer%20Studio"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#191919] transition-colors capitalize"
+                >
+                  WhatsApp
                 </a>
               </li>
             </ul>
