@@ -158,7 +158,7 @@ export default function HomePage() {
               className="font-serif text-[1.45rem] sm:text-5xl lg:text-6xl text-[#FDFBF8] tracking-tight leading-[1.1] mb-1.5 sm:mb-5 font-normal"
               variants={heroItem(22, 0.6)}
             >
-              Style Beyond<br />Trends.
+              Where every outfit<br />feels extraordinary.
             </motion.h1>
             {/* Subtext */}
             <motion.p
