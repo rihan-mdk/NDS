@@ -40,7 +40,7 @@ export function MobileBottomNav() {
               {active && (
                 <motion.div
                   layoutId="activeBottomNavCircle"
-                  className="absolute w-[64px] h-[56px] rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#EAE5DF]/80"
+                  className="absolute w-[76px] h-[58px] rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#EAE5DF]/80"
                   transition={{
                     type: "spring",
                     stiffness: 400,
@@ -56,7 +56,7 @@ export function MobileBottomNav() {
                   }`}
                 />
                 <span
-                  className={`text-[9px] uppercase tracking-wider leading-none transition-colors duration-200 ${
+                  className={`text-[8px] uppercase tracking-[0.04em] leading-none transition-colors duration-200 ${
                     active ? "text-[#191919] font-bold" : "text-[#8C8681] font-medium"
                   }`}
                 >
