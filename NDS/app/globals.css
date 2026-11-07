@@ -117,4 +117,9 @@
   .divider-warm {
     @apply border-t border-border-warm;
   }
+
+  /* iPhone safe-area padding bottom utility */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
