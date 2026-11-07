@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, LayoutGrid, Sparkles, User } from "lucide-react";
+import { motion } from "framer-motion";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -26,28 +27,42 @@ export function MobileBottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-[#FDFBF8]/96 backdrop-blur-md border-t border-[#EAE5DF] lg:hidden h-[94px] shadow-[0_-2px_12px_rgba(0,0,0,0.05)]">
-      <div className="flex justify-around items-start h-full pt-3 pb-[max(env(safe-area-inset-bottom,0px),16px)] px-4">
+    <nav className="fixed bottom-0 inset-x-0 z-40 bg-[#FDFBF8]/96 backdrop-blur-md border-t border-[#EAE5DF] lg:hidden h-[90px] shadow-[0_-2px_12px_rgba(0,0,0,0.05)]">
+      <div className="flex justify-around items-center h-full px-2 pb-[max(env(safe-area-inset-bottom,0px),10px)]">
         {navItems.map(({ label, href, icon: Icon }) => {
           const active = isActive(href);
           return (
             <Link
               key={label}
               href={href}
-              className={`flex flex-col items-center justify-center gap-1.5 flex-1 py-1 transition-colors ${
-                active
-                  ? "text-[#191919] font-semibold"
-                  : "text-[#9E9893] hover:text-[#191919]"
-              }`}
+              className="relative flex flex-col items-center justify-center flex-1 h-[64px] select-none"
             >
-              <Icon
-                className={`w-[22px] h-[22px] transition-all ${
-                  active ? "scale-105 stroke-[2.2] text-[#191919]" : "stroke-[1.5]"
-                }`}
-              />
-              <span className="text-[9px] uppercase tracking-widest leading-none font-medium">
-                {label}
-              </span>
+              {active && (
+                <motion.div
+                  layoutId="activeBottomNavCircle"
+                  className="absolute w-[64px] h-[56px] rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#EAE5DF]/80"
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 32,
+                    mass: 0.8,
+                  }}
+                />
+              )}
+              <div className="relative z-10 flex flex-col items-center justify-center gap-1">
+                <Icon
+                  className={`w-5 h-5 transition-transform duration-200 ${
+                    active ? "scale-105 stroke-[2.2] text-[#191919]" : "stroke-[1.5] text-[#8C8681]"
+                  }`}
+                />
+                <span
+                  className={`text-[9px] uppercase tracking-wider leading-none transition-colors duration-200 ${
+                    active ? "text-[#191919] font-bold" : "text-[#8C8681] font-medium"
+                  }`}
+                >
+                  {label}
+                </span>
+              </div>
             </Link>
           );
         })}

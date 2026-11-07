@@ -83,7 +83,7 @@ export default function HomePage() {
     <div className="flex flex-col w-full bg-[#FDFBF8]">
       {/* SECTION 1: Editorial Hero — Static sticky layer for page overlap effect */}
       {/* To swap the hero image: replace /images/hero.jpg with your new image path in public/images/ */}
-      <section className="sticky top-14 sm:top-0 z-0 w-full h-[calc(100svh-7rem)] sm:h-screen sm:-mt-14 overflow-hidden bg-[#1A1712] flex items-end sm:items-center">
+      <section className="sticky top-14 sm:top-0 z-0 w-full h-[calc(100dvh-146px)] sm:h-screen sm:-mt-14 overflow-hidden bg-[#1A1712] flex items-end sm:items-center">
 
         {/* Mobile hero image — custom high-res portrait editorial */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -140,12 +140,12 @@ export default function HomePage() {
 
         {/* Hero text overlay — staggered fade-up entrance */}
         <motion.div
-          className="relative z-10 w-full px-4 sm:px-12 lg:px-20 pb-5 sm:pb-12 pt-0 sm:pt-16 flex flex-col items-start"
+          className="relative z-10 w-full px-5 sm:px-12 lg:px-20 pb-4 sm:pb-12 pt-0 sm:pt-16 flex flex-col items-start"
           initial="hidden"
           animate="visible"
           variants={heroTextContainer}
         >
-          <div className="max-w-[260px] sm:max-w-xl">
+          <div className="max-w-[280px] sm:max-w-xl">
             {/* Eyebrow */}
             <motion.span
               className="block font-sans text-[8px] sm:text-[10px] uppercase tracking-[0.25em] sm:tracking-[0.35em] text-[#C9A96E] mb-1 sm:mb-4 font-semibold"

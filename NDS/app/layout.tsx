@@ -42,7 +42,7 @@ export default function RootLayout({
           <CartProvider>
             <WishlistProvider>
               <Header />
-              <main className="flex-1 pt-14 pb-[94px] lg:pb-0">{children}</main>
+              <main className="flex-1 pt-14 pb-[90px] lg:pb-0">{children}</main>
               <Footer />
               <MobileBottomNav />
             </WishlistProvider>
