@@ -10,9 +10,9 @@ export default function AboutPage() {
         <div className="absolute inset-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            className="w-full h-full object-cover object-top brightness-[0.7]"
+            className="w-full h-full object-cover object-center brightness-[0.72]"
             alt="NEEL'S DESIGNER STUDIO Atelier Heritage"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1aHgUGiTM73In2sKqPHO9aD1Bc9_sDtarUYinm5NbKPdbyEX4QJdIzPQczgLKewNXfSDWigUPmGx-AsXntvUZpa1eNPRz1-JD3wlL1VeovytKEmLGoeG0dgyT8LwOnFSZmcGa6lxicezOd1-Qpx49pslGwl-V3knaAiQC8fTQVv78m-aVzAhTub9AWAW78pByB9u2KO1MTY74KMKPmsaeWpCJadYasRnGhYfeQlaE"
+            src="/images/about-banner.png"
           />
         </div>
         <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-[#191919] via-[#191919]/60 to-transparent pointer-events-none" />
@@ -52,12 +52,12 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
-          <div className="relative aspect-[4/5] bg-[#EFEEEB] border border-[#EAE5DF] overflow-hidden">
+          <div className="relative aspect-[4/5] bg-[#EFEEEB] border border-[#EAE5DF] overflow-hidden shadow-lg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuA32m-r1djVXMtzSCI3FDkCQ9alqyAkExyQ34QuMXyoB0s3yxu_8PKsJZyhxNw265oJgmChAHITV8hMVZgr5BCmudXFSlpTsb-dRAL_GnOw1JmrJEk9f84dgPMr_Cc3F5sPu9NCphUnQAmD3Wn4xuzZjbssHOBwvplF5CPOlHfHjWHVYsDx7maH3RkjIjDsJioNuw5GTQIBlQjPMXM2YPy-khRSRq-D7PL5Xi2a1uRf"
-              alt="Atelier Bridal Heritage"
-              className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-700"
+              src="/images/about_us.png"
+              alt="Atelier Bridal Heritage — Neel's Designer Studio"
+              className="w-full h-full object-cover object-center hover:scale-105 transition-transform duration-700"
             />
           </div>
         </div>
