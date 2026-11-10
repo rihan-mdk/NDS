@@ -9,6 +9,7 @@ import {
   getDeletedIdsFromStorage,
 } from "@/lib/products-store";
 import { Product } from "@/lib/products-data";
+import { useLiveCategories } from "@/lib/categories-store";
 import {
   Plus,
   Search,
@@ -136,19 +137,11 @@ export default function AdminProductsPage() {
     return true;
   });
 
+  const { categories: liveCategories } = useLiveCategories();
+
   const categories = [
     { label: "All Categories", value: "all" },
-    { label: "Korean", value: "korean" },
-    { label: "Short Kurti", value: "short-kurti" },
-    { label: "Pakistani", value: "pakistani" },
-    { label: "Lehenga", value: "lehenga" },
-    { label: "Gown", value: "gown" },
-    { label: "Party Wear", value: "party-wear" },
-    { label: "Co-ord Set", value: "co-ord-set" },
-    { label: "Jeans", value: "jeans" },
-    { label: "Bracelets", value: "bracelets" },
-    { label: "Clutches", value: "clutches" },
-    { label: "Rings", value: "rings" },
+    ...liveCategories.map((c) => ({ label: c.name, value: c.slug })),
   ];
 
   return (

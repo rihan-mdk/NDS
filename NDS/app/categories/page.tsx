@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { useLiveCategories } from "@/lib/categories-store";
 
 interface CategoryDiscoveryItem {
   id: string;
@@ -80,6 +81,8 @@ const CATEGORIES: CategoryDiscoveryItem[] = [
 ];
 
 export default function CategoriesPage() {
+  const { clothing: categories } = useLiveCategories();
+
   return (
     <div className="w-full bg-[#FDFBF8] min-h-[calc(100vh-3.5rem)]">
       {/* Editorial Page Header */}
@@ -97,10 +100,10 @@ export default function CategoriesPage() {
         </div>
       </section>
 
-      {/* 8 Category Visual Cards Grid — 2-Column on Mobile, 4-Column on Desktop, 4:5 Aspect Ratio */}
+      {/* Category Visual Cards Grid — 2-Column on Mobile, 4-Column on Desktop, 4:5 Aspect Ratio */}
       <section className="w-full px-4 sm:px-10 lg:px-14 py-6 sm:py-12 lg:py-16">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
-          {CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <Link
               key={category.id}
               href={`/categories/${category.slug}`}
@@ -111,7 +114,7 @@ export default function CategoriesPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={category.image}
-                  alt={category.alt}
+                  alt={category.alt || category.name}
                   className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
                 />
               </div>

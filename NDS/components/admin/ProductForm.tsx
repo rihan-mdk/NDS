@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Product } from "@/lib/products-data";
 import { saveProductToStorage } from "@/lib/products-store";
+import { useLiveCategories } from "@/lib/categories-store";
 import {
   ArrowLeft,
   Sparkles,
@@ -45,6 +46,7 @@ const CLOTHING_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
 export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
   const router = useRouter();
+  const { categories: allLiveCategories, clothing: liveClothing, accessories: liveAccessories } = useLiveCategories();
 
   // Determine initial product type
   const initialIsAccessory = initialData?.isAccessory ?? (
@@ -393,23 +395,33 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
 
         {/* Category Selector */}
         <div>
-          <label className="block text-[10px] uppercase tracking-wider text-[#191919] font-semibold mb-2">
-            Boutique Category *
-          </label>
+          <div className="flex items-center justify-between mb-2 sm:max-w-md">
+            <label className="block text-[10px] uppercase tracking-wider text-[#191919] font-semibold">
+              Boutique Category *
+            </label>
+            <Link
+              href="/admin/categories"
+              target="_blank"
+              className="text-[10px] uppercase tracking-wider text-[#7B5644] hover:text-[#191919] font-semibold transition-colors flex items-center gap-1"
+            >
+              <Plus className="w-3 h-3" />
+              <span>Manage Categories</span>
+            </Link>
+          </div>
           <select
             value={category}
-            onChange={(e) => setCategory(e.target.value as Product["category"])}
+            onChange={(e) => setCategory(e.target.value)}
             className="w-full sm:max-w-md bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
           >
             {productType === "clothing"
-              ? CLOTHING_CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label} Collection
+              ? liveClothing.map((c) => (
+                  <option key={c.slug} value={c.slug}>
+                    {c.name} Collection
                   </option>
                 ))
-              : ACCESSORY_CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
+              : liveAccessories.map((c) => (
+                  <option key={c.slug} value={c.slug}>
+                    {c.name}
                   </option>
                 ))}
           </select>

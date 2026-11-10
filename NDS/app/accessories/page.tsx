@@ -3,43 +3,11 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-
-interface AccessoryCategoryItem {
-  id: string;
-  name: string;
-  slug: string;
-  image: string;
-  alt: string;
-}
-
-const ACCESSORY_CATEGORIES: AccessoryCategoryItem[] = [
-  {
-    id: "bracelets",
-    name: "BRACELETS",
-    slug: "bracelets",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCQd_Bl8-29VL_EkcAAe3uI4Mx5aTxlzLLbaDPU4N7hBLurX7il5yqNe52gPYHGos9P-nXlZFWbccr6VHXBBmSHGDf7h2E7Xl759UGAOpW1SGiKeCf46YRWigV_A4UZlEnF5qss3WS4vUW9WzEGspnDetazXHuy1jlQRGAqUCHcDBmBHN47hc0UT2ttRsCqnj28cn4INi87FSavEb9eZ8LZcqUqiRhbVUnDnt9gzBgM",
-    alt: "Artisanal Heritage Cuffs & Bracelets",
-  },
-  {
-    id: "clutches",
-    name: "CLUTCHES",
-    slug: "clutches",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBg4fEf5pO9178NLlTyF2p2U0sUBWW4zY3gJh1_88s9j8HmpLQiY6jT44friUru7ejw2P8cdcRuyeNxISzQm56fs_P9m7IIyp3rOV_t-NsOnPF7idSQlYkFYT6pJDlXfSnw8dZSqs9qrsOdghNfhCSo_lH69f3fTkkJSrXLurEz3KQZwCTikLlD2HJMQqBQThgWK2FY9_BDFlVW1F7rIIpmSFLWMuk-F4QjJkVWiUR8",
-    alt: "Luxury Raw Silk & Velvet Potli Clutches",
-  },
-  {
-    id: "rings",
-    name: "RINGS",
-    slug: "rings",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAvk8J6o7zxSCxL0DNrDShrTtnmHzoBCNVDp1mhNa6ehWAzo2TusQ-oM5r6wh3jEGRFWJjVgNcG1wTeSA9MIiIFKESLGwkEtS1bbgQdXiRefG2nGneDCUTIiEghgVFqq7dpP_Fz1QA-1bU7aZQGQJFfYo7qhp3EKQ4ywU0vrAOAs3fWRF4YPJcAj61W5KS4cqmUGkofisrtQm7DRuvP61f_PusGAragBx_DVLS1ie3z",
-    alt: "Imperial Kundan & Polki Statement Rings",
-  },
-];
+import { useLiveCategories } from "@/lib/categories-store";
 
 export default function AccessoriesPage() {
+  const { accessories: categories } = useLiveCategories();
+
   return (
     <div className="w-full bg-[#FDFBF8] min-h-[calc(100vh-3.5rem)]">
       {/* Editorial Page Header */}
@@ -57,10 +25,10 @@ export default function AccessoriesPage() {
         </div>
       </section>
 
-      {/* 3 Accessory Category Visual Cards Grid — 2-Column on Mobile (2x2 structure), 3-Column on Desktop, 4:5 Aspect Ratio */}
+      {/* Accessory Category Visual Cards Grid — 2-Column on Mobile (2x2 structure), 3-Column on Desktop, 4:5 Aspect Ratio */}
       <section className="w-full px-4 sm:px-10 lg:px-14 py-6 sm:py-12 lg:py-16">
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
-          {ACCESSORY_CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <Link
               key={category.id}
               href={`/accessories/${category.slug}`}
@@ -71,7 +39,7 @@ export default function AccessoriesPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={category.image}
-                  alt={category.alt}
+                  alt={category.alt || category.name}
                   className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                 />
               </div>

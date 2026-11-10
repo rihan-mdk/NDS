@@ -148,7 +148,7 @@ export async function GET(request: Request) {
 
         const activeRows = data.filter(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (r: any) => r.category !== "deleted" && r.title !== "__DELETED__" && !r.slug?.startsWith("deleted-")
+          (r: any) => r.category !== "deleted" && r.title !== "__DELETED__" && !r.slug?.startsWith("deleted-") && r.category !== "__category__"
         );
 
         if (identifier) {

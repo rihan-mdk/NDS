@@ -16,6 +16,7 @@ import {
   Sparkles,
   Users,
   Tag,
+  FolderKanban,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -140,6 +141,12 @@ export default function AdminLayout({
       name: "Products",
       href: "/admin/products",
       icon: Package,
+      exact: false,
+    },
+    {
+      name: "Categories",
+      href: "/admin/categories",
+      icon: FolderKanban,
       exact: false,
     },
     {

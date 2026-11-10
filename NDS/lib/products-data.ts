@@ -1,8 +1,20 @@
+export interface AtelierCategory {
+  id: string;
+  name: string;
+  slug: string;
+  type: "clothing" | "accessory";
+  description: string;
+  image: string;
+  alt?: string;
+  count?: number;
+  isCustom?: boolean;
+}
+
 export interface Product {
   id: string;
   slug: string;
   title: string;
-  category: 'korean' | 'short-kurti' | 'pakistani' | 'lehenga' | 'gown' | 'party-wear' | 'co-ord-set' | 'jeans' | 'bracelets' | 'clutches' | 'rings';
+  category: string;
   categoryLabel: string;
   subCategory: string;
   price: number;
