@@ -8,6 +8,7 @@ import { getLiveProductBySlug, getAllLiveProducts } from "@/lib/products-store";
 import { ProductCard } from "@/components/ProductCard";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Heart,
   ShoppingBag,
@@ -37,6 +38,7 @@ export default function ProductDetailPage() {
     const all = getAllLiveProducts();
     return all[0] || PRODUCTS[0];
   });
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const live = getLiveProductBySlug(slug);
@@ -45,6 +47,7 @@ export default function ProductDetailPage() {
       if (live.sizes && live.sizes.length > 0) {
         setSelectedSize(live.sizes[0]);
       }
+      setIsLoading(false);
     }
 
     // Also fetch from cloud API in case the product was created on another system
@@ -63,6 +66,7 @@ export default function ProductDetailPage() {
             if (match.sizes && match.sizes.length > 0) {
               setSelectedSize(match.sizes[0]);
             }
+            setIsLoading(false);
             return;
           }
         }
@@ -80,6 +84,7 @@ export default function ProductDetailPage() {
           }
         }
       } catch (e) {}
+      setIsLoading(false);
     }
     fetchCloudProduct();
   }, [slug]);
@@ -204,6 +209,71 @@ export default function ProductDetailPage() {
 
   if (relatedProducts.length < 4) {
     relatedProducts = allLive.filter((p) => p.id !== product.id).slice(0, 4);
+  }
+
+  // ── Luxury Atelier Skeleton (shown while product resolves from cloud) ──
+  if (isLoading) {
+    return (
+      <div className="w-full bg-[#FDFBF8] min-h-screen">
+        {/* Breadcrumb skeleton */}
+        <div className="hidden sm:block w-full px-4 sm:px-10 lg:px-14 py-3 sm:py-4 border-b border-[#EAE5DF]">
+          <div className="max-w-[1440px] mx-auto">
+            <Skeleton className="h-3 w-48" />
+          </div>
+        </div>
+
+        {/* Main 2-column skeleton */}
+        <section className="w-full px-4 sm:px-8 lg:px-12 py-3 sm:py-6 lg:py-8">
+          <div className="max-w-[1240px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-10 xl:gap-14 items-start">
+
+            {/* Left: Image gallery */}
+            <div className="lg:col-span-7 flex flex-col gap-4 sm:gap-5 max-w-[440px] lg:max-w-[530px] mx-auto lg:mx-0 w-full">
+              <Skeleton className="w-full aspect-[4/5]" />
+              {/* Thumbnail strip */}
+              <div className="flex gap-2 sm:gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="w-16 sm:w-20 aspect-[4/5] flex-shrink-0" />
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Product info */}
+            <div className="lg:col-span-5 flex flex-col gap-5 sm:gap-6 pt-0 lg:pt-3">
+              {/* Category tag */}
+              <Skeleton className="h-5 w-24 rounded-full" />
+              {/* Title */}
+              <div className="flex flex-col gap-2.5">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-4/5" />
+              </div>
+              {/* Price */}
+              <Skeleton className="h-7 w-32" />
+              {/* Divider */}
+              <div className="border-t border-[#EAE5DF]" />
+              {/* Size selector label */}
+              <Skeleton className="h-4 w-20" />
+              {/* Size pills */}
+              <div className="flex gap-2 flex-wrap">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-9 w-14 rounded-sm" />
+                ))}
+              </div>
+              {/* Add to bag / Buy now buttons */}
+              <div className="flex flex-col gap-3 pt-1">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+              {/* Accordion bars */}
+              <div className="flex flex-col gap-3 pt-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
   }
 
   return (

@@ -4,9 +4,10 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useLiveCategories } from "@/lib/categories-store";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AccessoriesPage() {
-  const { accessories: categories } = useLiveCategories();
+  const { accessories: categories, isLoading } = useLiveCategories();
 
   return (
     <div className="w-full bg-[#FDFBF8] min-h-[calc(100vh-3.5rem)]">
@@ -28,31 +29,43 @@ export default function AccessoriesPage() {
       {/* Accessory Category Visual Cards Grid — 2-Column on Mobile, 4-Column on Desktop (same as cloths category), 4:5 Aspect Ratio */}
       <section className="w-full px-4 sm:px-10 lg:px-14 py-6 sm:py-12 lg:py-16">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
-          {categories.map((category) => (
-            <Link
-              key={category.id}
-              href={`/accessories/${category.slug}`}
-              className="group flex flex-col bg-transparent overflow-hidden"
-            >
-              {/* 4:5 Portrait Category Image */}
-              <div className="relative aspect-[4/5] w-full bg-[#F5F3F0] overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={category.image}
-                  alt={category.alt || category.name}
-                  className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
-                />
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={`acc-skel-${i}`} className="flex flex-col bg-transparent overflow-hidden">
+                <Skeleton className="relative aspect-[4/5] w-full bg-[#EFECE8]" />
+                <div className="pt-2.5 sm:pt-4 pb-1 sm:pb-2 flex items-center justify-between">
+                  <Skeleton className="h-4 w-24 bg-[#E5E0D8]" />
+                  <Skeleton className="h-3.5 w-3.5 rounded-full bg-[#E5E0D8]" />
+                </div>
               </div>
+            ))
+          ) : (
+            categories.map((category) => (
+              <Link
+                key={category.id}
+                href={`/accessories/${category.slug}`}
+                className="group flex flex-col bg-transparent overflow-hidden"
+              >
+                {/* 4:5 Portrait Category Image */}
+                <div className="relative aspect-[4/5] w-full bg-[#F5F3F0] overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={category.image}
+                    alt={category.alt || category.name}
+                    className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                </div>
 
-              {/* Minimal Category Title with Subtle Arrow — Name only, no price/meta */}
-              <div className="pt-2.5 sm:pt-4 pb-1 sm:pb-2 flex items-center justify-between">
-                <span className="font-serif text-[12px] sm:text-base tracking-[0.14em] text-[#191919] uppercase group-hover:text-[#7B5644] transition-colors font-medium truncate">
-                  {category.name}
-                </span>
-                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#191919] group-hover:text-[#7B5644] transform group-hover:translate-x-1.5 transition-all flex-shrink-0" />
-              </div>
-            </Link>
-          ))}
+                {/* Minimal Category Title with Subtle Arrow — Name only, no price/meta */}
+                <div className="pt-2.5 sm:pt-4 pb-1 sm:pb-2 flex items-center justify-between">
+                  <span className="font-serif text-[12px] sm:text-base tracking-[0.14em] text-[#191919] uppercase group-hover:text-[#7B5644] transition-colors font-medium truncate">
+                    {category.name}
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#191919] group-hover:text-[#7B5644] transform group-hover:translate-x-1.5 transition-all flex-shrink-0" />
+                </div>
+              </Link>
+            ))
+          )}
         </div>
       </section>
     </div>

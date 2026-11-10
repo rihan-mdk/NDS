@@ -8,6 +8,7 @@ import { useLiveProducts } from "@/lib/products-store";
 import { useLiveCategories } from "@/lib/categories-store";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SlidersHorizontal, ArrowLeft } from "lucide-react";
 
 export default function AccessoryCategoryDetailPage() {
@@ -16,7 +17,7 @@ export default function AccessoryCategoryDetailPage() {
   const [sortBy, setSortBy] = useState<string>("price-low");
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
-  const { accessories: liveAccessories } = useLiveCategories();
+  const { accessories: liveAccessories, isLoading } = useLiveCategories();
   const categoryMetaFromList =
     liveAccessories.find((c) => c.slug === slug) ||
     ACCESSORIES_CATEGORIES.find((c) => c.slug === slug);
@@ -106,7 +107,19 @@ export default function AccessoryCategoryDetailPage() {
 
       {/* Product Grid — Strict 2-column mobile grid, 4:5 image ratio cards */}
       <section className="w-full px-4 sm:px-10 lg:px-14 py-6 sm:py-12">
-        {items.length === 0 ? (
+        {isLoading ? (
+          <div className="grid gap-3 sm:gap-6 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-3">
+                <Skeleton className="w-full aspect-[4/5]" />
+                <div className="flex flex-col gap-1.5 px-0.5">
+                  <Skeleton className="h-3.5 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : items.length === 0 ? (
           <div className="py-20 text-center">
             <p className="font-serif text-2xl text-[#191919] mb-2 font-normal">
               No Pieces in this Category Yet

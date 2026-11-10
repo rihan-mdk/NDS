@@ -122,4 +122,18 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  /* Luxury Shimmer Skeleton Effect */
+  @keyframes atelier-shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-shimmer {
+    animation: atelier-shimmer 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 }

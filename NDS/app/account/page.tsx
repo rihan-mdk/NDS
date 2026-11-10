@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { createClient } from "@/lib/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   User as UserIcon,
   ShoppingBag,
@@ -57,7 +58,7 @@ interface Measurements {
 }
 
 export default function AccountProfilePage() {
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, signOut, isAdmin, loading } = useAuth();
   const { totalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
   const router = useRouter();
@@ -430,6 +431,30 @@ export default function AccountProfilePage() {
       ══════════════════════════════════════════════════════════════ */}
       <div className="block lg:hidden w-full px-4 sm:px-6 pt-4 pb-24">
 
+        {/* ── Auth Loading Skeleton (mobile) ── */}
+        {loading ? (
+          <div className="flex flex-col items-center pt-6 pb-4 gap-4">
+            {/* Avatar */}
+            <Skeleton className="w-20 h-20 rounded-full" />
+            {/* Name */}
+            <Skeleton className="h-6 w-36" />
+            {/* Sub-label */}
+            <Skeleton className="h-3 w-24" />
+            {/* 3 stat cards */}
+            <div className="w-full grid grid-cols-3 gap-3 mt-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 rounded-xl" />
+              ))}
+            </div>
+            {/* Menu rows */}
+            <div className="w-full flex flex-col gap-3 mt-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 rounded-xl w-full" />
+              ))}
+            </div>
+          </div>
+        ) : (<>
+
         {/* Top User Profile Section */}
         <section className="pt-2 pb-5 flex flex-col items-center text-center">
           <div className="w-20 h-20 rounded-full bg-[#F5F3F0] flex items-center justify-center relative shadow-xs border border-[#E4E2DF]/60 mb-3">
@@ -707,6 +732,7 @@ export default function AccountProfilePage() {
           </div>
         </section>
 
+      </>)}
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
@@ -726,6 +752,36 @@ export default function AccountProfilePage() {
         </div>
 
         {/* Account Management Grid */}
+        {loading ? (
+          <div className="grid grid-cols-12 gap-10 mt-8 items-start">
+            {/* Sidebar skeleton */}
+            <div className="col-span-3 flex flex-col gap-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+            {/* Content skeleton */}
+            <div className="col-span-9 flex flex-col gap-6">
+              <div className="flex items-center gap-5 pb-6 border-b border-[#EAE5DF]">
+                <Skeleton className="w-16 h-16 rounded-full" />
+                <div className="flex flex-col gap-2">
+                  <Skeleton className="h-6 w-44" />
+                  <Skeleton className="h-4 w-56" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-5">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-24 rounded-sm" />
+                ))}
+              </div>
+              <div className="flex flex-col gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
         <div className="grid grid-cols-12 gap-10 mt-8 items-start">
 
           {/* ── Left Sidebar Navigation (col-span-3) ── */}
@@ -1105,6 +1161,7 @@ export default function AccountProfilePage() {
 
           </div>
         </div>
+        )} {/* end loading ternary */}
       </div>
 
       {/* ══════════════════════════════════════════════════════════════

@@ -193,11 +193,13 @@ export function useLiveCategories(typeFilter?: "clothing" | "accessory"): {
   categories: AtelierCategory[];
   clothing: AtelierCategory[];
   accessories: AtelierCategory[];
+  isLoading: boolean;
   refresh: () => Promise<void>;
 } {
   const [categories, setCategories] = useState<AtelierCategory[]>(() => {
     return [...DEFAULT_CLOTHING_CATEGORIES, ...DEFAULT_ACCESSORY_CATEGORIES];
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   const sync = async () => {
     try {
@@ -216,6 +218,7 @@ export function useLiveCategories(typeFilter?: "clothing" | "accessory"): {
             } catch {}
           }
           setCategories(data.categories);
+          setIsLoading(false);
           return;
         }
       }
@@ -223,11 +226,13 @@ export function useLiveCategories(typeFilter?: "clothing" | "accessory"): {
       console.warn("Failed to sync categories:", e);
     }
     setCategories(getAllCategories());
+    setIsLoading(false);
   };
 
   useEffect(() => {
     // 1. Instant local render
     setCategories(getAllCategories());
+    const t = setTimeout(() => setIsLoading(false), 300);
 
     // 2. Background sync
     sync();
@@ -252,6 +257,7 @@ export function useLiveCategories(typeFilter?: "clothing" | "accessory"): {
     }
 
     return () => {
+      clearTimeout(t);
       window.removeEventListener(SYNC_EVENT, handleUpdate);
       window.removeEventListener("storage", handleUpdate);
       window.removeEventListener("focus", sync);
@@ -270,6 +276,7 @@ export function useLiveCategories(typeFilter?: "clothing" | "accessory"): {
     categories: filtered,
     clothing,
     accessories,
+    isLoading,
     refresh: sync,
   };
 }
