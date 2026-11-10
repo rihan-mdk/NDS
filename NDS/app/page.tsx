@@ -53,8 +53,7 @@ const CURATED_CATEGORIES = [
   {
     name: "Accessories",
     href: "/accessories",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCAzcVOWYJb1gD6fk7UwqLMJCcFi5ffOrtlxPtknpZ5fplAAmUoNHnn8sl2eAiXRqMn_G_iMSZwzLKY6WzsLEK6muv-QLfwJmBZHcZjFs6tifDN9hax5AY6tEGGsX5Ngyw8UlonXjw6_b5v2waq7efXSNv6f0n4E9nKCyWXbD5FOw_cXetIaLGTF6DUf3qoxIEdgh_7Sz7WMMqxwxpU40w1ftRlOyhul0mo0AVsGoTB",
+    image: "/images/cover_images/clutches.jpg",
   },
 ];
 

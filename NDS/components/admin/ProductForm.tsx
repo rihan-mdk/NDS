@@ -37,9 +37,9 @@ const CLOTHING_CATEGORIES = [
 ];
 
 const ACCESSORY_CATEGORIES = [
-  { label: "Bracelet & Cuffs", value: "bracelets" },
-  { label: "Clutches & Potlis", value: "clutches" },
-  { label: "Statement Rings", value: "rings" },
+  { label: "Bracelet", value: "bracelets" },
+  { label: "Clutches", value: "clutches" },
+  { label: "Rings", value: "rings" },
 ];
 
 const CLOTHING_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
@@ -390,7 +390,7 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
                 Accessory
               </div>
               <p className="text-[11px] text-[#77716D] mt-0.5">
-                Bracelets, Clutches, and Statement Rings.
+                Bracelets, Clutches, and Rings.
               </p>
             </button>
           </div>

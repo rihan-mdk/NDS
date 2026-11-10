@@ -95,24 +95,24 @@ export const CATEGORIES_LIST = [
 export const ACCESSORIES_CATEGORIES = [
   {
     slug: 'bracelets',
-    name: 'Bracelets & Cuffs',
+    name: 'Bracelet',
     count: 6,
     description: 'Filigree heritage cuffs, 22k gold foiling, and meenakari craftsmanship.',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCQd_Bl8-29VL_EkcAAe3uI4Mx5aTxlzLLbaDPU4N7hBLurX7il5yqNe52gPYHGos9P-nXlZFWbccr6VHXBBmSHGDf7h2E7Xl759UGAOpW1SGiKeCf46YRWigV_A4UZlEnF5qss3WS4vUW9WzEGspnDetazXHuy1jlQRGAqUCHcDBmBHN47hc0UT2ttRsCqnj28cn4INi87FSavEb9eZ8LZcqUqiRhbVUnDnt9gzBgM'
+    image: '/images/cover_images/Bracelet.jpg'
   },
   {
     slug: 'clutches',
-    name: 'Clutches & Potlis',
+    name: 'Clutches',
     count: 8,
     description: 'Hand-sewn velvet potlis with bullion wire cord and pearl tassels.',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBg4fEf5pO9178NLlTyF2p2U0sUBWW4zY3gJh1_88s9j8HmpLQiY6jT44friUru7ejw2P8cdcRuyeNxISzQm56fs_P9m7IIyp3rOV_t-NsOnPF7idSQlYkFYT6pJDlXfSnw8dZSqs9qrsOdghNfhCSo_lH69f3fTkkJSrXLurEz3KQZwCTikLlD2HJMQqBQThgWK2FY9_BDFlVW1F7rIIpmSFLWMuk-F4QjJkVWiUR8'
+    image: '/images/cover_images/clutches.jpg'
   },
   {
     slug: 'rings',
-    name: 'Statement Rings',
+    name: 'Rings',
     count: 5,
     description: 'Uncut polki diamonds set in royal kundan foil mounts.',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAvk8J6o7zxSCxL0DNrDShrTtnmHzoBCNVDp1mhNa6ehWAzo2TusQ-oM5r6wh3jEGRFWJjVgNcG1wTeSA9MIiIFKESLGwkEtS1bbgQdXiRefG2nGneDCUTIiEghgVFqq7dpP_Fz1QA-1bU7aZQGQJFfYo7qhp3EKQ4ywU0vrAOAs3fWRF4YPJcAj61W5KS4cqmUGkofisrtQm7DRuvP61f_PusGAragBx_DVLS1ie3z'
+    image: '/images/cover_images/rings.jpg'
   },
 ];
 

@@ -25,9 +25,9 @@ export default function AccessoriesPage() {
         </div>
       </section>
 
-      {/* Accessory Category Visual Cards Grid — 2-Column on Mobile (2x2 structure), 3-Column on Desktop, 4:5 Aspect Ratio */}
+      {/* Accessory Category Visual Cards Grid — 2-Column on Mobile, 4-Column on Desktop (same as cloths category), 4:5 Aspect Ratio */}
       <section className="w-full px-4 sm:px-10 lg:px-14 py-6 sm:py-12 lg:py-16">
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
           {categories.map((category) => (
             <Link
               key={category.id}
