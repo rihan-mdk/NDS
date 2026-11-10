@@ -9,6 +9,10 @@ import {
 } from "@/lib/categories-store";
 import { AtelierCategory } from "@/lib/products-data";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 const DATA_DIR = path.join(process.cwd(), "data");
 const CATEGORIES_FILE_PATH = path.join(DATA_DIR, "custom-categories.json");
 const SESSION_COOKIE_NAME = "nds_admin_session";

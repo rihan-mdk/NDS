@@ -201,7 +201,10 @@ export function useLiveCategories(typeFilter?: "clothing" | "accessory"): {
 
   const sync = async () => {
     try {
-      const res = await fetch("/api/admin/categories");
+      const res = await fetch(`/api/categories?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" },
+      });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.categories)) {
@@ -216,7 +219,9 @@ export function useLiveCategories(typeFilter?: "clothing" | "accessory"): {
           return;
         }
       }
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to sync categories:", e);
+    }
     setCategories(getAllCategories());
   };
 
@@ -227,17 +232,32 @@ export function useLiveCategories(typeFilter?: "clothing" | "accessory"): {
     // 2. Background sync
     sync();
 
-    // 3. Listen to local events
+    // 3. Re-sync on window focus or tab visibility change
+    const handleVisibility = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        sync();
+      }
+    };
+
+    // 4. Listen to local events
     const handleUpdate = () => {
       setCategories(getAllCategories());
     };
 
     window.addEventListener(SYNC_EVENT, handleUpdate);
     window.addEventListener("storage", handleUpdate);
+    window.addEventListener("focus", sync);
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibility);
+    }
 
     return () => {
       window.removeEventListener(SYNC_EVENT, handleUpdate);
       window.removeEventListener("storage", handleUpdate);
+      window.removeEventListener("focus", sync);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibility);
+      }
     };
   }, []);
 

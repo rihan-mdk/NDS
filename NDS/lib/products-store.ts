@@ -129,7 +129,10 @@ export function useLiveProducts(categoryFilter?: string): Product[] {
     // 2. Synchronize with cloud database in background
     async function syncFromCloud() {
       try {
-        const res = await fetch("/api/admin/products");
+        const res = await fetch(`/api/admin/products?t=${Date.now()}`, {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" },
+        });
         if (res.ok) {
           const data = await res.json();
 
@@ -170,13 +173,27 @@ export function useLiveProducts(categoryFilter?: string): Product[] {
 
     syncFromCloud();
 
-    // Listen to local update events for instantaneous updates without network delay
+    const handleVisibility = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        syncFromCloud();
+      }
+    };
+
+    // Listen to local update events and window focus for instantaneous updates without network delay
     window.addEventListener(SYNC_EVENT, updateLocal);
     window.addEventListener("storage", updateLocal);
+    window.addEventListener("focus", syncFromCloud);
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibility);
+    }
 
     return () => {
       window.removeEventListener(SYNC_EVENT, updateLocal);
       window.removeEventListener("storage", updateLocal);
+      window.removeEventListener("focus", syncFromCloud);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibility);
+      }
     };
   }, [categoryFilter]);
 

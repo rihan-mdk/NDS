@@ -5,6 +5,10 @@ import path from "path";
 import { PRODUCTS, Product } from "@/lib/products-data";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 const DATA_DIR = path.join(process.cwd(), "data");
 const FILE_PATH = path.join(DATA_DIR, "custom-products.json");
 const DELETED_FILE_PATH = path.join(DATA_DIR, "deleted-products.json");
