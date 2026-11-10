@@ -196,7 +196,7 @@ export function useLiveCategories(typeFilter?: "clothing" | "accessory"): {
   refresh: () => Promise<void>;
 } {
   const [categories, setCategories] = useState<AtelierCategory[]>(() => {
-    return getAllCategories();
+    return [...DEFAULT_CLOTHING_CATEGORIES, ...DEFAULT_ACCESSORY_CATEGORIES];
   });
 
   const sync = async () => {

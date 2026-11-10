@@ -101,6 +101,13 @@ export function deleteProductFromStorage(id: string) {
   }
 }
 
+function getStaticProducts(categoryFilter?: string): Product[] {
+  const deletedIds = new Set(KNOWN_DELETED_BASE_IDS);
+  const base = PRODUCTS.filter((p) => !deletedIds.has(p.id));
+  if (!categoryFilter || categoryFilter === "all") return base;
+  return base.filter((p) => p.category === categoryFilter);
+}
+
 /**
  * React hook to subscribe to live product updates.
  * SSR and initial client hydration start with base PRODUCTS to guarantee zero hydration mismatch,
@@ -108,9 +115,7 @@ export function deleteProductFromStorage(id: string) {
  */
 export function useLiveProducts(categoryFilter?: string): Product[] {
   const [products, setProducts] = useState<Product[]>(() => {
-    const all = getAllLiveProducts();
-    if (!categoryFilter || categoryFilter === "all") return all;
-    return all.filter((p) => p.category === categoryFilter);
+    return getStaticProducts(categoryFilter);
   });
 
   useEffect(() => {
