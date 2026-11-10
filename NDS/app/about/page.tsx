@@ -18,7 +18,7 @@ export default function AboutPage() {
         <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-[#191919] via-[#191919]/60 to-transparent pointer-events-none" />
 
         <div className="relative z-10 w-full px-6 sm:px-10 lg:px-14 pb-16 pt-32">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-[#B58A76] font-semibold block mb-3">
+          <span className="text-[10px] uppercase tracking-[0.25em] text-[#2C2825] font-semibold block mb-3">
             ESTABLISHED · ATELIER HERITAGE
           </span>
           <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-[#FDFBF8] font-normal leading-tight mb-4 max-w-3xl">
