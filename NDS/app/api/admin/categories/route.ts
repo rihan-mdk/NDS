@@ -78,6 +78,7 @@ export async function GET() {
             Array.isArray(row.images) && row.images.length > 0
               ? row.images[0]
               : "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=800&q=80",
+          alt: row.fabric || `Artisanal Handcrafted ${row.title}`,
           isCustom: true,
         }));
       }
@@ -180,6 +181,7 @@ export async function POST(request: NextRequest) {
       type,
       description: description.trim() || `${cleanName} collection crafted for the discerning atelier.`,
       image: image.trim() || fallbackImage,
+      alt: `Artisanal Handcrafted ${cleanName}`,
       count: 0,
       isCustom: true,
     };
@@ -197,6 +199,7 @@ export async function POST(request: NextRequest) {
         price: 0,
         images: [newCategory.image],
         description: newCategory.description,
+        fabric: newCategory.alt,
         in_stock: true,
         updated_at: new Date().toISOString(),
       });

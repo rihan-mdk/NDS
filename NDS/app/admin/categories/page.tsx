@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import {
   FolderPlus,
@@ -15,6 +15,8 @@ import {
   Loader2,
   Check,
   ImageIcon,
+  UploadCloud,
+  Upload,
 } from "lucide-react";
 import { useLiveCategories, saveCategoryToStorage, deleteCategoryFromStorage } from "@/lib/categories-store";
 import { AtelierCategory } from "@/lib/products-data";
@@ -34,6 +36,12 @@ export default function AdminCategoriesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
+  // Image upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadMode, setUploadMode] = useState<"file" | "url">("file");
+
   // Delete modal state
   const [categoryToDelete, setCategoryToDelete] = useState<AtelierCategory | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -49,6 +57,62 @@ export default function AdminCategoriesPage() {
     setFormSlug(slug);
   };
 
+  // Upload helper for category image from file explorer
+  const uploadCategoryFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setFormError("Only image files (JPG, PNG, WebP) are allowed.");
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setFormError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) {
+          setFormImage(data.url);
+          setIsUploadingImage(false);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Upload API error, falling back to local file reader:", err);
+    }
+
+    // Fallback: Read as base64 data URL
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormImage(reader.result as string);
+      setIsUploadingImage(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadCategoryFile(file);
+    }
+    if (e.target) e.target.value = "";
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      uploadCategoryFile(file);
+    }
+  };
+
   const handleOpenModal = (defaultType?: "clothing" | "accessory") => {
     setFormType(defaultType || activeTab);
     setFormName("");
@@ -56,6 +120,9 @@ export default function AdminCategoriesPage() {
     setFormDescription("");
     setFormImage("");
     setFormError("");
+    setUploadMode("file");
+    setIsUploadingImage(false);
+    setIsDragOver(false);
     setIsModalOpen(true);
   };
 
@@ -247,8 +314,8 @@ export default function AdminCategoriesPage() {
                 key={category.id}
                 className="group flex flex-col bg-white border border-[#EAE5DF] overflow-hidden hover:border-[#191919]/40 hover:shadow-sm transition-all"
               >
-                {/* Visual Cover Photo */}
-                <div className="relative aspect-[4/3] w-full bg-[#F5F3F0] overflow-hidden">
+                {/* Visual Cover Photo - 4:5 Portrait Ratio matching storefront */}
+                <div className="relative aspect-[4/5] w-full bg-[#F5F3F0] overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={category.image}
@@ -455,13 +522,116 @@ export default function AdminCategoriesPage() {
                 />
               </div>
 
-              {/* Cover Image URL */}
+              {/* Category Cover Image (File Explorer Upload + URL Option) */}
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-[#191919] font-semibold mb-1.5">
-                  Cover Image URL (Optional)
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[10px] uppercase tracking-wider text-[#191919] font-semibold">
+                    Cover Image
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setUploadMode(uploadMode === "file" ? "url" : "file")}
+                    className="text-[10px] text-[#7B5644] hover:underline font-medium"
+                  >
+                    {uploadMode === "file" ? "Or enter URL manually" : "Or upload from file explorer"}
+                  </button>
+                </div>
+
+                {/* Hidden native file input for file explorer */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+
+                {formImage ? (
+                  /* Live 4:5 Aspect Ratio Preview Card (matching kurti & bracelet presentation) */
+                  <div className="border border-[#EAE5DF] bg-[#FAF8F5] p-3 flex items-center gap-4">
+                    <div className="relative aspect-[4/5] w-20 bg-[#F5F3F0] border border-[#EAE5DF] overflow-hidden shrink-0 shadow-xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={formImage}
+                        alt="Category Preview"
+                        className="w-full h-full object-cover object-center"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-medium mb-1">
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Cover Image Attached</span>
+                      </div>
+                      <p className="text-[11px] text-[#77716D] truncate mb-2.5 font-mono">
+                        {formImage.startsWith("data:") ? "Local File Explorer Image" : formImage}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold px-2.5 py-1.5 bg-[#191919] text-[#FDFBF8] hover:bg-[#7B5644] transition-colors"
+                        >
+                          <Upload className="w-3 h-3" />
+                          <span>Change File</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormImage("")}
+                          className="text-[10px] uppercase tracking-wider font-semibold px-2.5 py-1.5 border border-[#EAE5DF] text-[#77716D] hover:text-red-600 hover:border-red-200 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : uploadMode === "file" ? (
+                  /* File Explorer Upload Dropzone */
+                  <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragOver(true);
+                    }}
+                    onDragLeave={() => setIsDragOver(false)}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
+                      isDragOver
+                        ? "border-[#7B5644] bg-[#7B5644]/5"
+                        : "border-[#D5CEC7] hover:border-[#7B5644] bg-[#FAF8F5] hover:bg-[#F5F2EE]"
+                    }`}
+                  >
+                    {isUploadingImage ? (
+                      <div className="flex flex-col items-center py-2">
+                        <Loader2 className="w-6 h-6 animate-spin text-[#7B5644] mb-2" />
+                        <span className="text-xs font-medium text-[#191919]">
+                          Uploading image...
+                        </span>
+                        <span className="text-[10px] text-[#77716D]">
+                          Processing file for atelier gallery
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 rounded-full bg-white border border-[#EAE5DF] flex items-center justify-center text-[#7B5644] shadow-xs">
+                          <UploadCloud className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-semibold text-[#191919] underline decoration-[#7B5644]/60 underline-offset-2">
+                            Choose Image from File Explorer
+                          </span>
+                          <p className="text-[11px] text-[#77716D] mt-0.5">
+                            or drag and drop your image file here
+                          </p>
+                        </div>
+                        <span className="text-[10px] text-[#9E9893] uppercase tracking-wider">
+                          JPEG, PNG, WebP (4:5 portrait structure recommended)
+                        </span>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  /* Direct URL option */
+                  <div>
                     <input
                       type="url"
                       value={formImage}
@@ -469,12 +639,9 @@ export default function AdminCategoriesPage() {
                       placeholder="https://example.com/cover-image.jpg"
                       className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
                     />
-                  </div>
-                </div>
-                {formImage && (
-                  <div className="mt-2 relative w-20 h-20 bg-[#F5F3F0] border border-[#EAE5DF] overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={formImage} alt="Preview" className="w-full h-full object-cover" />
+                    <p className="text-[10px] text-[#77716D] mt-1">
+                      Direct public image link
+                    </p>
                   </div>
                 )}
               </div>
@@ -491,7 +658,7 @@ export default function AdminCategoriesPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isUploadingImage}
                   className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#191919] text-[#FDFBF8] text-xs uppercase tracking-widest font-semibold hover:bg-[#7B5644] transition-colors disabled:opacity-50"
                 >
                   {isSubmitting ? (

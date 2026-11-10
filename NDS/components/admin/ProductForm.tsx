@@ -222,6 +222,11 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
     const isAccessory = productType === "accessory";
     const allImages = [mainImage.trim(), ...additionalImages.filter(Boolean)];
 
+    const selectedCatMeta = allLiveCategories.find((c) => c.slug === category);
+    const computedCategoryLabel =
+      selectedCatMeta?.name ||
+      category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, " ");
+
     const productPayload: Product = {
       id: initialData?.id || `prod-custom-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       slug:
@@ -232,9 +237,7 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
           .replace(/(^-|-$)+/g, ""),
       title: title.trim(),
       category: category as any,
-      categoryLabel: isAccessory
-        ? "Accessories"
-        : category.charAt(0).toUpperCase() + category.slice(1).replace("-", " "),
+      categoryLabel: computedCategoryLabel,
       subCategory: subCategory.trim() || (isAccessory ? "Haute Joaillerie" : "Atelier Couture"),
       price: Number(price),
       originalPrice: originalPrice ? Number(originalPrice) : undefined,

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { PRODUCTS, CATEGORIES_LIST, getProductsByCategory, Product } from "@/lib/products-data";
 import { useLiveProducts } from "@/lib/products-store";
+import { useLiveCategories } from "@/lib/categories-store";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { SlidersHorizontal, ArrowLeft } from "lucide-react";
@@ -15,14 +16,22 @@ export default function CategoryDetailPage() {
   const [sortBy, setSortBy] = useState<string>("price-low");
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
-  // Use slug to derive a clean "[Category] Collection" display name
-  // Keep CATEGORIES_LIST only for the description
-  const categoryMetaFromList = CATEGORIES_LIST.find((c) => c.slug === slug);
-  const displayName =
+  const { clothing: liveClothing } = useLiveCategories();
+  const categoryMetaFromList =
+    liveClothing.find((c) => c.slug === slug) ||
+    CATEGORIES_LIST.find((c) => c.slug === slug);
+
+  const rawName =
+    categoryMetaFromList?.name ||
     slug
       .split("-")
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ") + " Collection";
+      .join(" ");
+
+  const displayName = rawName.toLowerCase().endsWith("collection")
+    ? rawName
+    : `${rawName} Collection`;
+
   const categoryMeta = {
     slug,
     name: displayName,

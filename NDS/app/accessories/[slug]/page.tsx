@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { PRODUCTS, ACCESSORIES_CATEGORIES, getProductsByCategory, Product } from "@/lib/products-data";
 import { useLiveProducts } from "@/lib/products-store";
+import { useLiveCategories } from "@/lib/categories-store";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { SlidersHorizontal, ArrowLeft } from "lucide-react";
@@ -15,12 +16,22 @@ export default function AccessoryCategoryDetailPage() {
   const [sortBy, setSortBy] = useState<string>("price-low");
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
-  const categoryMetaFromList = ACCESSORIES_CATEGORIES.find((c) => c.slug === slug);
-  const displayName =
+  const { accessories: liveAccessories } = useLiveCategories();
+  const categoryMetaFromList =
+    liveAccessories.find((c) => c.slug === slug) ||
+    ACCESSORIES_CATEGORIES.find((c) => c.slug === slug);
+
+  const rawName =
+    categoryMetaFromList?.name ||
     slug
       .split("-")
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ") + " Collection";
+      .join(" ");
+
+  const displayName = rawName.toLowerCase().endsWith("collection")
+    ? rawName
+    : `${rawName} Collection`;
+
   const categoryMeta = {
     slug,
     name: displayName,

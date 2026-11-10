@@ -153,14 +153,18 @@ export function getAllAccessoryCategories(): AtelierCategory[] {
 export function saveCategoryToStorage(category: AtelierCategory) {
   if (typeof window === "undefined") return;
   try {
+    const itemWithAlt: AtelierCategory = {
+      ...category,
+      alt: category.alt || `Artisanal Handcrafted ${category.name}`,
+    };
     const current = getCustomCategoriesFromStorage();
-    const existingIndex = current.findIndex((c) => c.slug === category.slug || c.id === category.id);
+    const existingIndex = current.findIndex((c) => c.slug === itemWithAlt.slug || c.id === itemWithAlt.id);
     let updated: AtelierCategory[];
     if (existingIndex > -1) {
       updated = [...current];
-      updated[existingIndex] = category;
+      updated[existingIndex] = itemWithAlt;
     } else {
-      updated = [category, ...current];
+      updated = [itemWithAlt, ...current];
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     window.dispatchEvent(new Event(SYNC_EVENT));
