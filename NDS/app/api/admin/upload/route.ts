@@ -3,9 +3,7 @@ import { cookies } from "next/headers";
 import fs from "fs";
 import path from "path";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-
-const SESSION_COOKIE_NAME = "nds_admin_session";
-const SESSION_SECRET_TOKEN = "nds_atelier_admin_token_v1";
+import { verifyAdminFromCookies } from "@/lib/auth-server";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 
@@ -18,8 +16,8 @@ function ensureUploadDir() {
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const session = cookieStore.get(SESSION_COOKIE_NAME);
-    if (session?.value !== SESSION_SECRET_TOKEN) {
+    const isAdmin = await verifyAdminFromCookies(cookieStore);
+    if (!isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -70,8 +68,6 @@ export async function POST(request: Request) {
           url: publicUrlData.publicUrl,
           fileName,
         });
-      } else {
-        console.warn("Supabase storage upload failed, falling back to local:", uploadError);
       }
     }
 

@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-
-const SESSION_COOKIE_NAME = "nds_admin_session";
-const SESSION_SECRET_TOKEN = "nds_atelier_admin_token_v1";
+import { verifyAdminFromCookies } from "@/lib/auth-server";
+import { sanitizeText } from "@/lib/security";
 
 async function verifyAdmin(): Promise<boolean> {
   try {
     const cookieStore = await cookies();
-    const session = cookieStore.get(SESSION_COOKIE_NAME);
-    return session?.value === SESSION_SECRET_TOKEN;
+    return verifyAdminFromCookies(cookieStore);
   } catch {
     return false;
   }
@@ -54,6 +52,17 @@ function dbOrderToRecord(order: any, items: any[] = []) {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get("userId");
+
+  // If requesting the full orders list (not for a specific user), admin authentication is strictly required
+  if (!userId) {
+    const isAdmin = await verifyAdmin();
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Unauthorized atelier administrator access required." },
+        { status: 401 }
+      );
+    }
+  }
 
   const supabase = getSupabaseAdmin();
   if (!supabase) {

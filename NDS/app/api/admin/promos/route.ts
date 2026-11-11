@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-
-const SESSION_COOKIE_NAME = "nds_admin_session";
-const SESSION_SECRET_TOKEN = "nds_atelier_admin_token_v1";
+import { verifyAdminFromCookies } from "@/lib/auth-server";
+import { sanitizeText, sanitizeSlug } from "@/lib/security";
 
 async function verifyAdmin(): Promise<boolean> {
   try {
     const cookieStore = await cookies();
-    const session = cookieStore.get(SESSION_COOKIE_NAME);
-    return session?.value === SESSION_SECRET_TOKEN;
+    return await verifyAdminFromCookies(cookieStore);
   } catch {
     return false;
   }
@@ -56,12 +54,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "code and discount_percent are required" }, { status: 400 });
   }
 
+  // Sanitize inputs
+  const safeCode = sanitizeSlug(String(code).trim().toUpperCase());
+  const safeDescription = description ? sanitizeText(String(description)) : null;
+  const discountNum = Number(discount_percent);
+
+  if (!safeCode || isNaN(discountNum) || discountNum <= 0 || discountNum > 100) {
+    return NextResponse.json({ error: "Invalid promo code or discount value" }, { status: 400 });
+  }
+
   const { data, error } = await supabase
     .from("promo_codes")
     .insert({
-      code: String(code).trim().toUpperCase(),
-      discount_percent: Number(discount_percent),
-      description: description || null,
+      code: safeCode,
+      discount_percent: discountNum,
+      description: safeDescription,
       max_uses: max_uses ? Number(max_uses) : null,
       expires_at: expires_at || null,
       is_active: true,
@@ -94,9 +101,12 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
   }
 
-  // Normalise code if being updated
+  // Sanitize fields being updated
   if (updates.code) {
-    updates.code = String(updates.code).trim().toUpperCase();
+    updates.code = sanitizeSlug(String(updates.code).trim().toUpperCase());
+  }
+  if (updates.description) {
+    updates.description = sanitizeText(String(updates.description));
   }
 
   const { data, error } = await supabase
@@ -139,4 +149,3 @@ export async function DELETE(request: NextRequest) {
 
   return NextResponse.json({ success: true });
 }
-

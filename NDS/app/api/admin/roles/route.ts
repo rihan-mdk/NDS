@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-
-const SESSION_COOKIE_NAME = "nds_admin_session";
-const SESSION_SECRET_TOKEN = "nds_atelier_admin_token_v1";
+import { verifyAdminFromCookies } from "@/lib/auth-server";
 
 async function verifyAdmin(): Promise<boolean> {
   try {
     const cookieStore = await cookies();
-    const session = cookieStore.get(SESSION_COOKIE_NAME);
-    return session?.value === SESSION_SECRET_TOKEN;
+    return await verifyAdminFromCookies(cookieStore);
   } catch {
     return false;
   }
@@ -31,7 +28,6 @@ export async function GET() {
     // Fetch all auth users via admin API
     const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
     if (usersError) {
-      console.error("Error listing users:", usersError);
       return NextResponse.json({ users: [] });
     }
 
@@ -52,8 +48,7 @@ export async function GET() {
     }));
 
     return NextResponse.json({ users: enriched });
-  } catch (err) {
-    console.error("GET /api/admin/roles error:", err);
+  } catch {
     return NextResponse.json({ users: [] }, { status: 200 });
   }
 }
@@ -89,13 +84,11 @@ export async function PUT(request: Request) {
     });
 
     if (error) {
-      console.error("Error updating role:", error);
       return NextResponse.json({ error: "Failed to update role" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("PUT /api/admin/roles error:", err);
+  } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -128,9 +121,7 @@ export async function DELETE(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("DELETE /api/admin/roles error:", err);
+  } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-

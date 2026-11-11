@@ -8,6 +8,7 @@ import {
   DEFAULT_ACCESSORY_CATEGORIES,
 } from "@/lib/categories-store";
 import { AtelierCategory } from "@/lib/products-data";
+import { verifyAdminFromCookies } from "@/lib/auth-server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -15,8 +16,6 @@ export const fetchCache = "force-no-store";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const CATEGORIES_FILE_PATH = path.join(DATA_DIR, "custom-categories.json");
-const SESSION_COOKIE_NAME = "nds_admin_session";
-const SESSION_SECRET_TOKEN = "nds_atelier_admin_token_v1";
 
 function ensureDataFile() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -50,8 +49,7 @@ function writeCustomCategoriesToFile(categories: AtelierCategory[]) {
 async function verifyAdmin(): Promise<boolean> {
   try {
     const cookieStore = await cookies();
-    const session = cookieStore.get(SESSION_COOKIE_NAME);
-    return session?.value === SESSION_SECRET_TOKEN;
+    return verifyAdminFromCookies(cookieStore);
   } catch {
     return false;
   }

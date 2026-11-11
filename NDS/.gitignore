@@ -37,3 +37,11 @@ next-env.d.ts
 # raw local media
 Our_Gallery/
 
+# server-side data files (dynamic JSON state; not for version control)
+/data/custom-products.json
+/data/custom-categories.json
+/data/deleted-products.json
+
+# local uploads
+/public/uploads/
+

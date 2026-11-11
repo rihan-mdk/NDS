@@ -4,6 +4,8 @@ import fs from "fs";
 import path from "path";
 import { PRODUCTS, Product } from "@/lib/products-data";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { verifyAdminFromCookies } from "@/lib/auth-server";
+import { sanitizeText, sanitizeHtml, sanitizeSlug } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,8 +14,6 @@ export const fetchCache = "force-no-store";
 const DATA_DIR = path.join(process.cwd(), "data");
 const FILE_PATH = path.join(DATA_DIR, "custom-products.json");
 const DELETED_FILE_PATH = path.join(DATA_DIR, "deleted-products.json");
-const SESSION_COOKIE_NAME = "nds_admin_session";
-const SESSION_SECRET_TOKEN = "nds_atelier_admin_token_v1";
 
 function ensureDataFile() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -121,8 +121,7 @@ function productToRow(product: Product) {
 
 async function verifyAdmin(): Promise<boolean> {
   const cookieStore = await cookies();
-  const session = cookieStore.get(SESSION_COOKIE_NAME);
-  return session?.value === SESSION_SECRET_TOKEN;
+  return verifyAdminFromCookies(cookieStore);
 }
 
 // GET all products or single product by ?id= / ?slug= (Supabase + base catalog fallback)
@@ -297,19 +296,19 @@ export async function POST(request: Request) {
     const newProduct: Product = {
       id: `prod-custom-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       slug: uniqueSlug,
-      title: title.trim(),
-      category,
-      categoryLabel: categoryLabel || (isAccessory ? "Accessories" : "Collection"),
-      subCategory: subCategory || "",
+      title: sanitizeText(title.trim()),
+      category: sanitizeSlug(category),
+      categoryLabel: sanitizeText(categoryLabel || (isAccessory ? "Accessories" : "Collection")),
+      subCategory: sanitizeText(subCategory || ""),
       price: Number(price),
       originalPrice: originalPrice ? Number(originalPrice) : undefined,
       images: Array.isArray(images) ? images : [images],
-      description: description.trim(),
-      details: Array.isArray(details) ? details : [],
-      fabric: fabric || (isAccessory ? "Fine Precious Metal" : "Pure Handloom Silk"),
-      embroidery: embroidery || (isAccessory ? "Artisan Craftsmanship" : "Hand Needlework"),
-      washCare: washCare || "Specialist Dry Clean Only",
-      deliveryTime: deliveryTime || "Ships within 3-5 business days via Insured Express",
+      description: sanitizeHtml(description.trim()),
+      details: Array.isArray(details) ? details.map((d: string) => sanitizeText(String(d))) : [],
+      fabric: sanitizeText(fabric || (isAccessory ? "Fine Precious Metal" : "Pure Handloom Silk")),
+      embroidery: sanitizeText(embroidery || (isAccessory ? "Artisan Craftsmanship" : "Hand Needlework")),
+      washCare: sanitizeText(washCare || "Specialist Dry Clean Only"),
+      deliveryTime: sanitizeText(deliveryTime || "Ships within 3-5 business days via Insured Express"),
       sizes: Array.isArray(sizes) ? sizes : [],
       inStock: inStock !== undefined ? Boolean(inStock) : true,
       newArrival: Boolean(newArrival),
