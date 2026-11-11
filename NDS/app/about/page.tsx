@@ -1,19 +1,16 @@
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 
 export default function AboutPage() {
   return (
     <div className="w-full bg-[#FDFBF8] text-[#191919]">
       {/* SECTION 1: Heritage Editorial Hero */}
-      <section className="relative w-full overflow-hidden bg-[#191919] min-h-[56vw] sm:min-h-[70vh] flex items-end">
+      <section className="relative w-full overflow-hidden bg-[#191919] h-[60vw] sm:h-[70vh] flex items-end">
         <div className="absolute inset-0">
-          <Image
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center brightness-[0.72]"
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            className="w-full h-full object-cover object-center brightness-[0.72]"
             alt="NEEL'S DESIGNER STUDIO Atelier Heritage"
             src="/images/about-banner.png"
           />
@@ -55,13 +52,13 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
-          <div className="relative w-full aspect-[4/5] bg-[#EFEEEB] border border-[#EAE5DF] overflow-hidden shadow-lg">
-            <Image
-              fill
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover object-center hover:scale-105 transition-transform duration-700"
-              alt="Atelier Bridal Heritage — Neel's Designer Studio"
+          {/* padding-top 125% = 4:5 ratio, most reliable cross-browser approach */}
+          <div className="relative w-full overflow-hidden shadow-lg border border-[#EAE5DF] bg-[#EFEEEB]" style={{ paddingTop: "125%" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/images/about_us.png"
+              alt="Atelier Bridal Heritage — Neel's Designer Studio"
+              className="absolute inset-0 w-full h-full object-cover object-center hover:scale-105 transition-transform duration-700"
             />
           </div>
         </div>
