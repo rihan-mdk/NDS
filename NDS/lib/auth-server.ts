@@ -136,7 +136,11 @@ export async function verifyAdminFromCookies(cookieStore: {
  */
 export function verifyAdminCredentials(emailInput: string, passwordInput: string): boolean {
   const normalizedEmail = (emailInput || "").trim().toLowerCase();
-  const expectedPassword = process.env.ADMIN_PASSWORD || "Neels@2026";
+  const expectedPassword = process.env.ADMIN_PASSWORD;
+  if (!expectedPassword) {
+    console.error("ADMIN_PASSWORD environment variable is not configured.");
+    return false;
+  }
 
   const emailMatches = timingSafeCompare(normalizedEmail, ADMIN_EMAIL);
   const passwordMatches = timingSafeCompare(passwordInput || "", expectedPassword);
