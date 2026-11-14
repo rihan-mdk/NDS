@@ -77,7 +77,38 @@ export async function proxy(request: NextRequest) {
   }
 
   // ── 4. Apply Hardened Security Headers to All Responses ────────────────────
-  const response = NextResponse.next();
+  const isDev = process.env.NODE_ENV === "development";
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+
+  const cspDirectives = [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://accounts.google.com${isDev ? " 'unsafe-eval'" : ""}`,
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self' data:",
+    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://images.unsplash.com https://cdn.21st.dev https://placehold.co https://*.supabase.co https://pqlmjejlgtvnuuiwllre.supabase.co",
+    "connect-src 'self' https://*.supabase.co https://pqlmjejlgtvnuuiwllre.supabase.co https://accounts.google.com",
+    "frame-src https://accounts.google.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    !isDev ? "upgrade-insecure-requests" : "",
+  ].filter(Boolean);
+
+  const cspHeader = cspDirectives.join("; ");
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", cspHeader);
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
+  // Apply Content Security Policy
+  response.headers.set("Content-Security-Policy", cspHeader);
 
   // Prevent MIME-sniffing
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -92,24 +123,8 @@ export async function proxy(request: NextRequest) {
     "Permissions-Policy",
     "camera=(), microphone=(), geolocation=(), browsing-topics=()"
   );
-  // Content Security Policy
-  response.headers.set(
-    "Content-Security-Policy",
-    [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://lh3.googleusercontent.com https://*.supabase.co https://pqlmjejlgtvnuuiwllre.supabase.co",
-      "connect-src 'self' https://*.supabase.co https://accounts.google.com",
-      "frame-src https://accounts.google.com",
-      "object-src 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-    ].join("; ")
-  );
   // Strict Transport Security (HSTS - 2 years)
-  if (process.env.NODE_ENV === "production") {
+  if (!isDev) {
     response.headers.set(
       "Strict-Transport-Security",
       "max-age=63072000; includeSubDomains; preload"

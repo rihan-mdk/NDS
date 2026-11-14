@@ -6,7 +6,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import {
   DEFAULT_CLOTHING_CATEGORIES,
   DEFAULT_ACCESSORY_CATEGORIES,
-} from "@/lib/categories-store";
+} from "@/lib/categories-data";
 import { AtelierCategory } from "@/lib/products-data";
 import { verifyAdminFromCookies } from "@/lib/auth-server";
 
