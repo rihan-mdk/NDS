@@ -3,8 +3,10 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Package, Truck, CheckCircle2, Home, ArrowLeft, ArrowRight } from "lucide-react";
+import { Package, Truck, CheckCircle2, Home, ArrowLeft, ArrowRight, Star } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { ReviewModal } from "@/components/ReviewModal";
+import { ProductReview } from "@/lib/reviews-data";
 
 interface Order {
   id: string;
@@ -22,6 +24,28 @@ function OrdersContent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const { user } = useAuth();
+  const [reviewingTarget, setReviewingTarget] = useState<{
+    orderId: string;
+    product: {
+      id: string;
+      slug: string;
+      title: string;
+      image?: string;
+      selectedSize?: string;
+    };
+  } | null>(null);
+  const [reviewedKeys, setReviewedKeys] = useState<Set<string>>(new Set());
+
+  // Load reviewed items tracker
+  useEffect(() => {
+    try {
+      const localReviews: ProductReview[] = JSON.parse(
+        localStorage.getItem("nds_product_reviews") || "[]"
+      );
+      const keys = new Set(localReviews.map((r) => `${r.orderId}_${r.productId}`));
+      setReviewedKeys(keys);
+    } catch {}
+  }, []);
 
   useEffect(() => {
     // 1. Load from localStorage immediately (instant render)
@@ -163,31 +187,81 @@ function OrdersContent() {
                 Items in this Order ({selectedOrder.items?.length || 0})
               </h3>
               <div className="divide-y divide-[#F5F3F0] space-y-0">
-                {(selectedOrder.items || []).map((item: any, idx: number) => (
-                  <div key={idx} className="py-3 flex gap-3">
-                    <div className="w-14 bg-[#EFEEEB] aspect-[3/4] border border-[#EAE5DF] overflow-hidden flex-shrink-0">
-                      {item.product?.images?.[0] && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={item.product.images[0]}
-                          alt={item.product.title}
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src =
-                              "https://lh3.googleusercontent.com/aida-public/AB6AXuBJpt-4xAPPD2y_sYhU90s1PyDcuMTlcdr7Tsgr9preP3ChZ-0YOqWHEimx4pGXvXZjLo_d_ZhlpbkbtVbTuPH8XinCqwqB1vRypf66P2pZbPkPoKq51i6CVsNm-nr-K90cOYZxiD6wfZjGgGEb9WtjCnGV3hseUUPqWPcQhymIdHMMSp-vMlKsWrT9ATqrIyMBU7i780F1l-UGP9W21ltdSNr5Cubb5s2xdK__NH_Qa-TAS0qC4fZWcQ";
-                          }}
-                          className="w-full h-full object-cover"
-                        />
+                {(selectedOrder.items || []).map((item: any, idx: number) => {
+                  const prodId = item.product?.id || `prod-${idx}`;
+                  const prodSlug =
+                    item.product?.slug ||
+                    item.product?.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") ||
+                    "atelier-creation";
+                  const reviewKey = `${selectedOrder.id}_${prodId}`;
+                  const isReviewed = reviewedKeys.has(reviewKey);
+
+                  return (
+                    <div key={idx} className="py-3.5 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-14 bg-[#EFEEEB] aspect-[3/4] border border-[#EAE5DF] overflow-hidden flex-shrink-0">
+                          {item.product?.images?.[0] && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.product.images[0]}
+                              alt={item.product.title}
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src =
+                                  "https://lh3.googleusercontent.com/aida-public/AB6AXuBJpt-4xAPPD2y_sYhU90s1PyDcuMTlcdr7Tsgr9preP3ChZ-0YOqWHEimx4pGXvXZjLo_d_ZhlpbkbtVbTuPH8XinCqwqB1vRypf66P2pZbPkPoKq51i6CVsNm-nr-K90cOYZxiD6wfZjGgGEb9WtjCnGV3hseUUPqWPcQhymIdHMMSp-vMlKsWrT9ATqrIyMBU7i780F1l-UGP9W21ltdSNr5Cubb5s2xdK__NH_Qa-TAS0qC4fZWcQ";
+                              }}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <Link
+                            href={`/product/${prodSlug}`}
+                            className="text-xs font-serif text-[#191919] hover:text-[#7B5644] transition-colors block truncate font-medium"
+                          >
+                            {item.product?.title}
+                          </Link>
+                          <p className="text-[11px] text-[#77716D]">
+                            Size: {item.selectedSize || "Standard"} · Qty: {item.quantity}
+                          </p>
+                          <p className="text-xs font-semibold text-[#191919] mt-0.5">
+                            ₹{((item.product?.price || 0) * item.quantity).toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Review Action for Delivered Orders */}
+                      {selectedOrder.status === "Delivered" && (
+                        <div className="flex-shrink-0">
+                          {isReviewed ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] uppercase tracking-wider font-semibold">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Reviewed</span>
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() =>
+                                setReviewingTarget({
+                                  orderId: selectedOrder.id,
+                                  product: {
+                                    id: prodId,
+                                    slug: prodSlug,
+                                    title: item.product?.title || "Atelier Creation",
+                                    image: item.product?.images?.[0],
+                                    selectedSize: item.selectedSize,
+                                  },
+                                })
+                              }
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-[10px] uppercase tracking-widest font-semibold transition-all shadow-xs"
+                            >
+                              <Star className="w-3 h-3 text-[#C29B38] fill-[#C29B38]" />
+                              <span>Write Review</span>
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-xs font-serif text-[#191919]">{item.product?.title}</p>
-                      <p className="text-[11px] text-[#77716D]">Size: {item.selectedSize} · Qty: {item.quantity}</p>
-                      <p className="text-xs font-semibold text-[#191919] mt-0.5">
-                        ₹{((item.product?.price || 0) * item.quantity).toLocaleString("en-IN")}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -247,6 +321,22 @@ function OrdersContent() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Review Modal for Delivered Order Items */}
+        {reviewingTarget && (
+          <ReviewModal
+            isOpen={true}
+            onClose={() => setReviewingTarget(null)}
+            orderId={reviewingTarget.orderId}
+            product={reviewingTarget.product}
+            userId={user?.id}
+            customerName={selectedOrder?.customer?.name || user?.user_metadata?.full_name || ""}
+            customerEmail={selectedOrder?.customer?.email || user?.email || ""}
+            onSuccess={(newReview) => {
+              setReviewedKeys((prev) => new Set([...prev, `${newReview.orderId}_${newReview.productId}`]));
+            }}
+          />
         )}
       </section>
     </div>

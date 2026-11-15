@@ -19,13 +19,32 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
+  ArrowRight,
   Sparkles,
   Star,
   X,
+  CheckCircle2,
+  Camera,
+  Maximize2,
 } from "lucide-react";
+import { ProductReview, ProductReviewStats, calculateReviewStats } from "@/lib/reviews-data";
 
 const FALLBACK_IMAGE =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuBJpt-4xAPPD2y_sYhU90s1PyDcuMTlcdr7Tsgr9preP3ChZ-0YOqWHEimx4pGXvXZjLo_d_ZhlpbkbtVbTuPH8XinCqwqB1vRypf66P2pZbPkPoKq51i6CVsNm-nr-K90cOYZxiD6wfZjGgGEb9WtjCnGV3hseUUPqWPcQhymIdHMMSp-vMlKsWrT9ATqrIyMBU7i780F1l-UGP9W21ltdSNr5Cubb5s2xdK__NH_Qa-TAS0qC4fZWcQ";
+
+function formatReviewDate(dateString: string) {
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString;
+    return d.toLocaleDateString("en-IN", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch {
+    return dateString;
+  }
+}
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -39,6 +58,72 @@ export default function ProductDetailPage() {
     return all[0] || PRODUCTS[0];
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [reviewStats, setReviewStats] = useState<ProductReviewStats>({
+    averageRating: 0,
+    totalReviews: 0,
+    ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+  });
+  const [isReviewsLoading, setIsReviewsLoading] = useState<boolean>(true);
+  const [zoomedImage, setZoomedImage] = useState<{
+    url: string;
+    author: string;
+    rating: number;
+  } | null>(null);
+
+  const loadProductReviews = async () => {
+    try {
+      setIsReviewsLoading(true);
+      // 1. Fetch from server API
+      const res = await fetch(`/api/reviews?slug=${encodeURIComponent(slug)}`);
+      let serverReviews: ProductReview[] = [];
+      if (res.ok) {
+        const data = await res.json();
+        serverReviews = data.reviews || [];
+      }
+
+      // 2. Read local reviews from localStorage
+      let localReviews: ProductReview[] = [];
+      try {
+        const saved = localStorage.getItem("nds_product_reviews");
+        if (saved) {
+          const parsed: ProductReview[] = JSON.parse(saved);
+          localReviews = parsed.filter(
+            (r) => r.productSlug === slug || (product && r.productId === product.id)
+          );
+        }
+      } catch {}
+
+      // 3. Merge & deduplicate by review id
+      const map = new Map<string, ProductReview>();
+      for (const r of serverReviews) map.set(r.id, r);
+      for (const r of localReviews) map.set(r.id, r);
+
+      const combined = Array.from(map.values()).sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      setReviews(combined);
+      setReviewStats(calculateReviewStats(combined));
+    } catch (err) {
+      console.error("Failed to load reviews:", err);
+    } finally {
+      setIsReviewsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProductReviews();
+
+    const handleReviewsUpdated = () => {
+      loadProductReviews();
+    };
+
+    window.addEventListener("nds_reviews_updated", handleReviewsUpdated);
+    return () => {
+      window.removeEventListener("nds_reviews_updated", handleReviewsUpdated);
+    };
+  }, [slug, product?.id]);
 
   useEffect(() => {
     const live = getLiveProductBySlug(slug);
@@ -579,16 +664,35 @@ export default function ProductDetailPage() {
             {/* 3. Rating & Review Count */}
             <div className="flex items-center gap-2 mb-2 lg:mb-2.5">
               <div className="flex items-center text-[#C29B38]">
-                {[...Array(5)].map((_, i) => (
+                {[1, 2, 3, 4, 5].map((starIndex) => (
                   <Star
-                    key={i}
-                    className="w-3.5 h-3.5 fill-[#C29B38] text-[#C29B38]"
+                    key={starIndex}
+                    className={`w-3.5 h-3.5 ${
+                      reviewStats.totalReviews > 0 && starIndex <= Math.round(reviewStats.averageRating)
+                        ? "fill-[#C29B38] text-[#C29B38]"
+                        : "text-[#D8D2CA]"
+                    }`}
                   />
                 ))}
               </div>
-              <span className="font-sans text-xs text-[#77716D]">
-                4.9 <span className="text-[#C4C7C7] mx-1">•</span> 84 reviews
-              </span>
+              <a
+                href="#patron-reviews"
+                className="font-sans text-xs text-[#77716D] hover:text-[#7B5644] transition-colors"
+              >
+                {reviewStats.totalReviews > 0 ? (
+                  <>
+                    <span className="font-semibold text-[#191919]">{reviewStats.averageRating}</span>
+                    <span className="text-[#C4C7C7] mx-1">•</span>
+                    <span>
+                      {reviewStats.totalReviews} review{reviewStats.totalReviews === 1 ? "" : "s"}
+                    </span>
+                  </>
+                ) : (
+                  <span>
+                    No reviews yet <span className="text-[#C4C7C7] mx-1">•</span> Verified Patrons
+                  </span>
+                )}
+              </a>
             </div>
 
             {/* 4. Price Row */}
@@ -822,6 +926,211 @@ export default function ProductDetailPage() {
         </div>
       </section>
 
+      {/* ── Real Patron Reviews & Atelier Testimonials ── */}
+      <section
+        id="patron-reviews"
+        className="w-full px-4 sm:px-8 lg:px-12 py-12 sm:py-16 bg-[#FDFBF8] border-t border-[#EAE5DF]"
+      >
+        <div className="max-w-[1240px] mx-auto">
+          {/* Section Header */}
+          <div className="mb-8 sm:mb-12">
+            <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-[#7B5644] block mb-1 font-semibold">
+              AUTHENTIC EXPERIENCES
+            </span>
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <h2 className="font-serif text-2xl sm:text-3xl text-[#191919] font-normal">
+                  Patron Reviews &amp; Testimonials
+                </h2>
+                <p className="font-sans text-xs sm:text-sm text-[#77716D] mt-1">
+                  Verified reflections and photographs from patrons following bespoke atelier delivery.
+                </p>
+              </div>
+              <Link
+                href="/orders"
+                className="inline-flex items-center gap-2 self-start sm:self-auto px-4 py-2 bg-[#F5F3F0] hover:bg-[#EAE5DF] text-[#191919] text-[10px] uppercase tracking-widest font-semibold border border-[#EAE5DF] transition-colors"
+              >
+                <span>Check Order Status to Review</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {reviewStats.totalReviews === 0 ? (
+            /* Empty State */
+            <div className="bg-[#FAF8F5] border border-[#EAE5DF] p-8 sm:p-14 text-center max-w-2xl mx-auto">
+              <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[#EAE5DF]/60 flex items-center justify-center text-[#7B5644]">
+                <Star className="w-5 h-5 text-[#7B5644]" />
+              </div>
+              <h3 className="font-serif text-xl sm:text-2xl text-[#191919] font-normal mb-2">
+                Be The First To Review This Creation
+              </h3>
+              <p className="font-sans text-xs sm:text-sm text-[#77716D] leading-relaxed max-w-md mx-auto mb-6">
+                Reviews for our handcrafted garments and jewelry are unlocked exclusively after an order has been fulfilled and delivered.
+              </p>
+              <div className="inline-flex flex-wrap items-center justify-center gap-4 text-[11px] text-[#77716D]">
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  100% Verified Deliveries
+                </span>
+                <span className="text-[#C4C7C7]">•</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-[#7B5644]" />
+                  Real Patron Photographs
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-start">
+              {/* Rating Summary Card (4 cols) */}
+              <div className="lg:col-span-4 bg-[#FAF8F5] border border-[#EAE5DF] p-6 sm:p-8">
+                <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-[#77716D] font-semibold block mb-2">
+                  Atelier Patron Score
+                </span>
+                <div className="flex items-baseline gap-3 mb-2">
+                  <span className="font-serif text-5xl text-[#191919] font-light">
+                    {reviewStats.averageRating}
+                  </span>
+                  <span className="text-xs text-[#77716D] font-sans">out of 5.0</span>
+                </div>
+
+                <div className="flex items-center gap-1 text-[#C29B38] mb-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`w-4 h-4 ${
+                        star <= Math.round(reviewStats.averageRating)
+                          ? "fill-[#C29B38] text-[#C29B38]"
+                          : "text-[#D8D2CA]"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <p className="font-sans text-xs text-[#77716D] mb-6">
+                  Based on {reviewStats.totalReviews} verified patron rating
+                  {reviewStats.totalReviews === 1 ? "" : "s"}
+                </p>
+
+                {/* Rating Distribution Bars */}
+                <div className="space-y-2 pt-4 border-t border-[#EAE5DF]">
+                  {[5, 4, 3, 2, 1].map((star) => {
+                    const count = reviewStats.ratingDistribution[star as 1 | 2 | 3 | 4 | 5] || 0;
+                    const percent =
+                      reviewStats.totalReviews > 0
+                        ? Math.round((count / reviewStats.totalReviews) * 100)
+                        : 0;
+
+                    return (
+                      <div key={star} className="flex items-center gap-3 text-xs">
+                        <span className="w-8 flex items-center gap-1 text-[#191919] font-medium text-[11px]">
+                          {star} <Star className="w-2.5 h-2.5 fill-[#C29B38] text-[#C29B38]" />
+                        </span>
+                        <div className="flex-1 h-1.5 bg-[#EAE5DF] overflow-hidden rounded-full">
+                          <div
+                            className="h-full bg-[#191919] transition-all duration-500 rounded-full"
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                        <span className="w-10 text-right text-[11px] text-[#77716D]">
+                          {count} ({percent}%)
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-6 pt-5 border-t border-[#EAE5DF] flex items-center gap-2 text-[11px] text-[#77716D]">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                  <span>Only confirmed delivered orders can submit reviews</span>
+                </div>
+              </div>
+
+              {/* Reviews Feed (8 cols) */}
+              <div className="lg:col-span-8 space-y-5">
+                {reviews.map((rev) => (
+                  <div
+                    key={rev.id}
+                    className="p-6 bg-[#FAF8F5] border border-[#EAE5DF] transition-shadow hover:shadow-xs"
+                  >
+                    {/* Header: Author & Date & Verified Badge */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <span className="font-serif text-sm sm:text-base text-[#191919] font-medium">
+                          {rev.userName || "Verified Patron"}
+                        </span>
+                        {rev.verifiedPurchase && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] uppercase tracking-wider font-semibold">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            <span>Verified Patron</span>
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] font-sans text-[#77716D]">
+                        {formatReviewDate(rev.createdAt)}
+                      </span>
+                    </div>
+
+                    {/* Stars */}
+                    <div className="flex items-center gap-1 mb-3">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-3.5 h-3.5 ${
+                            star <= rev.rating
+                              ? "fill-[#C29B38] text-[#C29B38]"
+                              : "text-[#D8D2CA]"
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Comment text */}
+                    {rev.comment && (
+                      <p className="font-sans text-xs sm:text-sm text-[#3A3836] leading-relaxed mb-4 whitespace-pre-line">
+                        {rev.comment}
+                      </p>
+                    )}
+
+                    {/* Customer Real Photo */}
+                    {rev.imageUrl && (
+                      <div className="mt-3">
+                        <span className="text-[10px] uppercase tracking-widest text-[#7B5644] font-semibold block mb-2">
+                          Patron Photograph:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setZoomedImage({
+                              url: rev.imageUrl!,
+                              author: rev.userName,
+                              rating: rev.rating,
+                            })
+                          }
+                          className="group relative block w-28 h-36 sm:w-32 sm:h-40 overflow-hidden border border-[#EAE5DF] bg-[#EFEEEB] text-left cursor-zoom-in"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={rev.imageUrl}
+                            alt={`Photo submitted by ${rev.userName}`}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-[#191919]/0 group-hover:bg-[#191919]/25 transition-colors flex items-center justify-center">
+                            <span className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-[#FDFBF8] text-[#191919] rounded-full shadow-sm">
+                              <Maximize2 className="w-3.5 h-3.5" />
+                            </span>
+                          </div>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* ── Related Products / Curated Pairings (4 Columns on Desktop, 2 on Mobile) ── */}
       <section className="w-full px-4 sm:px-8 lg:px-12 py-10 sm:py-16 bg-[#F5F3F0] border-t border-[#EAE5DF]">
         <div className="max-w-[1240px] mx-auto">
@@ -912,6 +1221,55 @@ export default function ProductDetailPage() {
             <p className="text-[11px] text-[#77716D] mt-5 leading-relaxed">
               Complimentary custom tailoring and virtual styling consultations are available for all orders.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Zoom Modal for Patron Customer Photos */}
+      {zoomedImage && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-[#191919]/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setZoomedImage(null)}
+        >
+          <div
+            className="relative max-w-2xl w-full bg-[#FDFBF8] border border-[#EAE5DF] p-4 sm:p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setZoomedImage(null)}
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 text-[#77716D] hover:text-[#191919] bg-[#F5F3F0] hover:bg-[#EAE5DF] transition-colors rounded-full"
+              aria-label="Close photo preview"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-full max-h-[70vh] flex items-center justify-center overflow-hidden bg-[#EFEEEB] border border-[#EAE5DF] mb-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={zoomedImage.url}
+                alt={`Full photograph by ${zoomedImage.author}`}
+                className="max-h-[70vh] w-auto max-w-full object-contain"
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-xs">
+              <div>
+                <p className="font-serif text-sm text-[#191919] font-medium">{zoomedImage.author}</p>
+                <p className="text-[11px] text-[#77716D]">Verified Patron Real Photo</p>
+              </div>
+              <div className="flex items-center text-[#C29B38]">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-3.5 h-3.5 ${
+                      star <= zoomedImage.rating ? "fill-[#C29B38] text-[#C29B38]" : "text-[#D8D2CA]"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}

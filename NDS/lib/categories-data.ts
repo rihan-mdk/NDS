@@ -115,3 +115,4 @@ export const DEFAULT_ACCESSORY_CATEGORIES: AtelierCategory[] = [
     isCustom: false,
   },
 ];
+
