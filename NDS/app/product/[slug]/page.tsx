@@ -1056,7 +1056,7 @@ export default function ProductDetailPage() {
                     {/* Header: Author & Date & Verified Badge */}
                     <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                       <div className="flex items-center gap-2.5 flex-wrap">
-                        <span className="font-serif text-sm sm:text-base text-[#191919] font-medium">
+                        <span className="font-serif text-sm sm:text-base text-[#191919] font-medium truncate max-w-[180px] sm:max-w-none">
                           {rev.userName || "Verified Patron"}
                         </span>
                         {rev.verifiedPurchase && (
@@ -1087,7 +1087,7 @@ export default function ProductDetailPage() {
 
                     {/* Comment text */}
                     {rev.comment && (
-                      <p className="font-sans text-xs sm:text-sm text-[#3A3836] leading-relaxed mb-4 whitespace-pre-line">
+                      <p className="font-sans text-xs sm:text-sm text-[#3A3836] leading-relaxed mb-4 whitespace-pre-line break-words">
                         {rev.comment}
                       </p>
                     )}

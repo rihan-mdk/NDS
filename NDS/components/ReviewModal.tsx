@@ -164,8 +164,8 @@ export function ReviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="relative w-full max-w-lg bg-[#FDFBF8] border border-[#EAE5DF] shadow-2xl p-6 sm:p-8 my-8 text-[#191919] animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+      <div className="relative w-full max-w-lg bg-[#FDFBF8] border border-[#EAE5DF] shadow-2xl p-5 sm:p-8 my-auto max-h-[92vh] overflow-y-auto text-[#191919] animate-in fade-in zoom-in-95 duration-200">
         {/* Close Button */}
         <button
           onClick={onClose}

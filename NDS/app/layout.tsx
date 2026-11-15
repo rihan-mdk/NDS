@@ -5,6 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
@@ -55,6 +56,7 @@ export default async function RootLayout({
               <Header />
               <main className="flex-1 pt-14 pb-[90px] lg:pb-0">{children}</main>
               <Footer />
+              <WhatsAppButton />
               <MobileBottomNav />
             </WishlistProvider>
           </CartProvider>
