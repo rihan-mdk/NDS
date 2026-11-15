@@ -16,6 +16,11 @@ interface Order {
   total: number;
   shippingAddress: string;
   paymentMethod: string;
+  customer?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  };
 }
 
 function OrdersContent() {
