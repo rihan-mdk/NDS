@@ -279,8 +279,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const discount = Math.round(subtotal * (discountPercent / 100));
   const shipping = calculateDtdcShipping(subtotal).rate;
-  const tax = Math.round((subtotal - discount) * 0.12);
-  const total = subtotal - discount + tax + shipping;
+  const tax = 0;
+  const total = subtotal - discount + shipping;
 
   return (
     <CartContext.Provider

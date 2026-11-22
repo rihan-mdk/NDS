@@ -58,8 +58,7 @@ function CheckoutContent() {
   const discount = isBuyNow && directItem ? 0 : cartDiscount;
   const shippingInfo = calculateDtdcShipping(subtotal, formData.state, formData.pincode);
   const shipping = shippingInfo.rate;
-  const tax = Math.round((subtotal - discount) * 0.12);
-  const total = subtotal - discount + tax + shipping;
+  const total = subtotal - discount + shipping;
 
   useEffect(() => {
     // Only load saved address if the user is authenticated and has explicit addresses for their account
@@ -472,10 +471,6 @@ function CheckoutContent() {
                     <span>- ₹{discount.toLocaleString("en-IN")}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span>Estimated GST (12%)</span>
-                  <span className="font-semibold text-[#191919]">₹{tax.toLocaleString("en-IN")}</span>
-                </div>
                 <div className="flex justify-between items-baseline">
                   <div>
                     <span>Express Courier (DTDC)</span>

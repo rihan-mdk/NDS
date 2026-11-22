@@ -162,11 +162,11 @@ function OrderConfirmationContent() {
 
             <div className="space-y-3 pt-4 border-t border-[#EAE5DF]">
               <button
-                onClick={() => alert(`Downloading formal tax invoice for ${orderId}...`)}
+                onClick={() => alert(`Downloading order invoice receipt for ${orderId}...`)}
                 className="w-full py-3 px-4 bg-[#FDFBF8] border border-[#191919] text-[#191919] text-[10px] uppercase tracking-widest font-semibold hover:bg-[#191919] hover:text-[#FDFBF8] transition-colors flex items-center justify-center gap-2"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>DOWNLOAD TAX INVOICE (PDF)</span>
+                <span>DOWNLOAD INVOICE RECEIPT (PDF)</span>
               </button>
 
               <Link

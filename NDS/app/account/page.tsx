@@ -1729,7 +1729,7 @@ export default function AccountProfilePage() {
                 All couture designs, textile motifs, and imagery shown on this platform are original intellectual creations of Neel&apos;s Designer Studio.
               </p>
               <p>
-                Prices listed in INR are inclusive of applicable GST taxes. Orders commence once payment and sizing details are confirmed.
+                Prices listed in INR are direct atelier pricing. Orders commence once payment and sizing details are confirmed.
               </p>
               <p>
                 Orders may be cancelled within 24 hours of placement prior to master karigari cutting.
@@ -1778,7 +1778,7 @@ export default function AccountProfilePage() {
                 <strong>Payment Security:</strong> We process orders via direct UPI transfer. We never solicit, process, or store credit/debit card numbers or net banking credentials. Orders remain in <em>Payment Pending</em> until verified by our accounts desk.
               </p>
               <p>
-                <strong>Data Retention &amp; Rights:</strong> You may request complete erasure of your patron profile, addresses, bag, and wishlist at any time. In accordance with statutory Indian commercial and tax laws (GST &amp; Companies Act), historical invoice ledgers are retained for mandatory regulatory audit periods.
+                <strong>Data Retention &amp; Rights:</strong> You may request complete erasure of your patron profile, addresses, bag, and wishlist at any time. In accordance with statutory Indian commercial regulations, historical order ledgers are retained for mandatory regulatory audit periods.
               </p>
               <p>
                 <strong>Verified Contact:</strong> Email: <a href="mailto:neels9589@gmail.com" className="text-[#191919] underline">neels9589@gmail.com</a> · Primary/WhatsApp: <a href="tel:+918123200215" className="text-[#191919] underline">+91 8123200215</a> · Secondary: +91 9740259215.
@@ -1897,7 +1897,7 @@ export default function AccountProfilePage() {
                 Requesting erasure will permanently delete your patron profile, saved addresses, measurements, bag, wishlist, and Supabase login identity from our system.
               </p>
               <p className="bg-amber-50 p-3 border border-amber-200 text-amber-950">
-                <strong>Statutory Retention Notice:</strong> In compliance with Indian tax laws (GST Act &amp; Companies Act), past financial order invoices are legally retained with your patron profile disassociated for mandatory audit compliance.
+                <strong>Statutory Retention Notice:</strong> In compliance with Indian statutory regulations, past order records are retained with your patron profile disassociated for mandatory compliance.
               </p>
               {deleteAccountError && (
                 <p className="p-2 bg-rose-50 text-rose-800 border border-rose-200 text-xs">

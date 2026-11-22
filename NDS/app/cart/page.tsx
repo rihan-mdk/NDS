@@ -178,13 +178,6 @@ export default function CartPage() {
                   </div>
                 )}
 
-                <div className="flex justify-between">
-                  <span>Estimated GST (12%)</span>
-                  <span className="font-serif font-semibold text-[#191919]">
-                    ₹{tax.toLocaleString("en-IN")}
-                  </span>
-                </div>
-
                 <div className="flex justify-between items-baseline">
                   <div>
                     <span>Express Courier (DTDC)</span>

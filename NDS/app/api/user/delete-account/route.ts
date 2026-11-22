@@ -84,7 +84,7 @@ export async function POST() {
       // Ignore if table does not exist
     }
 
-    // 5. Retain legal & statutory order records as required under Indian Tax/GST regulations,
+    // 5. Retain legal & statutory order records as required under Indian commercial regulations,
     // but disassociate the active user account reference.
     try {
       await admin

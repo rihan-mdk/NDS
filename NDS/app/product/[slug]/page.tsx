@@ -581,9 +581,6 @@ export default function ProductDetailPage() {
               <span className="font-serif text-xl lg:text-2xl font-normal text-[#191919] tracking-tight">
                 ₹{product.price.toLocaleString("en-IN")}
               </span>
-              <span className="font-sans text-[10px] text-[#77716D] uppercase tracking-widest ml-auto">
-                Inclusive of all taxes
-              </span>
             </div>
 
             {/* 5. Short Description */}
