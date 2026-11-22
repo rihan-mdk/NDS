@@ -227,7 +227,6 @@ export default function CartPage() {
                       type="text"
                       value={inputCode}
                       onChange={(e) => setInputCode(e.target.value)}
-                      placeholder="e.g. ATELIER10"
                       className="flex-1 px-3 py-2 text-xs bg-[#FDFBF8] border border-[#EAE5DF] focus:outline-none uppercase tracking-wider"
                     />
                     <button

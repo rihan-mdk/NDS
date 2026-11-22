@@ -419,7 +419,6 @@ export default function AdminPromosPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. FESTIVE20"
                   value={formCode}
                   onChange={(e) => setFormCode(e.target.value.toUpperCase())}
                   className="w-full px-3 py-2 bg-white border border-[#EAE5DF] text-xs font-mono uppercase text-[#191919] focus:outline-none focus:border-[#7B5644]"
@@ -447,7 +446,6 @@ export default function AdminPromosPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Diwali Privilege 20% Voucher"
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   className="w-full px-3 py-2 bg-white border border-[#EAE5DF] text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
@@ -462,7 +460,6 @@ export default function AdminPromosPage() {
                   <input
                     type="number"
                     min="1"
-                    placeholder="Unlimited"
                     value={formMaxUses}
                     onChange={(e) => setFormMaxUses(e.target.value)}
                     className="w-full px-3 py-2 bg-white border border-[#EAE5DF] text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"

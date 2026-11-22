@@ -399,7 +399,6 @@ export function Component({
                       <Input
                         type="email"
                         required
-                        placeholder="Email address"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onFocus={() => setFocusedInput("email")}
@@ -434,7 +433,6 @@ export function Component({
                       <Input
                         type={showPassword ? "text" : "password"}
                         required
-                        placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         onFocus={() => setFocusedInput("password")}

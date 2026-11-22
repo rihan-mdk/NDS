@@ -1442,7 +1442,6 @@ export default function AccountProfilePage() {
                 <input
                   type="text"
                   required
-                  placeholder={displayName || "Full Name"}
                   value={addressFormData.name}
                   onChange={(e) => setAddressFormData({ ...addressFormData, name: e.target.value })}
                   className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"
@@ -1456,7 +1455,6 @@ export default function AccountProfilePage() {
                 <input
                   type="text"
                   required
-                  placeholder="House/Flat No., Apartment, Street"
                   value={addressFormData.street}
                   onChange={(e) => setAddressFormData({ ...addressFormData, street: e.target.value })}
                   className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"
@@ -1469,7 +1467,6 @@ export default function AccountProfilePage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="Area, Colony or Landmark"
                   value={addressFormData.area}
                   onChange={(e) => setAddressFormData({ ...addressFormData, area: e.target.value })}
                   className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"
@@ -1484,7 +1481,6 @@ export default function AccountProfilePage() {
                   <input
                     type="text"
                     required
-                    placeholder="City"
                     value={addressFormData.city}
                     onChange={(e) => setAddressFormData({ ...addressFormData, city: e.target.value })}
                     className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"
@@ -1498,7 +1494,6 @@ export default function AccountProfilePage() {
                     type="text"
                     maxLength={6}
                     required
-                    placeholder="6-digit PIN"
                     value={addressFormData.pincode}
                     onChange={(e) => setAddressFormData({ ...addressFormData, pincode: e.target.value })}
                     className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"
@@ -1512,7 +1507,6 @@ export default function AccountProfilePage() {
                 </label>
                 <input
                   type="tel"
-                  placeholder={displayPhone || "+91 Phone Number"}
                   value={addressFormData.phone}
                   onChange={(e) => setAddressFormData({ ...addressFormData, phone: e.target.value })}
                   className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"

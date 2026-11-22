@@ -245,7 +245,6 @@ function CheckoutContent() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
-                    placeholder="patron@domain.com"
                   />
                 </div>
                 <div>
@@ -258,7 +257,6 @@ function CheckoutContent() {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
-                    placeholder="+91 98765 43210"
                   />
                 </div>
               </div>
@@ -281,7 +279,6 @@ function CheckoutContent() {
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                     className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
-                    placeholder="Aditi Roy Kapoor"
                   />
                 </div>
                 <div>
@@ -294,7 +291,6 @@ function CheckoutContent() {
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
-                    placeholder="Bunglow 4, Malabar Hill, Ridge Road"
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -308,7 +304,6 @@ function CheckoutContent() {
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                       className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
-                      placeholder="Mumbai"
                     />
                   </div>
                   <div>
@@ -321,7 +316,6 @@ function CheckoutContent() {
                       value={formData.state}
                       onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                       className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
-                      placeholder="Maharashtra"
                     />
                   </div>
                   <div>
@@ -334,7 +328,6 @@ function CheckoutContent() {
                       value={formData.pincode}
                       onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
                       className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
-                      placeholder="400006"
                     />
                   </div>
                 </div>
@@ -370,7 +363,6 @@ function CheckoutContent() {
                     value={formData.utr}
                     onChange={(e) => setFormData({ ...formData, utr: e.target.value })}
                     maxLength={30}
-                    placeholder="Enter 12-digit UTR if transfer is completed"
                     className="w-full p-2.5 bg-[#FAF8F5] border border-[#EAE5DF] text-xs font-mono focus:outline-none focus:border-[#7B5644]"
                   />
                   <p className="text-[10px] text-[#77716D] mt-1.5 leading-relaxed">

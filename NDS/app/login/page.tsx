@@ -144,7 +144,6 @@ function LoginForm() {
                 type="email"
                 required
                 autoComplete="email"
-                placeholder="client@atelier.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3.5 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:bg-[#FFFFFF] focus:outline-none transition-colors"
@@ -172,7 +171,6 @@ function LoginForm() {
                   type={showPassword ? "text" : "password"}
                   required
                   autoComplete="current-password"
-                  placeholder="••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3.5 pr-10 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:bg-[#FFFFFF] focus:outline-none transition-colors"

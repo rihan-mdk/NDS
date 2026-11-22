@@ -484,7 +484,6 @@ export default function AdminCategoriesPage() {
                   required
                   value={formName}
                   onChange={handleNameChange}
-                  placeholder={formType === "clothing" ? "e.g. Banarasi Heritage, Evening Capes" : "e.g. Regal Brooches, Hair Ornaments"}
                   className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
                 />
               </div>
@@ -502,7 +501,6 @@ export default function AdminCategoriesPage() {
                     type="text"
                     value={formSlug}
                     onChange={(e) => setFormSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, ""))}
-                    placeholder="banarasi-heritage"
                     className="flex-1 bg-transparent border-0 p-0 text-xs text-[#191919] font-mono focus:outline-none ml-1"
                   />
                 </div>
@@ -517,7 +515,6 @@ export default function AdminCategoriesPage() {
                   rows={2}
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder="Artisanal silhouettes embellished with intricate handcrafted embroidery..."
                   className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
                 />
               </div>
@@ -636,7 +633,6 @@ export default function AdminCategoriesPage() {
                       type="url"
                       value={formImage}
                       onChange={(e) => setFormImage(e.target.value)}
-                      placeholder="https://example.com/cover-image.jpg"
                       className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
                     />
                     <p className="text-[10px] text-[#77716D] mt-1">

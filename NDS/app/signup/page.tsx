@@ -116,7 +116,6 @@ export default function SignupPage() {
                 type="text"
                 required
                 autoComplete="name"
-                placeholder="e.g. Your Full Name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="w-full px-4 py-3.5 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:bg-[#FFFFFF] focus:outline-none transition-colors"
@@ -135,7 +134,6 @@ export default function SignupPage() {
                 type="email"
                 required
                 autoComplete="email"
-                placeholder="client@atelier.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3.5 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:bg-[#FFFFFF] focus:outline-none transition-colors"
@@ -155,7 +153,6 @@ export default function SignupPage() {
                   type={showPassword ? "text" : "password"}
                   required
                   autoComplete="new-password"
-                  placeholder="••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3.5 pr-10 bg-[#F5F3F0] text-xs text-[#191919] border border-transparent focus:border-[#191919] focus:bg-[#FFFFFF] focus:outline-none transition-colors"

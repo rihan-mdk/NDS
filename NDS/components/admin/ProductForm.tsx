@@ -439,11 +439,6 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
             type="text"
             value={subCategory}
             onChange={(e) => setSubCategory(e.target.value)}
-            placeholder={
-              productType === "clothing"
-                ? "e.g. Silk Separates, Bridal Edit, Evening Couture"
-                : "e.g. Haute Joaillerie, Heritage Potlis"
-            }
             className="w-full sm:max-w-md bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
           />
         </div>
@@ -465,7 +460,6 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Zari Embroidered Azure Silk Kurti"
             className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
           />
         </div>
@@ -482,7 +476,6 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
               min="0"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              placeholder="e.g. 48000"
               className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
             />
           </div>
@@ -496,7 +489,6 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
               min="0"
               value={originalPrice}
               onChange={(e) => setOriginalPrice(e.target.value)}
-              placeholder="e.g. 54000 (strike-through discount)"
               className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
             />
           </div>
@@ -512,7 +504,6 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Concise, 2-3 sentence summary displayed on the Product Details Page..."
             className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] leading-relaxed focus:outline-none focus:border-[#7B5644]"
           />
         </div>
@@ -579,7 +570,6 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
                 required
                 value={mainImage}
                 onChange={(e) => setMainImage(e.target.value)}
-                placeholder="Or paste image URL (e.g. /images/... or https://...)"
                 className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
               />
             </div>
@@ -690,7 +680,6 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
                     handleAddImage();
                   }
                 }}
-                placeholder="Or paste additional URL and click Add"
                 className="flex-1 bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
               />
               <button
@@ -748,7 +737,6 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
                   type="text"
                   value={fabric}
                   onChange={(e) => setFabric(e.target.value)}
-                  placeholder="e.g. 100% Chanderi Silk with Mul Lining"
                   className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
                 />
               </div>
@@ -761,7 +749,6 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
                   type="text"
                   value={careInstructions}
                   onChange={(e) => setCareInstructions(e.target.value)}
-                  placeholder="e.g. Specialist Dry Clean Only"
                   className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
                 />
               </div>
@@ -808,7 +795,6 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
                   type="text"
                   value={metalBase}
                   onChange={(e) => setMetalBase(e.target.value)}
-                  placeholder="e.g. 22k Gold Foil on Sterling Silver"
                   className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
                 />
               </div>
@@ -821,7 +807,6 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
                   type="text"
                   value={gemstoneCraft}
                   onChange={(e) => setGemstoneCraft(e.target.value)}
-                  placeholder="e.g. Uncut Polki Diamonds &amp; Meenakari Enamel"
                   className="w-full bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
                 />
               </div>
@@ -838,7 +823,6 @@ export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
             type="text"
             value={deliveryTimeline}
             onChange={(e) => setDeliveryTimeline(e.target.value)}
-            placeholder="e.g. Ships within 3-5 business days via Insured Express"
             className="w-full sm:max-w-md bg-[#F5F3F0] border border-[#EAE5DF] px-3.5 py-2.5 text-xs text-[#191919] focus:outline-none focus:border-[#7B5644]"
           />
         </div>
