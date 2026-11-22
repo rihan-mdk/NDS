@@ -3,10 +3,8 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Package, Truck, CheckCircle2, Home, ArrowLeft, ArrowRight, Star } from "lucide-react";
+import { Package, Truck, CheckCircle2, Home, ArrowLeft, ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { ReviewModal } from "@/components/ReviewModal";
-import { ProductReview } from "@/lib/reviews-data";
 
 interface Order {
   id: string;
@@ -35,28 +33,6 @@ function OrdersContent() {
   const { user } = useAuth();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [cancelMessage, setCancelMessage] = useState<string | null>(null);
-  const [reviewingTarget, setReviewingTarget] = useState<{
-    orderId: string;
-    product: {
-      id: string;
-      slug: string;
-      title: string;
-      image?: string;
-      selectedSize?: string;
-    };
-  } | null>(null);
-  const [reviewedKeys, setReviewedKeys] = useState<Set<string>>(new Set());
-
-  // Load reviewed items tracker
-  useEffect(() => {
-    try {
-      const localReviews: ProductReview[] = JSON.parse(
-        localStorage.getItem("nds_product_reviews") || "[]"
-      );
-      const keys = new Set(localReviews.map((r) => `${r.orderId}_${r.productId}`));
-      setReviewedKeys(keys);
-    } catch {}
-  }, []);
 
   useEffect(() => {
     // 1. Authoritative fetch from Supabase if user is logged in
@@ -324,13 +300,10 @@ function OrdersContent() {
               </h3>
               <div className="divide-y divide-[#F5F3F0] space-y-0">
                 {(selectedOrder.items || []).map((item: any, idx: number) => {
-                  const prodId = item.product?.id || `prod-${idx}`;
                   const prodSlug =
                     item.product?.slug ||
                     item.product?.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") ||
                     "atelier-creation";
-                  const reviewKey = `${selectedOrder.id}_${prodId}`;
-                  const isReviewed = reviewedKeys.has(reviewKey);
 
                   return (
                     <div key={idx} className="py-3.5 flex items-center justify-between gap-3">
@@ -364,37 +337,6 @@ function OrdersContent() {
                           </p>
                         </div>
                       </div>
-
-                      {/* Review Action for Delivered Orders */}
-                      {selectedOrder.status === "Delivered" && (
-                        <div className="flex-shrink-0">
-                          {isReviewed ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] uppercase tracking-wider font-semibold">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Reviewed</span>
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() =>
-                                setReviewingTarget({
-                                  orderId: selectedOrder.id,
-                                  product: {
-                                    id: prodId,
-                                    slug: prodSlug,
-                                    title: item.product?.title || "Atelier Creation",
-                                    image: item.product?.images?.[0],
-                                    selectedSize: item.selectedSize,
-                                  },
-                                })
-                              }
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-[10px] uppercase tracking-widest font-semibold transition-all shadow-xs"
-                            >
-                              <Star className="w-3 h-3 text-[#C29B38] fill-[#C29B38]" />
-                              <span>Write Review</span>
-                            </button>
-                          )}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -457,22 +399,6 @@ function OrdersContent() {
               </div>
             )}
           </div>
-        )}
-
-        {/* Review Modal for Delivered Order Items */}
-        {reviewingTarget && (
-          <ReviewModal
-            isOpen={true}
-            onClose={() => setReviewingTarget(null)}
-            orderId={reviewingTarget.orderId}
-            product={reviewingTarget.product}
-            userId={user?.id}
-            customerName={selectedOrder?.customer?.name || user?.user_metadata?.full_name || ""}
-            customerEmail={selectedOrder?.customer?.email || user?.email || ""}
-            onSuccess={(newReview) => {
-              setReviewedKeys((prev) => new Set([...prev, `${newReview.orderId}_${newReview.productId}`]));
-            }}
-          />
         )}
       </section>
     </div>

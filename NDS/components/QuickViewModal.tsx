@@ -81,11 +81,6 @@ export function QuickViewModal({ product, onClose }: QuickViewModalProps) {
               <span className="font-serif text-xl font-semibold text-[#191919]">
                 ₹{product.price.toLocaleString("en-IN")}
               </span>
-              {product.originalPrice && (
-                <span className="text-xs text-[#77716D] line-through">
-                  ₹{product.originalPrice.toLocaleString("en-IN")}
-                </span>
-              )}
             </div>
             <p className="font-sans text-xs text-[#77716D] leading-relaxed mb-6">
               {product.description}

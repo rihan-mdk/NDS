@@ -122,11 +122,6 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             <span className="font-serif text-[13px] sm:text-base font-medium text-[#191919]">
               ₹{product.price.toLocaleString("en-IN")}
             </span>
-            {product.originalPrice && (
-              <span className="text-[10px] sm:text-[11px] text-[#77716D] line-through">
-                ₹{product.originalPrice.toLocaleString("en-IN")}
-              </span>
-            )}
           </div>
 
           {/* DISCOVER link — desktop only, replaced by mobile tap-to-view */}

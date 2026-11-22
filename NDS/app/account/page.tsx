@@ -1757,9 +1757,6 @@ export default function AccountProfilePage() {
                 <strong>Payment Security:</strong> We process orders via direct UPI transfer. We never solicit, process, or store credit/debit card numbers or net banking credentials. Orders remain in <em>Payment Pending</em> until verified by our accounts desk.
               </p>
               <p>
-                <strong>Review Photographs:</strong> If you upload review images, they are stored on our public media CDN and publicly displayed on product showcases. Uploads require explicit patron consent.
-              </p>
-              <p>
                 <strong>Data Retention &amp; Rights:</strong> You may request complete erasure of your patron profile, addresses, bag, and wishlist at any time. In accordance with statutory Indian commercial and tax laws (GST &amp; Companies Act), historical invoice ledgers are retained for mandatory regulatory audit periods.
               </p>
               <p>

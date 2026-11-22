@@ -353,11 +353,6 @@ export default function AdminProductsPage() {
                       <div className="font-serif text-sm text-[#191919]">
                         ₹{p.price.toLocaleString("en-IN")}
                       </div>
-                      {p.originalPrice && (
-                        <div className="text-[10px] text-[#77716D] line-through">
-                          ₹{p.originalPrice.toLocaleString("en-IN")}
-                        </div>
-                      )}
                     </td>
 
                     {/* Sizes / Fitting info */}
