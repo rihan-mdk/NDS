@@ -19,6 +19,7 @@ interface Order {
   total: number;
   shippingAddress: string;
   paymentMethod: string;
+  phone?: string;
   customer?: {
     name?: string;
     email?: string;
@@ -294,7 +295,7 @@ function OrdersContent() {
                   </p>
                   <div className="text-[11px] text-[#191919] bg-[#F5F3F0] border border-[#EAE5DF] p-3 max-w-xl space-y-1">
                     <span className="font-semibold block text-[#7B5644] uppercase tracking-wider text-[10px]">Direct Concierge Support:</span>
-                    <p>WhatsApp: <a href={`https://wa.me/918123200215?text=${encodeURIComponent(`Hello Neel's Designer Studio, I would like to request cancellation for Order ID: ${selectedOrder.id}. My registered contact number is: ${selectedOrder.phone || ""}`)}`} target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-[#7B5644]">+91 8123200215</a></p>
+                    <p>WhatsApp: <a href={`https://wa.me/918123200215?text=${encodeURIComponent(`Hello Neel's Designer Studio, I would like to request cancellation for Order ID: ${selectedOrder.id}. My registered contact number is: ${selectedOrder.customer?.phone || selectedOrder.phone || ""}`)}`} target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-[#7B5644]">+91 8123200215</a></p>
                     <p>Instagram: <a href="https://www.instagram.com/neels_designer_studio?obrf=aDk1emZ3aHVicDZl" target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-[#7B5644]">@neels_designer_studio</a></p>
                     <p className="text-[#77716D]">Please provide your order ID ({selectedOrder.id}) and registered contact number.</p>
                   </div>
