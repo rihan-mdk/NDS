@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useRef, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Eye, EyeOff, ArrowRight, AlertCircle, ChevronDown } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
@@ -21,11 +21,6 @@ function LoginForm() {
   const [errorMsg, setErrorMsg] = useState<string | null>(
     oauthError === "oauth" ? "Google sign-in failed. Please try again." : null
   );
-  const formRef = useRef<HTMLDivElement>(null);
-
-  const scrollToCredentials = () => {
-    formRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,61 +57,41 @@ function LoginForm() {
 
   return (
     <div className="w-full min-h-[calc(100vh-80px)] flex flex-col lg:flex-row bg-[#FDFBF8] text-[#191919]">
-      {/* Left Column: Visual Showcase (55% Couture Editorial) */}
-      <div className="relative w-full lg:w-[55%] min-h-[400px] lg:min-h-auto bg-[#EFEEEB] overflow-hidden flex flex-col justify-between p-8 lg:p-14">
+      {/* Visual Showcase (Desktop: Left Column, Mobile: Top Banner) */}
+      <div className="relative w-full lg:w-1/2 h-56 sm:h-72 lg:h-auto lg:min-h-full bg-[#EFEEEB] overflow-hidden flex flex-col justify-end p-6 lg:p-14">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          alt="High-fashion bridal couture editorial photography"
-          className="absolute inset-0 w-full h-full object-cover object-top filter contrast-[1.02] brightness-[0.98] transition-transform duration-1000 ease-out hover:scale-105"
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSRoFIyTRiLouO77pUfuYJFhQ4O-bErCwcb46mAro95Rjwkyxu9VICndxflW1DaxmTBf76kf5vW7nQQGOJ5AZ4ScZCpacCwUf49bQkNNAyUsu2NnPzoMQFsAqHzJbDXuk8e3KaV3Geq1bZQiFDapXSDnWfXzkXVPBLjj3AyUjtNJVyXpLF5w4vnKO72eRBzNpPKbUl59ccOcP57Ua1fa5YFLzI-hpHAIRXvr03vBC45noD3MOrvY6XAA"
+          alt="Neel's Designer Studio Boutique"
+          className="absolute inset-0 w-full h-full object-cover object-center filter contrast-[1.02] brightness-[0.98] transition-transform duration-1000 ease-out hover:scale-105"
+          src="/images/login_page.jpeg"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent pointer-events-none"></div>
 
-        <div></div>
-
-        {/* Bottom Editorial Footnote */}
-        <div className="relative z-10 max-w-md pt-24 pb-14 lg:pb-0">
-          <p className="font-serif text-lg sm:text-xl italic text-[#FDFBF8] mb-2 font-normal leading-relaxed">
+        {/* Editorial Footnote */}
+        <div className="relative z-10 max-w-md">
+          <p className="font-serif text-base sm:text-lg lg:text-xl italic text-[#FDFBF8] mb-1.5 font-normal leading-relaxed drop-shadow-sm">
             &ldquo;An intimate portal to bespoke couture.&rdquo;
           </p>
           <div className="flex items-center space-x-3">
-            <div className="w-6 h-px bg-[#FDFBF8]/50"></div>
-            <span className="text-[10px] text-[#FDFBF8]/80 tracking-[0.25em] uppercase font-medium">
-              NEEL&apos;S DESIGNER STUDIO ATELIER
+            <div className="w-6 h-px bg-[#FDFBF8]/60"></div>
+            <span className="text-[9px] sm:text-[10px] text-[#FDFBF8]/90 tracking-[0.25em] uppercase font-medium">
+              NEEL&apos;S DESIGNER STUDIO
             </span>
           </div>
         </div>
-
-        {/* Mobile Scroll Down Arrow Button to Login Credentials */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex lg:hidden">
-          <button
-            type="button"
-            onClick={scrollToCredentials}
-            aria-label="Scroll down to login credentials"
-            className="flex flex-col items-center gap-1 text-[#FDFBF8] opacity-90 hover:opacity-100 transition-opacity active:scale-95 cursor-pointer"
-          >
-            <span className="text-[9px] uppercase tracking-[0.22em] text-[#FDFBF8]/90 font-medium drop-shadow-xs">
-              Scroll to Login
-            </span>
-            <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-md">
-              <ChevronDown className="w-4 h-4 text-[#FDFBF8] animate-bounce stroke-[2]" />
-            </div>
-          </button>
-        </div>
       </div>
 
-      {/* Right Column: Authentication Form Container (45% Ivory Panel) */}
+      {/* Authentication Form Container (Desktop: Right Column, Mobile: Bottom Section) */}
       <div
-        ref={formRef}
         id="login-credentials"
-        className="w-full lg:w-[45%] flex flex-col justify-center p-8 sm:p-12 lg:p-16 bg-[#FDFBF8] scroll-mt-6"
+        className="w-full lg:w-1/2 flex flex-col justify-center p-6 sm:p-10 lg:p-16 bg-[#FDFBF8]"
       >
-        <div className="w-full max-w-[420px] mx-auto py-8">
-          <div className="mb-10 text-left">
-            <span className="text-[10px] tracking-[0.28em] text-[#191919] uppercase font-semibold block mb-4">
+        <div className="w-full max-w-[420px] mx-auto py-4 sm:py-8">
+          <div className="mb-8 lg:mb-10 text-left">
+            <span className="text-[10px] tracking-[0.28em] text-[#191919] uppercase font-semibold block mb-3 sm:mb-4">
               NEEL&apos;S DESIGNER STUDIO
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl text-[#191919] tracking-tight mb-2">
+            <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#191919] tracking-tight mb-2">
               Welcome Back.
             </h1>
             <p className="font-sans text-xs sm:text-sm text-[#77716D] leading-relaxed">
