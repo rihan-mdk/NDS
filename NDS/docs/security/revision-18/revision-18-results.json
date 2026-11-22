@@ -1,0 +1,92 @@
+{
+  "timestamp": "2026-11-22T14:48:50.894Z",
+  "environment": "unconfigured",
+  "summary": {
+    "total": 10,
+    "pass": 0,
+    "fail": 0,
+    "blocked": 10
+  },
+  "tests": [
+    {
+      "id": "IT-1",
+      "name": "Anonymous access to orders & order_items denied",
+      "status": "BLOCKED",
+      "expected": "Execution on dedicated disposable staging environment.",
+      "actual": "BLOCKED: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set in environment.",
+      "evidence": "Precondition check failed: Staging credentials not configured."
+    },
+    {
+      "id": "IT-2",
+      "name": "Authenticated user cross-user access denied",
+      "status": "BLOCKED",
+      "expected": "Execution on dedicated disposable staging environment.",
+      "actual": "BLOCKED: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set in environment.",
+      "evidence": "Precondition check failed: Staging credentials not configured."
+    },
+    {
+      "id": "IT-3",
+      "name": "Unauthorized users cannot invoke privileged SECURITY DEFINER functions",
+      "status": "BLOCKED",
+      "expected": "Execution on dedicated disposable staging environment.",
+      "actual": "BLOCKED: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set in environment.",
+      "evidence": "Precondition check failed: Staging credentials not configured."
+    },
+    {
+      "id": "IT-4",
+      "name": "Webhook signature, event ID, merchant ID, currency & association validation",
+      "status": "BLOCKED",
+      "expected": "Execution on dedicated disposable staging environment.",
+      "actual": "BLOCKED: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set in environment.",
+      "evidence": "Precondition check failed: Staging credentials not configured."
+    },
+    {
+      "id": "IT-5",
+      "name": "Duplicate webhook delivery does not duplicate state changes",
+      "status": "BLOCKED",
+      "expected": "Execution on dedicated disposable staging environment.",
+      "actual": "BLOCKED: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set in environment.",
+      "evidence": "Precondition check failed: Staging credentials not configured."
+    },
+    {
+      "id": "IT-6",
+      "name": "Refund lifecycle transitions and ledger consistency",
+      "status": "BLOCKED",
+      "expected": "Execution on dedicated disposable staging environment.",
+      "actual": "BLOCKED: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set in environment.",
+      "evidence": "Precondition check failed: Staging credentials not configured."
+    },
+    {
+      "id": "IT-7",
+      "name": "Concurrent partial refunds ceiling protection",
+      "status": "BLOCKED",
+      "expected": "Execution on dedicated disposable staging environment.",
+      "actual": "BLOCKED: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set in environment.",
+      "evidence": "Precondition check failed: Staging credentials not configured."
+    },
+    {
+      "id": "IT-8",
+      "name": "Private review images access control",
+      "status": "BLOCKED",
+      "expected": "Execution on dedicated disposable staging environment.",
+      "actual": "BLOCKED: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set in environment.",
+      "evidence": "Precondition check failed: Staging credentials not configured."
+    },
+    {
+      "id": "IT-9",
+      "name": "Review submission validation and duplicate prevention",
+      "status": "BLOCKED",
+      "expected": "Execution on dedicated disposable staging environment.",
+      "actual": "BLOCKED: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set in environment.",
+      "evidence": "Precondition check failed: Staging credentials not configured."
+    },
+    {
+      "id": "IT-10",
+      "name": "Admin reconciliation & cancellation authorization & replay protection",
+      "status": "BLOCKED",
+      "expected": "Execution on dedicated disposable staging environment.",
+      "actual": "BLOCKED: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set in environment.",
+      "evidence": "Precondition check failed: Staging credentials not configured."
+    }
+  ]
+}

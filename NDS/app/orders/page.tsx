@@ -11,7 +11,10 @@ import { ProductReview } from "@/lib/reviews-data";
 interface Order {
   id: string;
   date: string;
-  status: "Confirmed" | "Shipped" | "Delivered" | "Processing";
+  createdAt?: string;
+  status: "Payment Pending" | "Confirmed" | "Shipped" | "Delivered" | "Processing" | "Cancelled";
+  paymentStatus?: "Pending" | "Paid" | "Refund Pending" | "Refunded" | "No Refund Due";
+  utr?: string;
   items: any[];
   total: number;
   shippingAddress: string;
@@ -29,6 +32,8 @@ function OrdersContent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const { user } = useAuth();
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancelMessage, setCancelMessage] = useState<string | null>(null);
   const [reviewingTarget, setReviewingTarget] = useState<{
     orderId: string;
     product: {
@@ -53,19 +58,7 @@ function OrdersContent() {
   }, []);
 
   useEffect(() => {
-    // 1. Load from localStorage immediately (instant render)
-    try {
-      const saved = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
-      setOrders(saved);
-      if (targetOrderId) {
-        const found = saved.find((o: Order) => o.id === targetOrderId);
-        if (found) setSelectedOrder(found);
-      }
-    } catch (e) {
-      console.warn("Could not load orders locally:", e);
-    }
-
-    // 2. Fetch from Supabase if user is logged in
+    // 1. Authoritative fetch from Supabase if user is logged in
     if (user?.id) {
       fetch(`/api/admin/orders?userId=${user.id}`)
         .then((res) => (res.ok ? res.json() : null))
@@ -79,27 +72,103 @@ function OrdersContent() {
           }
         })
         .catch(() => {});
+    } else {
+      // 2. For unauthenticated guest sessions, only check the active session's recent order
+      try {
+        const sessionStored = sessionStorage.getItem("nds_last_order");
+        if (sessionStored) {
+          const parsed = JSON.parse(sessionStored);
+          if (parsed && parsed.id) {
+            setOrders([parsed]);
+            if (targetOrderId && parsed.id === targetOrderId) {
+              setSelectedOrder(parsed);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Could not load recent session order:", e);
+      }
     }
   }, [targetOrderId, user]);
 
+  const handleCancelOrder = async (orderId: string) => {
+    if (!confirm("Are you sure you wish to cancel this order? Cancellations within 24 hours receive a 100% full refund including shipping.")) {
+      return;
+    }
+
+    setCancellingId(orderId);
+    setCancelMessage(null);
+
+    try {
+      let cancellationToken: string | null = null;
+      try {
+        cancellationToken = sessionStorage.getItem("nds_guest_cancel_token_" + orderId);
+      } catch {}
+
+      const res = await fetch("/api/orders/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId,
+          ...(cancellationToken ? { cancellationToken } : {}),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setCancelMessage(data.message);
+        // Update local state with accurate payment and fulfillment status
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === orderId
+              ? { ...o, status: "Cancelled", paymentStatus: data.paymentStatus }
+              : o
+          )
+        );
+        setSelectedOrder((prev) =>
+          prev && prev.id === orderId
+            ? { ...prev, status: "Cancelled", paymentStatus: data.paymentStatus }
+            : prev
+        );
+      } else {
+        alert(data.error || "Failed to cancel order.");
+      }
+    } catch {
+      alert("Network error while submitting cancellation request.");
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
   const statusColor = (status: string) => {
     switch (status) {
-      case "Delivered": return "bg-emerald-100 text-emerald-800";
-      case "Shipped":   return "bg-blue-100 text-blue-800";
-      case "Confirmed": return "bg-[#F5EAE1] text-[#7B5644]";
-      case "Processing": return "bg-yellow-100 text-yellow-800";
-      default:          return "bg-[#F5F3F0] text-[#77716D]";
+      case "Delivered":
+        return "bg-emerald-100 text-emerald-800 border border-emerald-200";
+      case "Shipped":
+        return "bg-blue-100 text-blue-800 border border-blue-200";
+      case "Confirmed":
+        return "bg-[#F5EAE1] text-[#7B5644] border border-[#EAE5DF]";
+      case "Processing":
+        return "bg-yellow-100 text-yellow-800 border border-yellow-200";
+      case "Payment Pending":
+        return "bg-amber-100 text-amber-900 border border-amber-300";
+      case "Cancelled":
+        return "bg-rose-100 text-rose-800 border border-rose-200";
+      default:
+        return "bg-[#F5F3F0] text-[#77716D] border border-[#EAE5DF]";
     }
   };
 
   // Tracking steps based on status
   const getTrackingStep = (status: string) => {
     switch (status) {
-      case "Confirmed":  return 1;
-      case "Processing": return 2;
-      case "Shipped":    return 3;
-      case "Delivered":  return 4;
-      default:           return 1;
+      case "Payment Pending": return 0;
+      case "Confirmed":        return 1;
+      case "Processing":       return 2;
+      case "Shipped":          return 3;
+      case "Delivered":        return 4;
+      default:                 return 0;
     }
   };
 
@@ -153,27 +222,54 @@ function OrdersContent() {
                   <p>{selectedOrder.paymentMethod}</p>
                 </div>
                 <div>
-                  <p className="text-[#191919] font-medium mb-0.5">Total Paid</p>
+                  <p className="text-[#191919] font-medium mb-0.5">Total</p>
                   <p className="font-serif text-[#191919] font-semibold">₹{selectedOrder.total?.toLocaleString("en-IN")}</p>
                 </div>
               </div>
             </div>
 
+            {/* Status Informational Callout */}
+            {selectedOrder.status === "Payment Pending" && (
+              <div className="p-4 bg-amber-50 border border-amber-200 text-amber-950 text-xs mb-6">
+                <p className="font-semibold text-amber-900 mb-1 uppercase tracking-wider text-[10px]">
+                  Payment Pending Verification
+                </p>
+                <p className="leading-relaxed">
+                  Your order is registered under UPI. Selecting UPI does not constitute proof of payment. Please transfer the total to our verified accounts VPA or WhatsApp concierge (<strong className="font-medium">+91 8123200215</strong>). Once verified by our accounts desk, your order status will be marked <em>Confirmed</em>.
+                </p>
+              </div>
+            )}
+
+            {selectedOrder.status === "Cancelled" && (
+              <div className="p-4 bg-rose-50 border border-rose-200 text-rose-950 text-xs mb-6">
+                <p className="font-semibold text-rose-900 mb-1 uppercase tracking-wider text-[10px]">
+                  Order Cancelled
+                </p>
+                <p className="leading-relaxed font-medium">
+                  {selectedOrder.paymentStatus === "Refunded"
+                    ? "Your refund has been processed."
+                    : selectedOrder.paymentStatus === "Refund Pending"
+                    ? "Your order has been cancelled. Your refund is pending."
+                    : "Your order has been cancelled. No refund is due because payment was not received."}
+                </p>
+              </div>
+            )}
+
             {/* 4-Stage Tracking Timeline */}
             <div className="p-6 bg-[#FDFBF8] border border-[#EAE5DF] mb-6">
               <h3 className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#191919] mb-6">
-                Live Shipment Tracking
+                Commission &amp; Dispatch Progress (DTDC Express)
               </h3>
               <div className="grid grid-cols-4 gap-3">
                 {[
-                  { label: "Order Confirmed", icon: CheckCircle2, step: 1 },
+                  { label: "Payment & Confirmation", icon: CheckCircle2, step: 1 },
                   { label: "Atelier Packing", icon: Package, step: 2 },
                   { label: "In Transit", icon: Truck, step: 3 },
                   { label: "Delivered", icon: Home, step: 4 },
                 ].map(({ label, icon: Icon, step }) => {
                   const current = getTrackingStep(selectedOrder.status);
-                  const isActive = step <= current;
-                  const isCurrent = step === current;
+                  const isActive = step <= current && selectedOrder.status !== "Cancelled";
+                  const isCurrent = step === current && selectedOrder.status !== "Cancelled";
                   return (
                     <div key={step} className={`flex flex-col items-center text-center ${isActive ? "" : "opacity-40"}`}>
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-2 ${isCurrent ? "bg-[#7B5644] animate-pulse" : isActive ? "bg-[#191919]" : "bg-[#EFEEEB]"}`}>
@@ -183,6 +279,34 @@ function OrdersContent() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* 24-Hour Cancellation Policy Card */}
+            <div className="p-6 bg-[#FDFBF8] border border-[#EAE5DF] mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#191919] mb-1">
+                    24-Hour Cancellation Policy
+                  </h4>
+                  <p className="text-xs text-[#77716D] max-w-xl leading-relaxed">
+                    Cancellations are accepted within <strong>24 hours of order placement</strong> for an unconditional 100% full refund, including shipping charges. After 24 hours, custom fabric cutting and handcrafting commences, and ordinary cancellation requests cannot be accommodated.
+                  </p>
+                  {cancelMessage && (
+                    <p className="mt-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 p-2 font-medium">
+                      {cancelMessage}
+                    </p>
+                  )}
+                </div>
+                {selectedOrder.status !== "Cancelled" && selectedOrder.status !== "Delivered" && selectedOrder.status !== "Shipped" && (
+                  <button
+                    onClick={() => handleCancelOrder(selectedOrder.id)}
+                    disabled={cancellingId === selectedOrder.id}
+                    className="px-4 py-2 bg-rose-50 text-rose-800 border border-rose-300 text-[10px] uppercase tracking-wider font-semibold hover:bg-rose-100 disabled:opacity-50 transition-colors shrink-0"
+                  >
+                    {cancellingId === selectedOrder.id ? "Processing..." : "Request Cancellation"}
+                  </button>
+                )}
               </div>
             </div>
 

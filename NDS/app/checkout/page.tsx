@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart, CartItem } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { ShieldCheck, Truck, CreditCard, Smartphone, Building, Banknote, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, Truck, Smartphone, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -58,6 +58,7 @@ function CheckoutContent() {
     pincode: "",
     giftPackaging: false,
     giftMessage: "",
+    utr: "",
   });
 
   useEffect(() => {
@@ -97,7 +98,7 @@ function CheckoutContent() {
     }
   }, [user]);
 
-  const [paymentMethod, setPaymentMethod] = useState<"upi" | "card" | "netbanking" | "cod">("upi");
+  const paymentMethod = "upi";
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
@@ -106,11 +107,13 @@ function CheckoutContent() {
 
     const generatedOrderId = `NDS-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // Build local order record
+    // Build order record with separated payment status
     const newOrder = {
       id: generatedOrderId,
       date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      status: "Confirmed",
+      createdAt: new Date().toISOString(),
+      status: "Payment Pending",
+      paymentStatus: "Pending",
       items: [...items],
       total,
       shippingAddress: `${formData.fullName}, ${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
@@ -123,23 +126,19 @@ function CheckoutContent() {
         state: formData.state,
         pincode: formData.pincode,
       },
-      paymentMethod: paymentMethod.toUpperCase(),
+      paymentMethod: "UPI",
     };
 
-    // 1. Save to localStorage as instant fallback cache
+    // Store ephemeral copy in sessionStorage solely for the immediate confirmation view
     try {
-      const existingOrders = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
-      localStorage.setItem("nds_orders_history", JSON.stringify([newOrder, ...existingOrders]));
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("nds_orders_updated"));
-      }
+      sessionStorage.setItem("nds_last_order", JSON.stringify(newOrder));
     } catch (err) {
-      console.warn("Could not save order history locally:", err);
+      console.warn("Could not save temporary order reference:", err);
     }
 
-    // 2. POST to Supabase via API route (non-blocking — failures don't stop checkout)
+    // POST to Supabase via server route
     try {
-      await fetch("/api/admin/orders", {
+      const res = await fetch("/api/admin/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -152,7 +151,10 @@ function CheckoutContent() {
           shippingCity: formData.city,
           shippingState: formData.state,
           shippingPincode: formData.pincode,
-          paymentMethod: paymentMethod.toUpperCase(),
+          paymentMethod: "UPI",
+          status: "Payment Pending",
+          paymentStatus: "Pending",
+          utr: formData.utr.trim() || null,
           total,
           giftPackaging: formData.giftPackaging,
           giftMessage: formData.giftMessage,
@@ -166,6 +168,15 @@ function CheckoutContent() {
           })),
         }),
       });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.guestCancellationToken) {
+          try {
+            sessionStorage.setItem("nds_guest_cancel_token_" + generatedOrderId, data.guestCancellationToken);
+          } catch {}
+        }
+      }
     } catch (err) {
       console.warn("Could not save order to cloud:", err);
     }
@@ -240,7 +251,7 @@ function CheckoutContent() {
                 </div>
                 <div>
                   <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
-                    Phone Number (for Courier SMS) *
+                    Phone Number (for DTDC Delivery SMS) *
                   </label>
                   <input
                     type="tel"
@@ -337,73 +348,55 @@ function CheckoutContent() {
                 <span className="w-6 h-6 rounded-full bg-[#191919] text-[#FDFBF8] text-xs flex items-center justify-center font-sans font-medium">3</span>
                 Payment Method
               </h2>
-              <div className="space-y-3 mb-6">
-                {/* UPI */}
-                <div
-                  onClick={() => setPaymentMethod("upi")}
-                  className={`p-4 border cursor-pointer transition-all flex items-center space-x-3 ${
-                    paymentMethod === "upi"
-                      ? "border-[#191919] bg-[#F5F3F0]"
-                      : "border-[#EAE5DF] bg-transparent hover:border-[#191919]"
-                  }`}
-                >
-                  <Smartphone className="w-5 h-5 text-[#7B5644]" />
+              <div className="space-y-4 mb-6">
+                {/* UPI — Sole Accepted Payment Method */}
+                <div className="p-4 border border-[#191919] bg-[#F5F3F0] flex items-start space-x-3">
+                  <Smartphone className="w-5 h-5 text-[#7B5644] mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-[#191919]">UPI Instant Transfer</p>
-                    <p className="text-[10px] text-[#77716D]">Google Pay, PhonePe, Paytm, BHIM</p>
+                    <div className="flex flex-wrap items-center justify-between gap-1">
+                      <p className="text-xs font-semibold text-[#191919]">UPI Transfer (Manual Verification)</p>
+                      <span className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 bg-amber-100 text-amber-900 border border-amber-300">
+                        Payment Pending Verification
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-[#77716D] mt-1">Google Pay, PhonePe, Paytm, BHIM or Bank UPI App</p>
                   </div>
-                  {paymentMethod === "upi" && <CheckCircle2 className="w-4 h-4 text-[#191919]" />}
+                  <CheckCircle2 className="w-4 h-4 text-[#191919] mt-0.5 flex-shrink-0" />
                 </div>
 
-                {/* Credit / Debit Cards */}
-                <div
-                  onClick={() => setPaymentMethod("card")}
-                  className={`p-4 border cursor-pointer transition-all flex items-center space-x-3 ${
-                    paymentMethod === "card"
-                      ? "border-[#191919] bg-[#F5F3F0]"
-                      : "border-[#EAE5DF] bg-transparent hover:border-[#191919]"
-                  }`}
-                >
-                  <CreditCard className="w-5 h-5 text-[#7B5644]" />
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-[#191919]">Credit / Debit Card</p>
-                    <p className="text-[10px] text-[#77716D]">Visa, Mastercard, Amex, Diners Club</p>
+                {/* Honest Verification Notice */}
+                <div className="p-4 bg-[#FAF8F5] border border-[#EAE5DF] text-xs text-[#77716D] space-y-1.5 leading-relaxed">
+                  <div className="flex items-center gap-1.5 text-[#7B5644] font-semibold text-[10px] uppercase tracking-wider">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>Payment Verification Policy</span>
                   </div>
-                  {paymentMethod === "card" && <CheckCircle2 className="w-4 h-4 text-[#191919]" />}
+                  <p>
+                    Selecting UPI registers your order in <strong className="text-[#191919]">Payment Pending</strong> status. It does <strong>not</strong> serve as proof of payment.
+                  </p>
+                  <p>
+                    Our atelier concierge will verify your payment with our accounts team before your bespoke creation is confirmed and released for packaging.
+                  </p>
+                  <p className="text-[11px] text-[#191919] font-medium pt-1 border-t border-[#EAE5DF]">
+                    Grace Period: Eligible for 100% full refund if cancelled within 24 hours of placement.
+                  </p>
                 </div>
 
-                {/* Net Banking */}
-                <div
-                  onClick={() => setPaymentMethod("netbanking")}
-                  className={`p-4 border cursor-pointer transition-all flex items-center space-x-3 ${
-                    paymentMethod === "netbanking"
-                      ? "border-[#191919] bg-[#F5F3F0]"
-                      : "border-[#EAE5DF] bg-transparent hover:border-[#191919]"
-                  }`}
-                >
-                  <Building className="w-5 h-5 text-[#7B5644]" />
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-[#191919]">Net Banking</p>
-                    <p className="text-[10px] text-[#77716D]">All Major Indian Banks</p>
-                  </div>
-                  {paymentMethod === "netbanking" && <CheckCircle2 className="w-4 h-4 text-[#191919]" />}
-                </div>
-
-                {/* COD */}
-                <div
-                  onClick={() => setPaymentMethod("cod")}
-                  className={`p-4 border cursor-pointer transition-all flex items-center space-x-3 ${
-                    paymentMethod === "cod"
-                      ? "border-[#191919] bg-[#F5F3F0]"
-                      : "border-[#EAE5DF] bg-transparent hover:border-[#191919]"
-                  }`}
-                >
-                  <Banknote className="w-5 h-5 text-[#7B5644]" />
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-[#191919]">Cash on Delivery</p>
-                    <p className="text-[10px] text-[#77716D]">Pay at your doorstep</p>
-                  </div>
-                  {paymentMethod === "cod" && <CheckCircle2 className="w-4 h-4 text-[#191919]" />}
+                {/* Optional UPI Transaction Reference / UTR Input */}
+                <div className="p-4 bg-white border border-[#EAE5DF]">
+                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                    UPI Transaction Reference / UTR (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.utr}
+                    onChange={(e) => setFormData({ ...formData, utr: e.target.value })}
+                    maxLength={30}
+                    placeholder="e.g. 412839201948 (12-digit UTR)"
+                    className="w-full p-2.5 bg-[#FAF8F5] border border-[#EAE5DF] text-xs font-mono focus:outline-none focus:border-[#7B5644]"
+                  />
+                  <p className="text-[10px] text-[#77716D] mt-1.5 leading-relaxed">
+                    If you have completed your UPI transfer, enter your 12-digit reference number. Submitting a UTR aids manual ledger reconciliation and does <strong>not</strong> serve as automated proof of payment; our atelier desk verifies receipt before confirmation.
+                  </p>
                 </div>
               </div>
 
@@ -477,7 +470,7 @@ function CheckoutContent() {
                   <span className="font-semibold text-[#191919]">₹{tax.toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Insured Express Shipping</span>
+                  <span>Express Courier (DTDC)</span>
                   <span className="text-emerald-700 font-semibold uppercase text-[11px]">
                     {shipping === 0 ? "Complimentary" : `₹${shipping.toLocaleString("en-IN")}`}
                   </span>
@@ -500,7 +493,7 @@ function CheckoutContent() {
                 disabled={isSubmitting}
                 className="w-full mt-6 py-4 px-6 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-[11px] font-semibold tracking-[0.24em] uppercase transition-all duration-300 disabled:opacity-50 cursor-pointer"
               >
-                {isSubmitting ? "AUTHORIZING ORDER..." : "PLACE ORDER & DISPATCH"}
+                {isSubmitting ? "REGISTERING ORDER..." : "PLACE ORDER (PAYMENT PENDING VERIFICATION)"}
               </button>
 
               <div className="flex items-center justify-center space-x-2 text-[10px] uppercase tracking-wider text-[#77716D] pt-4">

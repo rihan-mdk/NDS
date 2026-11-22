@@ -186,7 +186,7 @@ export default function CartPage() {
                 </div>
 
                 <div className="flex justify-between">
-                  <span>Insured Express Courier</span>
+                  <span>Express Courier (DTDC)</span>
                   <span className="text-emerald-700 font-semibold uppercase tracking-wider text-[11px]">
                     {shipping === 0 ? "Complimentary" : `₹${shipping.toLocaleString("en-IN")}`}
                   </span>

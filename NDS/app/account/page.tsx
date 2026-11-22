@@ -65,8 +65,48 @@ export default function AccountProfilePage() {
 
   const [ordersCount, setOrdersCount] = useState<number>(0);
   const [activeModal, setActiveModal] = useState<
-    "details" | "address" | "measurements" | "terms" | "privacy" | "returns" | null
+    "details" | "address" | "measurements" | "terms" | "privacy" | "returns" | "deleteAccount" | null
   >(null);
+
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState("");
+  const [localDataCleared, setLocalDataCleared] = useState(false);
+
+  const handleClearLocalData = () => {
+    try {
+      localStorage.removeItem("nds_saved_details");
+      localStorage.removeItem("nds_saved_addresses");
+      localStorage.removeItem("nds_measurements");
+      localStorage.removeItem("nds_orders_history");
+      sessionStorage.removeItem("nds_last_order");
+      setLocalDataCleared(true);
+      setTimeout(() => setLocalDataCleared(false), 3000);
+    } catch (e) {
+      console.warn("Could not clear local device data:", e);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    setDeleteAccountError("");
+    try {
+      const res = await fetch("/api/user/delete-account", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        handleClearLocalData();
+        await signOut();
+        router.push("/?deleted=true");
+      } else {
+        setDeleteAccountError(data.error || "Failed to process account deletion.");
+      }
+    } catch {
+      setDeleteAccountError("Network error while processing deletion request.");
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
 
   const [savedDetails, setSavedDetails] = useState<SavedDetails>({
     fullName: "",
@@ -696,6 +736,36 @@ export default function AccountProfilePage() {
           </div>
         </section>
 
+        {/* Mobile: Privacy & Device Security Section */}
+        <section className="mb-5">
+          <span className="font-sans text-[10px] uppercase text-[#77716D] tracking-[0.2em] font-semibold block mb-2 px-1">
+            PRIVACY &amp; DEVICE SECURITY
+          </span>
+          <div className="bg-white rounded-xl shadow-xs border border-[#EAE5DF]/70 p-4 space-y-3">
+            <p className="text-xs text-[#77716D]">
+              Clears locally cached autofill data (saved addresses, name, phone, measurements) from this browser. Authoritative records remain secure in your cloud profile.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleClearLocalData}
+                className="w-full py-2.5 px-3 border border-[#EAE5DF] text-[#191919] hover:bg-[#F5F3F0] text-[10px] uppercase tracking-wider font-semibold transition-colors"
+              >
+                {localDataCleared ? "Device Data Cleared ✓" : "Clear Device Cache"}
+              </button>
+              {user && (
+                <button
+                  type="button"
+                  onClick={() => setActiveModal("deleteAccount")}
+                  className="w-full py-2.5 px-3 border border-rose-200 bg-rose-50/50 text-rose-800 hover:bg-rose-100 text-[10px] uppercase tracking-wider font-semibold transition-colors"
+                >
+                  Delete Account &amp; Data
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+
         {/* Follow Us Section */}
         <section className="mb-6">
           <div className="bg-white rounded-xl shadow-xs border border-[#EAE5DF]/70 p-4 flex items-center justify-between">
@@ -706,7 +776,7 @@ export default function AccountProfilePage() {
               {/* WhatsApp */}
               <a
                 aria-label="WhatsApp"
-                href="https://wa.me/919895303399?text=Hello%20Neel%27s%20Designer%20Studio"
+                href="https://wa.me/918123200215?text=Hello%20Neel%27s%20Designer%20Studio"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-[#F5F3F0] flex items-center justify-center text-[#191919] hover:text-[#25D366] hover:bg-[#25D366]/10 transition-colors"
@@ -1129,6 +1199,41 @@ export default function AccountProfilePage() {
               </div>
             </section>
 
+            {/* SECTION 4: Data Privacy & Security */}
+            <section className="border border-[#EAE5DF] bg-white p-6 sm:p-8 rounded-sm shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#EAE5DF]">
+                <div>
+                  <h2 className="font-serif text-xl md:text-2xl text-[#191919] font-normal">
+                    Privacy &amp; Data Rights
+                  </h2>
+                  <p className="text-xs text-[#77716D] mt-1">
+                    Purge locally cached browser autofill data or exercise your statutory data deletion rights.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleClearLocalData}
+                    className="px-4 py-2 border border-[#EAE5DF] text-[#191919] hover:bg-[#F5F3F0] text-xs uppercase tracking-wider font-medium transition-colors"
+                  >
+                    {localDataCleared ? "Device Cache Cleared ✓" : "Clear Device Cache"}
+                  </button>
+                  {user && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveModal("deleteAccount")}
+                      className="px-4 py-2 border border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 text-xs uppercase tracking-wider font-semibold transition-colors"
+                    >
+                      Delete Account &amp; Data
+                    </button>
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-[#77716D] pt-4 leading-relaxed">
+                Authoritative patron profile and order details are securely managed in protected cloud storage. In accordance with statutory Indian tax and accounting regulations, historical financial invoices and tax registers are legally preserved even upon personal account erasure.
+              </p>
+            </section>
+
             {/* Quick Policies / Atelier Assurance row */}
             <div className="flex items-center justify-between p-4 border border-[#EAE5DF] bg-[#F5F3F0]/60 rounded-sm">
               <span className="text-xs uppercase tracking-widest text-[#77716D]">
@@ -1154,7 +1259,7 @@ export default function AccountProfilePage() {
                   onClick={() => setActiveModal("returns")}
                   className="text-[#77716D] hover:text-[#191919] underline uppercase tracking-wider"
                 >
-                  Return Policy
+                  Return &amp; Cancellation Policy
                 </button>
               </div>
             </div>
@@ -1630,7 +1735,7 @@ export default function AccountProfilePage() {
           onClick={() => setActiveModal(null)}
         >
           <div
-            className="relative bg-[#FDFBF8] border border-[#EAE5DF] max-w-lg w-full p-6 sm:p-8 rounded-xl shadow-2xl"
+            className="relative bg-[#FDFBF8] border border-[#EAE5DF] max-w-lg w-full p-6 sm:p-8 rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -1643,16 +1748,22 @@ export default function AccountProfilePage() {
             <span className="text-[10px] uppercase tracking-[0.2em] text-[#7B5644] font-semibold block mb-1">
               PRIVACY COMMITMENT
             </span>
-            <h3 className="font-serif text-2xl text-[#191919] mb-4">Privacy Policy</h3>
+            <h3 className="font-serif text-2xl text-[#191919] mb-4">Privacy &amp; Data Policy</h3>
             <div className="space-y-3 text-xs text-[#77716D] leading-relaxed">
               <p>
-                Neel&apos;s Designer Studio respects your personal discretion. We collect only essential information required for order fulfillment.
+                <strong>Information We Collect:</strong> To tailor bespoke garments and fulfill couture commissions, Neel&apos;s Designer Studio collects your full name, email address, mobile number, delivery address, city, state, PIN code, tailored measurements, and commission history.
               </p>
               <p>
-                Your measurements, styling preferences, and payment details are securely encrypted and never shared with third parties.
+                <strong>Payment Security:</strong> We process orders via direct UPI transfer. We never solicit, process, or store credit/debit card numbers or net banking credentials. Orders remain in <em>Payment Pending</em> until verified by our accounts desk.
               </p>
               <p>
-                You may request complete removal of your patron profile data at any time by contacting our support team.
+                <strong>Review Photographs:</strong> If you upload review images, they are stored on our public media CDN and publicly displayed on product showcases. Uploads require explicit patron consent.
+              </p>
+              <p>
+                <strong>Data Retention &amp; Rights:</strong> You may request complete erasure of your patron profile, addresses, bag, and wishlist at any time. In accordance with statutory Indian commercial and tax laws (GST &amp; Companies Act), historical invoice ledgers are retained for mandatory regulatory audit periods.
+              </p>
+              <p>
+                <strong>Verified Contact:</strong> Email: <a href="mailto:neels9589@gmail.com" className="text-[#191919] underline">neels9589@gmail.com</a> · Primary/WhatsApp: <a href="tel:+918123200215" className="text-[#191919] underline">+91 8123200215</a> · Secondary: +91 9740259215.
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-[#EAE5DF] flex justify-end">
@@ -1667,7 +1778,7 @@ export default function AccountProfilePage() {
         </div>
       )}
 
-      {/* 6. Customer Care: Return Policy Modal */}
+      {/* 6. Customer Care: Return & Cancellation Policy Modal */}
       {activeModal === "returns" && (
         <div
           role="dialog"
@@ -1676,7 +1787,7 @@ export default function AccountProfilePage() {
           onClick={() => setActiveModal(null)}
         >
           <div
-            className="relative bg-[#FDFBF8] border border-[#EAE5DF] max-w-lg w-full p-6 sm:p-8 rounded-xl shadow-2xl"
+            className="relative bg-[#FDFBF8] border border-[#EAE5DF] max-w-lg w-full p-6 sm:p-8 rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -1689,16 +1800,25 @@ export default function AccountProfilePage() {
             <span className="text-[10px] uppercase tracking-[0.2em] text-[#7B5644] font-semibold block mb-1">
               ATELIER ASSURANCE
             </span>
-            <h3 className="font-serif text-2xl text-[#191919] mb-4">Return &amp; Exchange Policy</h3>
+            <h3 className="font-serif text-2xl text-[#191919] mb-4">Cancellation &amp; Return Policy</h3>
             <div className="space-y-3 text-xs text-[#77716D] leading-relaxed">
+              <div className="p-3 bg-[#F5EAE1]/70 border border-[#EAE5DF] text-[#7B5644]">
+                <strong className="block text-[11px] uppercase tracking-wider text-[#191919] mb-0.5">
+                  24-Hour Cancellation Guarantee
+                </strong>
+                Cancellation requests submitted within <strong>24 hours of order placement</strong> receive an unconditional <strong>100% full refund</strong>, including all shipping and packaging charges.
+              </div>
               <p>
-                Standard size ready-to-wear pieces may be exchanged within 7 days of delivery in unused condition with atelier security tags intact.
+                <strong>After 24 Hours:</strong> Because every couture ensemble involves custom fabric sourcing and bespoke pattern drafting, ordinary cancellation requests cannot be accepted after 24 hours of placement.
               </p>
               <p>
-                <strong>Custom Tailored &amp; Bridal Couture:</strong> Accompanied by complimentary lifetime fitting alterations — contact our support team to arrange.
+                <strong>Defects &amp; Legal Remedies:</strong> Nothing in this policy limits or affects statutory consumer warranties or remedies provided under the Consumer Protection Act, 2019 for transit damage or manufacturing defects.
               </p>
               <p>
-                To initiate an exchange or fitting adjustment, contact our support team with your order number.
+                <strong>Ready-to-Wear Exchanges:</strong> Standard unworn pieces may be exchanged within 7 days of delivery with original atelier security tags intact.
+              </p>
+              <p>
+                To request cancellation within 24 hours, contact our atelier desk: WhatsApp <strong className="text-[#191919]">+91 8123200215</strong> or Email <strong className="text-[#191919]">neels9589@gmail.com</strong>.
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-[#EAE5DF] flex justify-end">
@@ -1707,6 +1827,64 @@ export default function AccountProfilePage() {
                 className="px-6 py-2 bg-[#191919] text-[#FDFBF8] text-xs font-semibold uppercase tracking-widest hover:bg-[#7B5644]"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. Delete Account & Personal Data Modal */}
+      {activeModal === "deleteAccount" && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          onClick={() => setActiveModal(null)}
+        >
+          <div
+            className="relative bg-[#FDFBF8] border border-[#EAE5DF] max-w-md w-full p-6 sm:p-8 rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setActiveModal(null)}
+              className="absolute top-4 right-4 p-1.5 text-[#77716D] hover:text-[#191919] transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-rose-700 font-semibold block mb-1">
+              DATA PRIVACY &amp; ERASURE
+            </span>
+            <h3 className="font-serif text-2xl text-[#191919] mb-3">Delete Account &amp; Personal Data</h3>
+            <div className="space-y-3 text-xs text-[#77716D] leading-relaxed">
+              <p>
+                Requesting erasure will permanently delete your patron profile, saved addresses, measurements, bag, wishlist, and Supabase login identity from our system.
+              </p>
+              <p className="bg-amber-50 p-3 border border-amber-200 text-amber-950">
+                <strong>Statutory Retention Notice:</strong> In compliance with Indian tax laws (GST Act &amp; Companies Act), past financial order invoices are legally retained with your patron profile disassociated for mandatory audit compliance.
+              </p>
+              {deleteAccountError && (
+                <p className="p-2 bg-rose-50 text-rose-800 border border-rose-200 text-xs">
+                  {deleteAccountError}
+                </p>
+              )}
+            </div>
+            <div className="mt-6 pt-4 border-t border-[#EAE5DF] flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveModal(null)}
+                disabled={isDeletingAccount}
+                className="px-4 py-2 border border-[#EAE5DF] text-[#191919] text-xs font-semibold uppercase tracking-wider hover:bg-[#F5F3F0]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={isDeletingAccount}
+                className="px-5 py-2 bg-rose-700 text-white text-xs font-semibold uppercase tracking-wider hover:bg-rose-800 disabled:opacity-50"
+              >
+                {isDeletingAccount ? "Deleting..." : "Confirm Deletion"}
               </button>
             </div>
           </div>

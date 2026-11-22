@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import crypto from "crypto";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { verifyAdminFromCookies } from "@/lib/auth-server";
 import { sanitizeText } from "@/lib/security";
@@ -23,6 +24,8 @@ function dbOrderToRecord(order: any, items: any[] = []) {
       year: "numeric",
     }),
     status: order.status,
+    paymentStatus: order.payment_status || (order.status === "Confirmed" ? "Paid" : "Pending"),
+    utr: order.utr || null,
     total: Number(order.total),
     shippingAddress: `${order.customer_name}, ${order.shipping_address}, ${order.shipping_city}, ${order.shipping_state} - ${order.shipping_pincode}`,
     paymentMethod: order.payment_method,
@@ -53,14 +56,35 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get("userId");
 
+  const isAdmin = await verifyAdmin();
+
   // If requesting the full orders list (not for a specific user), admin authentication is strictly required
   if (!userId) {
-    const isAdmin = await verifyAdmin();
     if (!isAdmin) {
       return NextResponse.json(
         { error: "Unauthorized atelier administrator access required." },
         { status: 401 }
       );
+    }
+  } else {
+    // If not admin, the requester MUST be authenticated as this specific user
+    if (!isAdmin) {
+      try {
+        const { createClient } = await import("@/lib/supabase/server");
+        const supabaseServer = await createClient();
+        const { data: { user } } = await supabaseServer.auth.getUser();
+        if (!user || user.id !== userId) {
+          return NextResponse.json(
+            { error: "Unauthorized. You may only view your own order records." },
+            { status: 403 }
+          );
+        }
+      } catch {
+        return NextResponse.json(
+          { error: "Authentication required to view order history." },
+          { status: 401 }
+        );
+      }
     }
   }
 
@@ -138,6 +162,7 @@ export async function POST(request: Request) {
       total,
       giftPackaging,
       giftMessage,
+      utr,
       items,
     } = body;
 
@@ -146,6 +171,15 @@ export async function POST(request: Request) {
         { error: "Missing required order fields" },
         { status: 400 }
       );
+    }
+
+    const cleanUtr = utr && typeof utr === "string" ? utr.trim().replace(/[^a-zA-Z0-9]/g, "").slice(0, 30) : null;
+    let guestCancellationToken: string | null = null;
+    let cancellationTokenHash: string | null = null;
+
+    if (!userId) {
+      guestCancellationToken = crypto.randomBytes(24).toString("hex");
+      cancellationTokenHash = crypto.createHash("sha256").update(guestCancellationToken).digest("hex");
     }
 
     const { error: orderError } = await supabase.from("orders").insert({
@@ -158,8 +192,11 @@ export async function POST(request: Request) {
       shipping_city: shippingCity || null,
       shipping_state: shippingState || null,
       shipping_pincode: shippingPincode || null,
-      payment_method: paymentMethod || "UPI",
-      status: "Confirmed",
+      payment_method: "UPI",
+      status: "Payment Pending",
+      payment_status: "Pending",
+      utr: cleanUtr,
+      cancellation_token_hash: cancellationTokenHash,
       total: Number(total),
       gift_packaging: giftPackaging || false,
       gift_message: giftMessage || null,
@@ -193,7 +230,11 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, orderId: id }, { status: 201 });
+    return NextResponse.json({
+      success: true,
+      orderId: id,
+      ...(guestCancellationToken ? { guestCancellationToken } : {}),
+    }, { status: 201 });
   } catch (err) {
     console.error("POST /api/admin/orders error:", err);
     return NextResponse.json(
@@ -217,18 +258,23 @@ export async function PUT(request: Request) {
 
   try {
     const body = await request.json();
-    const { id, status } = body;
+    const { id, status, paymentStatus } = body;
 
-    if (!id || !status) {
+    if (!id || (!status && !paymentStatus)) {
       return NextResponse.json(
-        { error: "Missing id or status" },
+        { error: "Missing id or update parameters (status, paymentStatus)" },
         { status: 400 }
       );
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updates: Record<string, any> = { updated_at: new Date().toISOString() };
+    if (status) updates.status = status;
+    if (paymentStatus) updates.payment_status = paymentStatus;
+
     const { error } = await supabase
       .from("orders")
-      .update({ status, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq("id", id);
 
     if (error) {

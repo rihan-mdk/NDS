@@ -12,7 +12,7 @@ export function WhatsAppButton() {
     return null;
   }
 
-  const phoneNumber = "919945908847"; // 9945908847 with India country code
+  const phoneNumber = "918123200215"; // +91 8123200215 (Verified business WhatsApp)
   const defaultMessage = encodeURIComponent(
     "Hello Neel's Designer Studio, I would like to inquire about your bespoke couture and bridal collections."
   );
@@ -43,7 +43,7 @@ export function WhatsAppButton() {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className="group relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#25D366] text-white shadow-[0_6px_22px_rgba(37,211,102,0.4)] hover:shadow-[0_10px_28px_rgba(37,211,102,0.6)] hover:scale-108 active:scale-95 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:ring-offset-2 focus:ring-offset-[#FDFBF8]"
-        aria-label="Chat with Neel's Designer Studio Atelier Concierge on WhatsApp (+91 9945908847)"
+        aria-label="Chat with Neel's Designer Studio Atelier Concierge on WhatsApp (+91 8123200215)"
       >
         {/* Subtle breathing glow ring */}
         <span className="absolute inset-0 rounded-full bg-[#25D366] opacity-30 group-hover:opacity-0 animate-ping pointer-events-none" />

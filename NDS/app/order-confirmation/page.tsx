@@ -3,14 +3,14 @@
 import React, { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, PackageCheck, Truck, Home, Download, ArrowRight } from "lucide-react";
+import { CheckCircle2, PackageCheck, Truck, Home, Download, ArrowRight, Clock } from "lucide-react";
 
 function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId") || "NDS-2025-849201";
   const [orderDetails, setOrderDetails] = React.useState<{
     id?: string;
-    shippingAddress?: {
+    shippingAddress?: string | {
       name?: string;
       address?: string;
       apartment?: string;
@@ -18,10 +18,23 @@ function OrderConfirmationContent() {
       state?: string;
       pincode?: string;
     };
+    total?: number;
+    status?: string;
+    paymentStatus?: string;
   } | null>(null);
 
   React.useEffect(() => {
     try {
+      // 1. Check temporary session storage first
+      const sessionStored = sessionStorage.getItem("nds_last_order");
+      if (sessionStored) {
+        const parsed = JSON.parse(sessionStored);
+        if (parsed.id === orderId || !parsed.id) {
+          setOrderDetails(parsed);
+          return;
+        }
+      }
+      // 2. Fallback to local storage if present
       const stored = localStorage.getItem("nds_orders_history");
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -38,17 +51,20 @@ function OrderConfirmationContent() {
       {/* Top Hero Banner */}
       <section className="w-full px-6 sm:px-10 lg:px-14 py-16 text-center border-b border-[#EAE5DF] bg-[#F5F3F0]">
         <div className="w-16 h-16 rounded-full bg-[#191919] text-[#FDFBF8] mx-auto flex items-center justify-center mb-6">
-          <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+          <Clock className="w-8 h-8 text-amber-400" />
         </div>
         <span className="text-[10px] uppercase tracking-[0.25em] text-[#7B5644] font-semibold block mb-2">
-          ORDER ACQUIRED &amp; REGISTERED
+          ORDER REGISTERED — PAYMENT PENDING VERIFICATION
         </span>
         <h1 className="font-serif text-3xl sm:text-5xl text-[#191919] mb-4">
-          Thank You for Your Patronage
+          Order Received &amp; Registered
         </h1>
         <p className="font-sans text-sm text-[#77716D] max-w-lg mx-auto leading-relaxed">
-          Your order <strong className="text-[#191919]">{orderId}</strong> has been received by our master atelier. We are preparing your couture pieces with meticulous care.
+          Your order <strong className="text-[#191919]">{orderId}</strong> has been registered with our atelier. Payment via UPI is currently <strong className="text-[#191919]">Pending Verification</strong> by our accounts desk. Once payment is verified, your order will be confirmed for bespoke cutting and dispatch.
         </p>
+        <div className="mt-4 inline-block px-4 py-1.5 bg-amber-50 border border-amber-200 text-[11px] text-amber-900 font-medium">
+          24-Hour Policy: Eligible for a 100% full refund (including shipping) if cancelled within 24 hours of placement.
+        </div>
       </section>
 
       {/* 4-Stage Tracking Stepper */}
@@ -62,37 +78,37 @@ function OrderConfirmationContent() {
             {/* Step 1 */}
             <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
               <div className="w-10 h-10 rounded-full bg-[#191919] text-[#FDFBF8] flex items-center justify-center mb-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <Clock className="w-5 h-5 text-amber-400" />
               </div>
-              <p className="text-xs font-semibold text-[#191919] uppercase tracking-wider">Order Confirmed</p>
-              <p className="text-[11px] text-[#77716D] mt-1">Payment verified &amp; logged</p>
+              <p className="text-xs font-semibold text-[#191919] uppercase tracking-wider">Order Registered</p>
+              <p className="text-[11px] text-amber-800 font-medium mt-1">Payment Pending</p>
             </div>
 
             {/* Step 2 */}
-            <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
-              <div className="w-10 h-10 rounded-full bg-[#7B5644] text-[#FDFBF8] flex items-center justify-center mb-3 animate-pulse">
-                <PackageCheck className="w-5 h-5" />
+            <div className="flex flex-col items-center sm:items-start text-center sm:text-left opacity-60">
+              <div className="w-10 h-10 rounded-full bg-[#7B5644] text-[#FDFBF8] flex items-center justify-center mb-3">
+                <CheckCircle2 className="w-5 h-5" />
               </div>
-              <p className="text-xs font-semibold text-[#7B5644] uppercase tracking-wider">Atelier Packaging</p>
-              <p className="text-[11px] text-[#77716D] mt-1">Hand-inspection &amp; muslin seal</p>
+              <p className="text-xs font-semibold text-[#7B5644] uppercase tracking-wider">Verification &amp; Confirmation</p>
+              <p className="text-[11px] text-[#77716D] mt-1">Accounts desk verifies UPI</p>
             </div>
 
             {/* Step 3 */}
-            <div className="flex flex-col items-center sm:items-start text-center sm:text-left opacity-50">
+            <div className="flex flex-col items-center sm:items-start text-center sm:text-left opacity-40">
               <div className="w-10 h-10 rounded-full bg-[#EFEEEB] text-[#77716D] flex items-center justify-center mb-3">
-                <Truck className="w-5 h-5" />
+                <PackageCheck className="w-5 h-5" />
               </div>
-              <p className="text-xs font-semibold text-[#191919] uppercase tracking-wider">In Transit</p>
-              <p className="text-[11px] text-[#77716D] mt-1">BlueDart Express Air Courier</p>
+              <p className="text-xs font-semibold text-[#191919] uppercase tracking-wider">Atelier Packaging</p>
+              <p className="text-[11px] text-[#77716D] mt-1">Muslin seal &amp; garment bag</p>
             </div>
 
             {/* Step 4 */}
-            <div className="flex flex-col items-center sm:items-start text-center sm:text-left opacity-50">
+            <div className="flex flex-col items-center sm:items-start text-center sm:text-left opacity-40">
               <div className="w-10 h-10 rounded-full bg-[#EFEEEB] text-[#77716D] flex items-center justify-center mb-3">
-                <Home className="w-5 h-5" />
+                <Truck className="w-5 h-5" />
               </div>
-              <p className="text-xs font-semibold text-[#191919] uppercase tracking-wider">Out for Delivery</p>
-              <p className="text-[11px] text-[#77716D] mt-1">Arriving at your residence</p>
+              <p className="text-xs font-semibold text-[#191919] uppercase tracking-wider">Express Courier</p>
+              <p className="text-[11px] text-[#77716D] mt-1">DTDC Express Courier</p>
             </div>
           </div>
         </div>
@@ -104,7 +120,11 @@ function OrderConfirmationContent() {
             <h3 className="text-xs uppercase tracking-[0.2em] font-semibold text-[#191919] mb-4">
               Delivery Destination
             </h3>
-            {orderDetails?.shippingAddress ? (
+            {typeof orderDetails?.shippingAddress === "string" ? (
+              <p className="text-xs text-[#77716D] leading-relaxed mb-4">
+                {orderDetails.shippingAddress}
+              </p>
+            ) : orderDetails?.shippingAddress ? (
               <>
                 <p className="text-sm font-semibold text-[#191919] mb-1">
                   {orderDetails.shippingAddress.name || "Customer"}
@@ -122,10 +142,10 @@ function OrderConfirmationContent() {
               </p>
             )}
             <p className="text-xs text-[#77716D]">
-              <strong>Courier Partner:</strong> BlueDart Insured Air Express
+              <strong>Courier Partner:</strong> DTDC Express Courier
             </p>
             <p className="text-xs text-[#77716D] mt-1">
-              <strong>Estimated Arrival:</strong> 3-4 Business Days
+              <strong>Estimated Arrival:</strong> 3-5 Business Days (Consignment tracking shared via SMS/WhatsApp)
             </p>
           </div>
 

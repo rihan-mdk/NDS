@@ -224,3 +224,98 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to submit review" }, { status: 500 });
   }
 }
+
+// ── DELETE /api/reviews — Remove review or customer photograph ─────────────────
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const reviewId = searchParams.get("id");
+    const photoOnly = searchParams.get("photoOnly") === "true";
+
+    if (!reviewId) {
+      return NextResponse.json({ error: "Review ID is required" }, { status: 400 });
+    }
+
+    // Authenticate caller (must be owner of review or administrator)
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabaseServer = await createClient();
+    const { data: { user } } = await supabaseServer.auth.getUser();
+
+    const { verifyAdminFromCookies } = await import("@/lib/auth-server");
+    const { cookies } = await import("next/headers");
+    let isAdmin = false;
+    try {
+      const cookieStore = await cookies();
+      isAdmin = await verifyAdminFromCookies(cookieStore);
+    } catch {
+      isAdmin = false;
+    }
+
+    if (!user && !isAdmin) {
+      return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 });
+    }
+
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      return NextResponse.json({ error: "Database service unavailable." }, { status: 503 });
+    }
+
+    const { data: review, error: fetchError } = await supabase
+      .from("product_reviews")
+      .select("*")
+      .eq("id", reviewId)
+      .maybeSingle();
+
+    if (fetchError || !review) {
+      return NextResponse.json({ error: "Review not found" }, { status: 404 });
+    }
+
+    if (!isAdmin && (!review.user_id || review.user_id !== user?.id)) {
+      return NextResponse.json(
+        { error: "Unauthorized. You may only manage reviews submitted by your account." },
+        { status: 403 }
+      );
+    }
+
+    // Remove photo from Supabase Storage if present
+    if (review.image_url) {
+      try {
+        const urlMatch = review.image_url.match(/product-images\/(reviews\/[^?#]+)/);
+        if (urlMatch && urlMatch[1]) {
+          await supabase.storage.from("product-images").remove([urlMatch[1]]);
+        }
+      } catch (storageErr) {
+        console.warn("Could not delete review storage object:", storageErr);
+      }
+    }
+
+    if (photoOnly) {
+      // Remove only the photograph, keeping review text and rating
+      await supabase
+        .from("product_reviews")
+        .update({ image_url: null })
+        .eq("id", reviewId);
+
+      const fileReviews = readReviewsFromFile();
+      const updated = fileReviews.map((r) => r.id === reviewId ? { ...r, imageUrl: null } : r);
+      writeReviewsToFile(updated);
+
+      return NextResponse.json({ success: true, message: "Photograph removed successfully." });
+    } else {
+      // Delete the entire review record
+      await supabase
+        .from("product_reviews")
+        .delete()
+        .eq("id", reviewId);
+
+      const fileReviews = readReviewsFromFile();
+      const updated = fileReviews.filter((r) => r.id !== reviewId);
+      writeReviewsToFile(updated);
+
+      return NextResponse.json({ success: true, message: "Review and photograph deleted successfully." });
+    }
+  } catch (err) {
+    console.error("DELETE /api/reviews error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

@@ -34,6 +34,8 @@ interface OrderRecord {
   id: string;
   date: string;
   status: "Pending" | "Confirmed" | "Shipped" | "Delivered" | "Cancelled";
+  paymentStatus?: "Pending" | "Paid" | "Refund Pending" | "Refunded" | "No Refund Due";
+  utr?: string;
   items: OrderItem[];
   total: number;
   shippingAddress: string;
@@ -57,6 +59,14 @@ const ORDER_STATUSES: OrderRecord["status"][] = [
   "Cancelled",
 ];
 
+const PAYMENT_STATUSES: NonNullable<OrderRecord["paymentStatus"]>[] = [
+  "Pending",
+  "Paid",
+  "Refund Pending",
+  "Refunded",
+  "No Refund Due",
+];
+
 function OrdersManagementContent() {
   const searchParams = useSearchParams();
   const initialSelectedId = searchParams.get("id");
@@ -66,6 +76,7 @@ function OrdersManagementContent() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
   const [statusUpdating, setStatusUpdating] = useState<OrderRecord["status"]>("Confirmed");
+  const [paymentStatusUpdating, setPaymentStatusUpdating] = useState<NonNullable<OrderRecord["paymentStatus"]>>("Pending");
   const [saveToast, setSaveToast] = useState(false);
 
   useEffect(() => {
@@ -115,6 +126,7 @@ function OrdersManagementContent() {
   const handleOpenOrder = (order: OrderRecord) => {
     setSelectedOrder(order);
     setStatusUpdating(order.status);
+    setPaymentStatusUpdating(order.paymentStatus || (order.status === "Confirmed" ? "Paid" : "Pending"));
     setSaveToast(false);
   };
 
@@ -124,17 +136,27 @@ function OrdersManagementContent() {
     try {
       // Update local state and localStorage
       const updatedList = orders.map((o) =>
-        o.id === selectedOrder.id ? { ...o, status: statusUpdating } : o
+        o.id === selectedOrder.id
+          ? { ...o, status: statusUpdating, paymentStatus: paymentStatusUpdating }
+          : o
       );
       localStorage.setItem("nds_orders_history", JSON.stringify(updatedList));
       setOrders(updatedList);
-      setSelectedOrder({ ...selectedOrder, status: statusUpdating });
+      setSelectedOrder({
+        ...selectedOrder,
+        status: statusUpdating,
+        paymentStatus: paymentStatusUpdating,
+      });
 
       // Persist to Supabase
       await fetch("/api/admin/orders", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedOrder.id, status: statusUpdating }),
+        body: JSON.stringify({
+          id: selectedOrder.id,
+          status: statusUpdating,
+          paymentStatus: paymentStatusUpdating,
+        }),
       });
 
       if (typeof window !== "undefined") {
@@ -384,38 +406,78 @@ function OrdersManagementContent() {
               </button>
             </div>
 
-            {/* Status Update Control */}
-            <div className="p-4 sm:p-5 bg-[#FFFFFF] border border-[#EAE5DF] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-[#77716D] block mb-1">
-                  Update Fulfillment Status
-                </span>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={statusUpdating}
-                    onChange={(e) => setStatusUpdating(e.target.value as any)}
-                    className="bg-[#F5F3F0] border border-[#EAE5DF] px-3 py-2 text-xs font-semibold text-[#191919] focus:outline-none focus:border-[#7B5644]"
-                  >
-                    {ORDER_STATUSES.map((st) => (
-                      <option key={st} value={st}>
-                        {st}
-                      </option>
-                    ))}
-                  </select>
+            {/* Status & Payment Update Controls */}
+            <div className="p-4 sm:p-5 bg-[#FFFFFF] border border-[#EAE5DF] space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {/* Fulfillment Status */}
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-[#77716D] block mb-1">
+                      Fulfillment Status
+                    </span>
+                    <select
+                      value={statusUpdating}
+                      onChange={(e) => setStatusUpdating(e.target.value as any)}
+                      className="bg-[#F5F3F0] border border-[#EAE5DF] px-3 py-2 text-xs font-semibold text-[#191919] focus:outline-none focus:border-[#7B5644]"
+                    >
+                      {ORDER_STATUSES.map((st) => (
+                        <option key={st} value={st}>
+                          {st}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                  <button
-                    onClick={handleUpdateStatus}
-                    className="px-4 py-2 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-xs uppercase tracking-wider font-semibold transition-colors"
-                  >
-                    Save Status
-                  </button>
+                  {/* Payment Status */}
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-[#77716D] block mb-1">
+                      Payment Verification Status
+                    </span>
+                    <select
+                      value={paymentStatusUpdating}
+                      onChange={(e) => setPaymentStatusUpdating(e.target.value as any)}
+                      className="bg-[#F5F3F0] border border-[#EAE5DF] px-3 py-2 text-xs font-semibold text-[#191919] focus:outline-none focus:border-[#7B5644]"
+                    >
+                      {PAYMENT_STATUSES.map((ps) => (
+                        <option key={ps} value={ps}>
+                          {ps}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+
+                <button
+                  onClick={handleUpdateStatus}
+                  className="px-5 py-2 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-xs uppercase tracking-wider font-semibold transition-colors self-start sm:self-end"
+                >
+                  Save Statuses
+                </button>
               </div>
 
+              {/* UTR Callout if customer submitted reference */}
+              {selectedOrder.utr ? (
+                <div className="p-3 bg-amber-50 border border-amber-200 text-xs text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <strong className="uppercase tracking-wider text-[10px] text-amber-900 block">
+                      Customer Submitted UTR / Transaction Ref:
+                    </strong>
+                    <span className="font-mono font-semibold text-sm">{selectedOrder.utr}</span>
+                  </div>
+                  <span className="text-[10px] uppercase font-semibold px-2 py-0.5 bg-amber-200 text-amber-900 self-start sm:self-center">
+                    Unverified — Reconcile with Bank Ledger
+                  </span>
+                </div>
+              ) : (
+                <div className="text-[11px] text-[#77716D]">
+                  No UTR reference submitted by patron at checkout. Check direct bank transfer statement against order amount.
+                </div>
+              )}
+
               {saveToast && (
-                <div className="text-xs text-emerald-700 flex items-center gap-1.5 animate-in fade-in">
+                <div className="text-xs text-emerald-700 flex items-center gap-1.5 animate-in fade-in pt-1">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Status updated successfully</span>
+                  <span>Order status and payment status updated successfully</span>
                 </div>
               )}
             </div>

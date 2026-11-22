@@ -45,6 +45,7 @@ export function ReviewModal({
   const [name, setName] = useState(customerName || "");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [photoConsent, setPhotoConsent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
@@ -87,6 +88,11 @@ export function ReviewModal({
       return;
     }
 
+    if (selectedFile && !photoConsent) {
+      setErrorMessage("Please confirm your acknowledgement that uploaded photographs are publicly displayed on the product page.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -96,6 +102,8 @@ export function ReviewModal({
       if (selectedFile) {
         const formData = new FormData();
         formData.append("file", selectedFile);
+        formData.append("orderId", orderId);
+        formData.append("productId", product.id);
 
         const uploadRes = await fetch("/api/reviews/upload", {
           method: "POST",
@@ -286,17 +294,35 @@ export function ReviewModal({
               </label>
 
               {previewUrl ? (
-                <div className="relative w-28 h-36 bg-[#EFEEEB] border border-[#EAE5DF] overflow-hidden group">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={previewUrl} alt="Review upload preview" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute top-1 right-1 p-1 bg-black/70 hover:bg-black text-[#FDFBF8] rounded-full transition-colors"
-                    title="Remove photo"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+                <div className="space-y-3">
+                  <div className="relative w-28 h-36 bg-[#EFEEEB] border border-[#EAE5DF] overflow-hidden group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={previewUrl} alt="Review upload preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="absolute top-1 right-1 p-1 bg-black/70 hover:bg-black text-[#FDFBF8] rounded-full transition-colors"
+                      title="Remove photo"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Public Display Notice & Consent */}
+                  <div className="p-3 bg-[#F5F3F0] border border-[#EAE5DF] text-[11px] text-[#77716D] space-y-2">
+                    <p className="leading-relaxed">
+                      <strong className="text-[#191919]">Public Display Notice:</strong> Customer photographs are published directly on the product detail page to assist other patrons with fabric drape and tailoring. Please do not submit photos containing sensitive or private personal details.
+                    </p>
+                    <label className="flex items-start gap-2 cursor-pointer font-medium text-[#191919]">
+                      <input
+                        type="checkbox"
+                        checked={photoConsent}
+                        onChange={(e) => setPhotoConsent(e.target.checked)}
+                        className="mt-0.5 accent-[#191919]"
+                      />
+                      <span>I acknowledge and consent to this photograph being publicly displayed on the atelier creation page.</span>
+                    </label>
+                  </div>
                 </div>
               ) : (
                 <label className="border border-dashed border-[#D5CEC7] hover:border-[#7B5644] bg-[#F5F3F0]/50 hover:bg-[#F5F3F0] p-4 flex flex-col items-center justify-center cursor-pointer transition-colors text-center">

@@ -47,3 +47,6 @@ Our_Gallery/
 # local uploads
 /public/uploads/
 
+
+# scratch files
+scratch/

@@ -1,0 +1,112 @@
+{
+  "timestamp": "2026-11-22T14:23:50.989Z",
+  "environment": "staging",
+  "summary": {
+    "total": 10,
+    "pass": 0,
+    "fail": 0,
+    "blocked": 10
+  },
+  "tests": [
+    {
+      "id": "IT-1",
+      "name": "Anonymous access to orders & order_items denied (SELECT, INSERT, UPDATE, DELETE)",
+      "preconditions": "Staging database provisioned with 20261121_emergency_containment.sql and 20261121_rls_and_security_hardening.sql applied.",
+      "operation": "Issue anon REST requests: SELECT, INSERT, UPDATE, DELETE on orders and order_items.",
+      "expected": "All operations denied: 401 Unauthorized or 0 rows returned via RLS default-deny.",
+      "actual": "BLOCKED: Staging Supabase infrastructure not provisioned or environment variables unset.",
+      "status": "BLOCKED",
+      "evidence": "Precondition check failed: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set. Test was not executed to prevent touching production."
+    },
+    {
+      "id": "IT-2",
+      "name": "Authenticated user cross-user access denied",
+      "preconditions": "Two distinct authenticated user tokens generated on staging.",
+      "operation": "User A attempts to SELECT and UPDATE orders and order_items owned by User B.",
+      "expected": "User A receives 0 rows or 403 Forbidden; cross-user reading and mutation blocked.",
+      "actual": "BLOCKED: Staging Supabase infrastructure not provisioned or environment variables unset.",
+      "status": "BLOCKED",
+      "evidence": "Precondition check failed: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set. Test was not executed to prevent touching production."
+    },
+    {
+      "id": "IT-3",
+      "name": "Unauthorized users cannot invoke privileged SECURITY DEFINER functions",
+      "preconditions": "Staging database with RPC grants configured.",
+      "operation": "Anon and authenticated users attempt direct RPC calls: reconcile_payment_webhook, cancel_order_atomic, reconcile_captured_amount, is_trusted_service_caller.",
+      "expected": "PostgREST returns 401/403/404; execution rejected before function body.",
+      "actual": "BLOCKED: Staging Supabase infrastructure not provisioned or environment variables unset.",
+      "status": "BLOCKED",
+      "evidence": "Precondition check failed: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set. Test was not executed to prevent touching production."
+    },
+    {
+      "id": "IT-4",
+      "name": "Webhook invalid signatures, missing event IDs, merchant identity, currency & associations",
+      "preconditions": "Active /api/webhooks/razorpay endpoint pointed at staging.",
+      "operation": "Send webhooks with: invalid HMAC signature, missing event_id, wrong account_id, non-INR currency, mismatched order/payment IDs.",
+      "expected": "Rejected with HTTP 400/401/403; database state unchanged.",
+      "actual": "BLOCKED: Staging Supabase infrastructure not provisioned or environment variables unset.",
+      "status": "BLOCKED",
+      "evidence": "Precondition check failed: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set. Test was not executed to prevent touching production."
+    },
+    {
+      "id": "IT-5",
+      "name": "Duplicate webhook delivery does not duplicate state changes",
+      "preconditions": "Existing order in staging in 'Payment Pending' state.",
+      "operation": "Send identical payment.captured webhook payload twice with the same event_id.",
+      "expected": "First returns 200 (processed); second returns 200 (duplicate_ignored) without duplicate ledger entries.",
+      "actual": "BLOCKED: Staging Supabase infrastructure not provisioned or environment variables unset.",
+      "status": "BLOCKED",
+      "evidence": "Precondition check failed: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set. Test was not executed to prevent touching production."
+    },
+    {
+      "id": "IT-6",
+      "name": "Refund lifecycle transitions and mismatch rejection",
+      "preconditions": "Captured order with recorded payment ID on staging.",
+      "operation": "Test refund.created → pending, refund.processed → processed; send mismatched refund amount, mismatched currency, wrong payment ID, duplicate refund ID.",
+      "expected": "Legitimate transition succeeds; mismatched amount/currency/ID raises atomic exception and rejects order update.",
+      "actual": "BLOCKED: Staging Supabase infrastructure not provisioned or environment variables unset.",
+      "status": "BLOCKED",
+      "evidence": "Precondition check failed: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set. Test was not executed to prevent touching production."
+    },
+    {
+      "id": "IT-7",
+      "name": "Concurrent partial refunds cannot exceed captured amount or double-count",
+      "preconditions": "Captured order with captured_amount = 1000 INR on staging.",
+      "operation": "Fire two concurrent partial refund requests (600 INR each) simultaneously.",
+      "expected": "One refund succeeds; cumulative sum exceeds 1000 INR, so second is atomically rejected by database lock.",
+      "actual": "BLOCKED: Staging Supabase infrastructure not provisioned or environment variables unset.",
+      "status": "BLOCKED",
+      "evidence": "Precondition check failed: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set. Test was not executed to prevent touching production."
+    },
+    {
+      "id": "IT-8",
+      "name": "Private review images access control",
+      "preconditions": "Private review-images bucket configured with pending and approved review photos on staging.",
+      "operation": "Directly access public CDN URLs for pending/rejected review images; fetch approved review images via GET /api/reviews.",
+      "expected": "Direct CDN request returns 403/404; GET /api/reviews returns temporary signed URL for approved image only.",
+      "actual": "BLOCKED: Staging Supabase infrastructure not provisioned or environment variables unset.",
+      "status": "BLOCKED",
+      "evidence": "Precondition check failed: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set. Test was not executed to prevent touching production."
+    },
+    {
+      "id": "IT-9",
+      "name": "Review submission validation and duplicate prevention",
+      "preconditions": "Delivered order with product in order_items on staging.",
+      "operation": "Submit review with missing Supabase, unauthenticated user, wrong order owner, undelivered order, and duplicate submission.",
+      "expected": "Unauthenticated returns 401; wrong owner/undelivered returns 403; duplicate submission updates existing review and re-queues as pending.",
+      "actual": "BLOCKED: Staging Supabase infrastructure not provisioned or environment variables unset.",
+      "status": "BLOCKED",
+      "evidence": "Precondition check failed: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set. Test was not executed to prevent touching production."
+    },
+    {
+      "id": "IT-10",
+      "name": "Admin reconciliation and cancellation authorization & replay protection",
+      "preconditions": "Active /api/admin/reconcile-capture and /api/orders/cancel routes on staging.",
+      "operation": "Test reconciliation and cancellation with unauthenticated callers, forged body flags (isAdmin=true), and replay requests.",
+      "expected": "Forged flags rejected; reconciliation accepts only verified server-side admin; re-reconciliation rejected.",
+      "actual": "BLOCKED: Staging Supabase infrastructure not provisioned or environment variables unset.",
+      "status": "BLOCKED",
+      "evidence": "Precondition check failed: STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_KEY not set. Test was not executed to prevent touching production."
+    }
+  ]
+}

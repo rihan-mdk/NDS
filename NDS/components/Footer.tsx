@@ -95,27 +95,51 @@ export function Footer() {
           {/* Col 4: CONNECT */}
           <div>
             <h4 className="font-sans text-[10px] text-[#191919] uppercase tracking-[0.2em] font-semibold mb-4">
-              CONNECT
+              ATELIER CONCIERGE
             </h4>
             <ul className="space-y-2.5 font-sans text-xs text-[#77716D]">
+              <li>
+                <a
+                  href="https://wa.me/918123200215?text=Hello%20Neel%27s%20Designer%20Studio"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#191919] transition-colors"
+                >
+                  WhatsApp: +91 8123200215
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:+918123200215"
+                  className="hover:text-[#191919] transition-colors"
+                >
+                  Phone: +91 8123200215
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:+919740259215"
+                  className="hover:text-[#191919] transition-colors"
+                >
+                  Secondary: +91 9740259215
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:neels9589@gmail.com"
+                  className="hover:text-[#191919] transition-colors"
+                >
+                  neels9589@gmail.com
+                </a>
+              </li>
               <li>
                 <a
                   href="https://www.instagram.com/neels_designer_studio?obrf=aDk1emZ3aHVicDZl"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-[#191919] transition-colors capitalize"
+                  className="hover:text-[#191919] transition-colors"
                 >
-                  Instagram
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://wa.me/919895303399?text=Hello%20Neel%27s%20Designer%20Studio"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-[#191919] transition-colors capitalize"
-                >
-                  WhatsApp
+                  Instagram @neels_designer_studio
                 </a>
               </li>
             </ul>
@@ -126,20 +150,18 @@ export function Footer() {
         <div className="mt-12 pt-6 border-t border-[#EAE5DF] flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#77716D] gap-4">
           <p>© 2026 NEEL&apos;S DESIGNER STUDIO. All rights reserved.</p>
           <div className="flex items-center space-x-6">
-            <button
-              suppressHydrationWarning
-              onClick={() => setActiveModal("privacy")}
+            <Link
+              href="/privacy"
               className="hover:text-[#191919] transition-colors"
             >
               Privacy Policy
-            </button>
-            <button
-              suppressHydrationWarning
-              onClick={() => setActiveModal("terms")}
+            </Link>
+            <Link
+              href="/terms"
               className="hover:text-[#191919] transition-colors"
             >
-              Terms of Service
-            </button>
+              Terms &amp; Conditions
+            </Link>
           </div>
         </div>
       </div>
@@ -153,7 +175,7 @@ export function Footer() {
           onClick={() => setActiveModal(null)}
         >
           <div
-            className="relative bg-[#FDFBF8] border border-[#EAE5DF] max-w-lg w-full p-8 shadow-2xl"
+            className="relative bg-[#FDFBF8] border border-[#EAE5DF] max-w-lg w-full p-8 shadow-2xl max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -172,16 +194,22 @@ export function Footer() {
                 <h3 className="font-serif text-2xl text-[#191919] mb-4">Shipping &amp; Delivery</h3>
                 <div className="space-y-3 font-sans text-xs text-[#77716D] leading-relaxed">
                   <p>
-                    All atelier pieces are securely shipped via fully insured express couriers (BlueDart Express and DHL International).
+                    <strong>Coverage:</strong> Delivery across India via DTDC or another suitable courier partner.
                   </p>
                   <p>
-                    <strong>Ready-to-wear &amp; Accessories:</strong> Dispatched within 24–48 hours; delivery in 3–5 business days across India.
+                    <strong>Shipping Charges:</strong> Free shipping on orders of ₹8,000 or above. For orders below ₹8,000, actual applicable courier charges apply.
                   </p>
                   <p>
-                    <strong>Bespoke &amp; Bridal Couture:</strong> Made to order with custom sizing; dispatched in 10–14 business days.
+                    <strong>Estimated Delivery:</strong> Standard locations approximately 5–7 business days; remote locations approximately 7–10 business days. Order processing takes 1–3 business days prior to dispatch.
                   </p>
-                  <p>
-                    Complimentary express insured transit on all orders above ₹10,000.
+                  <p className="pt-2">
+                    <Link
+                      href="/terms"
+                      onClick={() => setActiveModal(null)}
+                      className="text-[#191919] underline font-medium hover:text-[#7B5644]"
+                    >
+                      Read full Shipping &amp; Delivery terms in Terms &amp; Conditions →
+                    </Link>
                   </p>
                 </div>
               </div>
@@ -190,18 +218,30 @@ export function Footer() {
             {activeModal === "returns" && (
               <div>
                 <span className="text-[10px] uppercase tracking-[0.2em] text-[#7B5644] font-semibold block mb-2">
-                  ATELIER ASSURANCE
+                  CANCELLATIONS &amp; EXCHANGES
                 </span>
-                <h3 className="font-serif text-2xl text-[#191919] mb-4">Returns &amp; Exchange</h3>
+                <h3 className="font-serif text-2xl text-[#191919] mb-4">Cancellation, Returns &amp; Exchange</h3>
                 <div className="space-y-3 font-sans text-xs text-[#77716D] leading-relaxed">
+                  <div className="p-3 bg-[#F5F3F0] border border-[#EAE5DF] text-[#191919]">
+                    <strong className="block text-[11px] uppercase tracking-wider text-[#7B5644] mb-1">
+                      24-Hour Cancellation (100% Refund):
+                    </strong>
+                    Cancellations requested within 24 hours of placing an order are eligible for a 100% full refund, including shipping charges already paid.
+                  </div>
                   <p>
-                    Standard sizes may be exchanged within 7 days of delivery in unused condition with security tags intact.
+                    <strong>Exchanges:</strong> We accept exchange requests only if the product received is damaged, defective, or incorrect.
                   </p>
                   <p>
-                    <strong>Custom Tailored Pieces:</strong> Accompanied by complimentary lifetime fitting alterations — contact our support team to arrange.
+                    <strong>Exchange Requirements:</strong> Contact us within 2–3 days of receipt. A continuous, uninterrupted unpacking video must be provided as evidence. Items must be unworn, unwashed, with tags and packaging intact. For approved exchanges, the customer is responsible for both-way shipping charges.
                   </p>
-                  <p>
-                    To initiate an exchange or fitting adjustment, contact our support team with your order number.
+                  <p className="pt-2">
+                    <Link
+                      href="/terms"
+                      onClick={() => setActiveModal(null)}
+                      className="text-[#191919] underline font-medium hover:text-[#7B5644]"
+                    >
+                      Read full cancellation and exchange policy →
+                    </Link>
                   </p>
                 </div>
               </div>
@@ -215,10 +255,19 @@ export function Footer() {
                 <h3 className="font-serif text-2xl text-[#191919] mb-4">Privacy Policy</h3>
                 <div className="space-y-3 font-sans text-xs text-[#77716D] leading-relaxed">
                   <p>
-                    Neel&apos;s Designer Studio respects your personal discretion. We collect only essential information required for order fulfillment and personalized styling.
+                    Neel&apos;s Designer Studio respects your personal privacy. We do not sell personal information and collect only information required to fulfill orders, support customer inquiries, and comply with legal obligations.
                   </p>
                   <p>
-                    Your measurements, styling preferences, and payment details are securely encrypted and never shared with third parties.
+                    We do not collect or store full credit card numbers, CVV codes, UPI PINs, or banking passwords on our website.
+                  </p>
+                  <p className="pt-2">
+                    <Link
+                      href="/privacy"
+                      onClick={() => setActiveModal(null)}
+                      className="text-[#191919] underline font-medium hover:text-[#7B5644]"
+                    >
+                      Read complete Privacy Policy page →
+                    </Link>
                   </p>
                 </div>
               </div>
@@ -227,15 +276,21 @@ export function Footer() {
             {activeModal === "terms" && (
               <div>
                 <span className="text-[10px] uppercase tracking-[0.2em] text-[#7B5644] font-semibold block mb-2">
-                  CLIENT TERMS
+                  TERMS &amp; CONDITIONS
                 </span>
-                <h3 className="font-serif text-2xl text-[#191919] mb-4">Terms of Service</h3>
+                <h3 className="font-serif text-2xl text-[#191919] mb-4">Terms &amp; Conditions</h3>
                 <div className="space-y-3 font-sans text-xs text-[#77716D] leading-relaxed">
                   <p>
-                    All couture designs, textile motifs, and imagery shown on this platform are original intellectual creations of Neel&apos;s Designer Studio.
+                    By accessing our website or placing an order, you agree to our terms regarding prepaid order processing, delivery via DTDC or suitable couriers, 24-hour cancellation window, and conditional exchanges.
                   </p>
-                  <p>
-                    Prices listed in INR are inclusive of applicable GST taxes. Orders commence once payment and sizing details are confirmed.
+                  <p className="pt-2">
+                    <Link
+                      href="/terms"
+                      onClick={() => setActiveModal(null)}
+                      className="text-[#191919] underline font-medium hover:text-[#7B5644]"
+                    >
+                      Read complete Terms &amp; Conditions page →
+                    </Link>
                   </p>
                 </div>
               </div>
