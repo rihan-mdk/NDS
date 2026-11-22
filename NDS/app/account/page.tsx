@@ -1798,28 +1798,46 @@ export default function AccountProfilePage() {
               <X className="w-5 h-5" />
             </button>
             <span className="text-[10px] uppercase tracking-[0.2em] text-[#7B5644] font-semibold block mb-1">
-              ATELIER ASSURANCE
+              ATELIER POLICIES
             </span>
-            <h3 className="font-serif text-2xl text-[#191919] mb-4">Cancellation &amp; Return Policy</h3>
+            <h3 className="font-serif text-2xl text-[#191919] mb-4">Order Cancellation &amp; Refund Policy</h3>
             <div className="space-y-3 text-xs text-[#77716D] leading-relaxed">
-              <div className="p-3 bg-[#F5EAE1]/70 border border-[#EAE5DF] text-[#7B5644]">
-                <strong className="block text-[11px] uppercase tracking-wider text-[#191919] mb-0.5">
-                  24-Hour Cancellation Guarantee
+              <div className="p-3 bg-[#F5F3F0] border border-[#EAE5DF] text-[#191919] space-y-1">
+                <strong className="block text-[11px] uppercase tracking-wider text-[#7B5644]">
+                  Order Cancellation
                 </strong>
-                Cancellation requests submitted within <strong>24 hours of order placement</strong> receive an unconditional <strong>100% full refund</strong>, including all shipping and packaging charges.
+                <ul className="list-disc pl-4 space-y-1 text-xs text-[#77716D]">
+                  <li>Customers who wish to cancel an order must contact Neel&apos;s Designer Studio directly through WhatsApp or Instagram.</li>
+                  <li>Cancellation requests must be submitted within 24 hours of placing the order.</li>
+                  <li>Approved cancellations within this period are eligible for a full refund, including shipping charges paid.</li>
+                  <li>Requests submitted after 24 hours may not be accepted, particularly if the order has already been processed or dispatched.</li>
+                  <li>Cancellation is subject to confirmation by the shop owner.</li>
+                </ul>
               </div>
-              <p>
-                <strong>After 24 Hours:</strong> Because every couture ensemble involves custom fabric sourcing and bespoke pattern drafting, ordinary cancellation requests cannot be accepted after 24 hours of placement.
-              </p>
-              <p>
-                <strong>Defects &amp; Legal Remedies:</strong> Nothing in this policy limits or affects statutory consumer warranties or remedies provided under the Consumer Protection Act, 2019 for transit damage or manufacturing defects.
-              </p>
-              <p>
-                <strong>Ready-to-Wear Exchanges:</strong> Standard unworn pieces may be exchanged within 7 days of delivery with original atelier security tags intact.
-              </p>
-              <p>
-                To request cancellation within 24 hours, contact our atelier desk: WhatsApp <strong className="text-[#191919]">+91 8123200215</strong> or Email <strong className="text-[#191919]">neels9589@gmail.com</strong>.
-              </p>
+
+              <div className="p-3 bg-[#F5F3F0] border border-[#EAE5DF] text-[#191919] space-y-1">
+                <strong className="block text-[11px] uppercase tracking-wider text-[#7B5644]">
+                  Refund Policy
+                </strong>
+                <ul className="list-disc pl-4 space-y-1 text-xs text-[#77716D]">
+                  <li>For refund-related enquiries, customers must contact Neel&apos;s Designer Studio directly through WhatsApp or Instagram.</li>
+                  <li>Approved cancellations within 24 hours qualify for a 100% refund, including shipping charges.</li>
+                  <li>Refund requests relating to damaged, defective, or incorrect products will be reviewed individually.</li>
+                  <li>Refund eligibility is subject to the applicable exchange and cancellation conditions.</li>
+                  <li>Once approved, refunds will be arranged through the applicable payment method.</li>
+                  <li>Processing time may depend on the payment provider or financial institution.</li>
+                </ul>
+              </div>
+
+              <div className="p-3 bg-[#FDFBF8] border border-[#EAE5DF] text-xs text-[#191919] space-y-1">
+                <strong className="block text-[11px] uppercase tracking-wider text-[#7B5644]">
+                  Contact for Cancellation and Refunds:
+                </strong>
+                <p>WhatsApp: <a href="https://wa.me/918123200215" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#7B5644]">+91 8123200215</a></p>
+                <p>Instagram: <a href="https://www.instagram.com/neels_designer_studio?obrf=aDk1emZ3aHVicDZl" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#7B5644]">Neel&apos;s Designer Studio official Instagram account</a></p>
+                <p>Email: <a href="mailto:neels9589@gmail.com" className="underline hover:text-[#7B5644]">neels9589@gmail.com</a></p>
+                <p className="text-[11px] text-[#77716D] pt-0.5">Please provide your order ID and registered contact number when contacting us.</p>
+              </div>
             </div>
             <div className="mt-6 pt-4 border-t border-[#EAE5DF] flex justify-end">
               <button

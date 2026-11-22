@@ -220,27 +220,48 @@ export function Footer() {
                 <span className="text-[10px] uppercase tracking-[0.2em] text-[#7B5644] font-semibold block mb-2">
                   CANCELLATIONS &amp; EXCHANGES
                 </span>
-                <h3 className="font-serif text-2xl text-[#191919] mb-4">Cancellation, Returns &amp; Exchange</h3>
+                <h3 className="font-serif text-2xl text-[#191919] mb-4">Order Cancellation &amp; Refund Policy</h3>
                 <div className="space-y-3 font-sans text-xs text-[#77716D] leading-relaxed">
-                  <div className="p-3 bg-[#F5F3F0] border border-[#EAE5DF] text-[#191919]">
-                    <strong className="block text-[11px] uppercase tracking-wider text-[#7B5644] mb-1">
-                      24-Hour Cancellation (100% Refund):
+                  <div className="p-3 bg-[#F5F3F0] border border-[#EAE5DF] text-[#191919] space-y-1">
+                    <strong className="block text-[11px] uppercase tracking-wider text-[#7B5644]">
+                      Order Cancellation:
                     </strong>
-                    Cancellations requested within 24 hours of placing an order are eligible for a 100% full refund, including shipping charges already paid.
+                    <ul className="list-disc pl-4 space-y-1 text-xs text-[#77716D]">
+                      <li>Customers who wish to cancel an order must contact Neel&apos;s Designer Studio directly through WhatsApp or Instagram.</li>
+                      <li>Cancellation requests must be submitted within 24 hours of placing the order.</li>
+                      <li>Approved cancellations within this period are eligible for a full refund, including shipping charges paid.</li>
+                      <li>Requests submitted after 24 hours may not be accepted, particularly if the order has already been processed or dispatched.</li>
+                      <li>Cancellation is subject to confirmation by the shop owner.</li>
+                    </ul>
                   </div>
-                  <p>
-                    <strong>Exchanges:</strong> We accept exchange requests only if the product received is damaged, defective, or incorrect.
-                  </p>
-                  <p>
-                    <strong>Exchange Requirements:</strong> Contact us within 2–3 days of receipt. A continuous, uninterrupted unpacking video must be provided as evidence. Items must be unworn, unwashed, with tags and packaging intact. For approved exchanges, the customer is responsible for both-way shipping charges.
-                  </p>
+
+                  <div className="p-3 bg-[#F5F3F0] border border-[#EAE5DF] text-[#191919] space-y-1">
+                    <strong className="block text-[11px] uppercase tracking-wider text-[#7B5644]">
+                      Refund Policy:
+                    </strong>
+                    <ul className="list-disc pl-4 space-y-1 text-xs text-[#77716D]">
+                      <li>For refund-related enquiries, customers must contact Neel&apos;s Designer Studio directly through WhatsApp or Instagram.</li>
+                      <li>Approved cancellations within 24 hours qualify for a 100% refund, including shipping charges.</li>
+                      <li>Refund requests relating to damaged, defective, or incorrect products will be reviewed individually.</li>
+                      <li>Once approved, refunds will be arranged through the applicable payment method.</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-3 bg-[#FDFBF8] border border-[#EAE5DF] text-xs text-[#191919] space-y-1">
+                    <strong className="block text-[11px] uppercase tracking-wider text-[#7B5644]">Contact for Cancellation and Refunds:</strong>
+                    <p>WhatsApp: <a href="https://wa.me/918123200215" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#7B5644]">+91 8123200215</a></p>
+                    <p>Instagram: <a href="https://www.instagram.com/neels_designer_studio?obrf=aDk1emZ3aHVicDZl" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#7B5644]">Neel&apos;s Designer Studio official Instagram account</a></p>
+                    <p>Email: <a href="mailto:neels9589@gmail.com" className="underline hover:text-[#7B5644]">neels9589@gmail.com</a></p>
+                    <p className="text-[11px] text-[#77716D] pt-0.5">Please provide your order ID and registered contact number when contacting us.</p>
+                  </div>
+
                   <p className="pt-2">
                     <Link
                       href="/terms"
                       onClick={() => setActiveModal(null)}
                       className="text-[#191919] underline font-medium hover:text-[#7B5644]"
                     >
-                      Read full cancellation and exchange policy →
+                      Read full Terms &amp; Conditions →
                     </Link>
                   </p>
                 </div>

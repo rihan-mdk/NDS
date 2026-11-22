@@ -189,18 +189,25 @@ export default function TermsPage() {
                 <h2 className="font-serif text-xl sm:text-2xl text-[#191919] mb-4 font-normal">
                   Order Cancellation
                 </h2>
-                <div className="p-4 bg-[#FDFBF8] border-l-2 border-[#7B5644] border-t border-r border-b border-[#EAE5DF] space-y-2 font-sans text-xs sm:text-sm text-[#77716D] leading-relaxed mb-4">
-                  <p className="text-[#191919] font-medium">
-                    Customers may request cancellation within 24 hours of placing an order.
-                  </p>
-                  <p>
-                    Approved cancellations are eligible for a <strong>100% refund, including shipping charges already paid</strong>.
+                <ul className="list-disc pl-5 space-y-2.5 font-sans text-xs sm:text-sm text-[#77716D] leading-relaxed mb-4">
+                  <li>Customers who wish to cancel an order must contact Neel&apos;s Designer Studio directly through WhatsApp or Instagram.</li>
+                  <li>Cancellation requests must be submitted within 24 hours of placing the order.</li>
+                  <li>Approved cancellations within this period are eligible for a full refund, including shipping charges paid.</li>
+                  <li>Requests submitted after 24 hours may not be accepted, particularly if the order has already been processed or dispatched.</li>
+                  <li>Cancellation is subject to confirmation by the shop owner.</li>
+                </ul>
+
+                <div className="p-4 bg-[#F5F3F0] border border-[#EAE5DF] text-xs font-sans text-[#191919] space-y-1.5">
+                  <strong className="block text-[11px] uppercase tracking-wider text-[#7B5644]">
+                    Contact for Cancellation and Refunds:
+                  </strong>
+                  <p><strong>WhatsApp:</strong> <a href="https://wa.me/918123200215" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#7B5644]">+91 8123200215</a></p>
+                  <p><strong>Instagram:</strong> <a href="https://www.instagram.com/neels_designer_studio?obrf=aDk1emZ3aHVicDZl" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#7B5644]">Neel&apos;s Designer Studio official Instagram account</a></p>
+                  <p><strong>Email:</strong> <a href="mailto:neels9589@gmail.com" className="underline hover:text-[#7B5644]">neels9589@gmail.com</a></p>
+                  <p className="text-[#77716D] pt-1">
+                    Please provide your order ID and registered contact number when contacting us.
                   </p>
                 </div>
-                <ul className="list-disc pl-5 space-y-2 font-sans text-xs sm:text-sm text-[#77716D] leading-relaxed">
-                  <li>Cancellation requests made after 24 hours may not be accepted, particularly once an order has been processed or dispatched.</li>
-                  <li>To request cancellation, contact us through our official support channels with your order details.</li>
-                </ul>
               </div>
             </div>
           </section>
@@ -254,14 +261,28 @@ export default function TermsPage() {
               <span className="font-serif text-xl sm:text-2xl text-[#7B5644] font-medium">8.</span>
               <div className="flex-1">
                 <h2 className="font-serif text-xl sm:text-2xl text-[#191919] mb-4 font-normal">
-                  Refunds
+                  Refund Policy
                 </h2>
-                <ul className="list-disc pl-5 space-y-2.5 font-sans text-xs sm:text-sm text-[#77716D] leading-relaxed">
-                  <li>Approved cancellations within the 24-hour window qualify for a full refund, including shipping charges.</li>
-                  <li>Refunds for approved damaged, defective, or incorrect-product cases will be assessed after verification.</li>
-                  <li>Refunds will be processed through the applicable payment or refund arrangement communicated by our support team.</li>
-                  <li>Refund processing timelines may depend on the payment provider or financial institution.</li>
+                <ul className="list-disc pl-5 space-y-2.5 font-sans text-xs sm:text-sm text-[#77716D] leading-relaxed mb-4">
+                  <li>For refund-related enquiries, customers must contact Neel&apos;s Designer Studio directly through WhatsApp or Instagram.</li>
+                  <li>Approved cancellations within 24 hours qualify for a 100% refund, including shipping charges.</li>
+                  <li>Refund requests relating to damaged, defective, or incorrect products will be reviewed individually.</li>
+                  <li>Refund eligibility is subject to the applicable exchange and cancellation conditions.</li>
+                  <li>Once approved, refunds will be arranged through the applicable payment method.</li>
+                  <li>Processing time may depend on the payment provider or financial institution.</li>
                 </ul>
+
+                <div className="p-4 bg-[#F5F3F0] border border-[#EAE5DF] text-xs font-sans text-[#191919] space-y-1.5">
+                  <strong className="block text-[11px] uppercase tracking-wider text-[#7B5644]">
+                    Contact for Cancellation and Refunds:
+                  </strong>
+                  <p><strong>WhatsApp:</strong> <a href="https://wa.me/918123200215" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#7B5644]">+91 8123200215</a></p>
+                  <p><strong>Instagram:</strong> <a href="https://www.instagram.com/neels_designer_studio?obrf=aDk1emZ3aHVicDZl" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#7B5644]">Neel&apos;s Designer Studio official Instagram account</a></p>
+                  <p><strong>Email:</strong> <a href="mailto:neels9589@gmail.com" className="underline hover:text-[#7B5644]">neels9589@gmail.com</a></p>
+                  <p className="text-[#77716D] pt-1">
+                    Please provide your order ID and registered contact number when contacting us.
+                  </p>
+                </div>
               </div>
             </div>
           </section>

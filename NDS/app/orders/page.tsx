@@ -284,14 +284,20 @@ function OrdersContent() {
 
             {/* 24-Hour Cancellation Policy Card */}
             <div className="p-6 bg-[#FDFBF8] border border-[#EAE5DF] mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h4 className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#191919] mb-1">
-                    24-Hour Cancellation Policy
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div className="space-y-2">
+                  <h4 className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#191919]">
+                    Order Cancellation Policy (Within 24 Hours)
                   </h4>
                   <p className="text-xs text-[#77716D] max-w-xl leading-relaxed">
-                    Cancellations are accepted within <strong>24 hours of order placement</strong> for an unconditional 100% full refund, including shipping charges. After 24 hours, custom fabric cutting and handcrafting commences, and ordinary cancellation requests cannot be accommodated.
+                    Customers who wish to cancel an order must contact Neel&apos;s Designer Studio directly through WhatsApp or Instagram within <strong>24 hours of placing the order</strong>. Approved cancellations within this period are eligible for a <strong>100% full refund</strong>, including shipping charges. Cancellation is subject to confirmation by the shop owner.
                   </p>
+                  <div className="text-[11px] text-[#191919] bg-[#F5F3F0] border border-[#EAE5DF] p-3 max-w-xl space-y-1">
+                    <span className="font-semibold block text-[#7B5644] uppercase tracking-wider text-[10px]">Direct Concierge Support:</span>
+                    <p>WhatsApp: <a href={`https://wa.me/918123200215?text=${encodeURIComponent(`Hello Neel's Designer Studio, I would like to request cancellation for Order ID: ${selectedOrder.id}. My registered contact number is: ${selectedOrder.phone || ""}`)}`} target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-[#7B5644]">+91 8123200215</a></p>
+                    <p>Instagram: <a href="https://www.instagram.com/neels_designer_studio?obrf=aDk1emZ3aHVicDZl" target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-[#7B5644]">@neels_designer_studio</a></p>
+                    <p className="text-[#77716D]">Please provide your order ID ({selectedOrder.id}) and registered contact number.</p>
+                  </div>
                   {cancelMessage && (
                     <p className="mt-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 p-2 font-medium">
                       {cancelMessage}
@@ -304,7 +310,7 @@ function OrdersContent() {
                     disabled={cancellingId === selectedOrder.id}
                     className="px-4 py-2 bg-rose-50 text-rose-800 border border-rose-300 text-[10px] uppercase tracking-wider font-semibold hover:bg-rose-100 disabled:opacity-50 transition-colors shrink-0"
                   >
-                    {cancellingId === selectedOrder.id ? "Processing..." : "Request Cancellation"}
+                    {cancellingId === selectedOrder.id ? "Processing..." : "Submit Cancellation"}
                   </button>
                 )}
               </div>
