@@ -43,59 +43,58 @@ function CheckoutContent() {
     : cartSubtotal;
 
   const discount = isBuyNow && directItem ? 0 : cartDiscount;
-  const shipping = subtotal > 10000 || subtotal === 0 ? 0 : 1500;
+  const shipping = subtotal >= 8000 || subtotal === 0 ? 0 : 250;
   const tax = Math.round((subtotal - discount) * 0.12);
   const total = subtotal - discount + tax + shipping;
 
   const [formData, setFormData] = useState({
     email: user?.email || "",
     phone: "",
-    fullName: user?.user_metadata?.full_name || (user?.email ? user.email.split("@")[0] : ""),
+    fullName: user?.user_metadata?.full_name || "",
     address: "",
     landmark: "",
     city: "",
     state: "",
     pincode: "",
-    giftPackaging: false,
-    giftMessage: "",
     utr: "",
   });
 
   useEffect(() => {
-    try {
-      const savedAddresses = localStorage.getItem("nds_saved_addresses");
-      const savedDetails = localStorage.getItem("nds_saved_details");
-      if (savedAddresses) {
-        const addrs = JSON.parse(savedAddresses);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const def = addrs.find((a: any) => a.isDefault) || addrs[0];
-        if (def) {
-          setFormData((prev) => ({
-            ...prev,
-            fullName: def.name || prev.fullName,
-            phone: def.phone || prev.phone,
-            address: def.street || prev.address,
-            landmark: def.area || prev.landmark,
-            city: def.city || prev.city,
-            state: def.state || prev.state,
-            pincode: def.pincode || prev.pincode,
-          }));
+    // Only load saved address if the user is authenticated and has explicit addresses for their account
+    if (!user?.id || user.id === "admin-usr-neels") return;
+
+    const loadUserSavedAddress = async () => {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { data: addresses } = await supabase
+          .from("user_addresses")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("is_default", { ascending: false });
+
+        if (addresses && addresses.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const def = addresses.find((a: any) => a.is_default) || addresses[0];
+          if (def) {
+            setFormData((prev) => ({
+              ...prev,
+              fullName: def.name || prev.fullName,
+              phone: def.phone || prev.phone,
+              address: def.street || prev.address,
+              landmark: def.area || prev.landmark,
+              city: def.city || prev.city,
+              state: def.state || prev.state,
+              pincode: def.pincode || prev.pincode,
+            }));
+          }
         }
-      } else if (savedDetails) {
-        const details = JSON.parse(savedDetails);
-        setFormData((prev) => ({
-          ...prev,
-          fullName: details.fullName || prev.fullName,
-          email: details.email || prev.email,
-          phone: details.phone || prev.phone,
-          address: details.address || prev.address,
-          city: details.city || prev.city,
-          pincode: details.pincode || prev.pincode,
-        }));
+      } catch (e) {
+        console.warn("Could not load user saved address:", e);
       }
-    } catch (e) {
-      console.warn("Could not load saved address in checkout:", e);
-    }
+    };
+
+    loadUserSavedAddress();
   }, [user]);
 
   const paymentMethod = "upi";
@@ -156,8 +155,8 @@ function CheckoutContent() {
           paymentStatus: "Pending",
           utr: formData.utr.trim() || null,
           total,
-          giftPackaging: formData.giftPackaging,
-          giftMessage: formData.giftMessage,
+          giftPackaging: false,
+          giftMessage: null,
           items: items.map((item) => ({
             productId: item.product.id,
             productTitle: item.product.title,
@@ -342,77 +341,42 @@ function CheckoutContent() {
               </div>
             </div>
 
-            {/* Step 3: Payment Preference */}
+            {/* Step 3: Payment Method */}
             <div className="bg-[#FDFBF8] border border-[#EAE5DF] p-6 sm:p-8">
               <h2 className="font-serif text-xl text-[#191919] uppercase tracking-wider mb-6 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-[#191919] text-[#FDFBF8] text-xs flex items-center justify-center font-sans font-medium">3</span>
                 Payment Method
               </h2>
-              <div className="space-y-4 mb-6">
-                {/* UPI — Sole Accepted Payment Method */}
-                <div className="p-4 border border-[#191919] bg-[#F5F3F0] flex items-start space-x-3">
-                  <Smartphone className="w-5 h-5 text-[#7B5644] mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center justify-between gap-1">
-                      <p className="text-xs font-semibold text-[#191919]">UPI Transfer (Manual Verification)</p>
-                      <span className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 bg-amber-100 text-amber-900 border border-amber-300">
-                        Payment Pending Verification
-                      </span>
+              <div className="space-y-4">
+                {/* UPI Option */}
+                <div className="p-4 border border-[#191919] bg-[#F5F3F0] flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Smartphone className="w-5 h-5 text-[#7B5644] flex-shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-[#191919]">UPI / QR Transfer</p>
+                      <p className="text-[11px] text-[#77716D]">Google Pay, PhonePe, Paytm, BHIM, or any UPI App</p>
                     </div>
-                    <p className="text-[10px] text-[#77716D] mt-1">Google Pay, PhonePe, Paytm, BHIM or Bank UPI App</p>
                   </div>
-                  <CheckCircle2 className="w-4 h-4 text-[#191919] mt-0.5 flex-shrink-0" />
-                </div>
-
-                {/* Honest Verification Notice */}
-                <div className="p-4 bg-[#FAF8F5] border border-[#EAE5DF] text-xs text-[#77716D] space-y-1.5 leading-relaxed">
-                  <div className="flex items-center gap-1.5 text-[#7B5644] font-semibold text-[10px] uppercase tracking-wider">
-                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span>Payment Verification Policy</span>
-                  </div>
-                  <p>
-                    Selecting UPI registers your order in <strong className="text-[#191919]">Payment Pending</strong> status. It does <strong>not</strong> serve as proof of payment.
-                  </p>
-                  <p>
-                    Our atelier concierge will verify your payment with our accounts team before your bespoke creation is confirmed and released for packaging.
-                  </p>
-                  <p className="text-[11px] text-[#191919] font-medium pt-1 border-t border-[#EAE5DF]">
-                    Grace Period: Eligible for 100% full refund if cancelled within 24 hours of placement.
-                  </p>
+                  <CheckCircle2 className="w-4 h-4 text-[#191919] flex-shrink-0" />
                 </div>
 
                 {/* Optional UPI Transaction Reference / UTR Input */}
                 <div className="p-4 bg-white border border-[#EAE5DF]">
                   <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
-                    UPI Transaction Reference / UTR (Optional)
+                    UPI Reference ID / UTR (Optional)
                   </label>
                   <input
                     type="text"
                     value={formData.utr}
                     onChange={(e) => setFormData({ ...formData, utr: e.target.value })}
                     maxLength={30}
-                    placeholder="e.g. 412839201948 (12-digit UTR)"
+                    placeholder="Enter 12-digit UTR if transfer is completed"
                     className="w-full p-2.5 bg-[#FAF8F5] border border-[#EAE5DF] text-xs font-mono focus:outline-none focus:border-[#7B5644]"
                   />
                   <p className="text-[10px] text-[#77716D] mt-1.5 leading-relaxed">
-                    If you have completed your UPI transfer, enter your 12-digit reference number. Submitting a UTR aids manual ledger reconciliation and does <strong>not</strong> serve as automated proof of payment; our atelier desk verifies receipt before confirmation.
+                    Payment details will also be shared on your order confirmation and official WhatsApp concierge.
                   </p>
                 </div>
-              </div>
-
-              {/* Gift Packaging Option */}
-              <div className="pt-4 border-t border-[#EAE5DF]">
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.giftPackaging}
-                    onChange={(e) => setFormData({ ...formData, giftPackaging: e.target.checked })}
-                    className="w-4 h-4 rounded-none accent-[#191919]"
-                  />
-                  <span className="text-xs font-medium text-[#191919]">
-                    Include signature velvet gift packaging &amp; handwritten monogram card
-                  </span>
-                </label>
               </div>
             </div>
           </div>
@@ -493,7 +457,7 @@ function CheckoutContent() {
                 disabled={isSubmitting}
                 className="w-full mt-6 py-4 px-6 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-[11px] font-semibold tracking-[0.24em] uppercase transition-all duration-300 disabled:opacity-50 cursor-pointer"
               >
-                {isSubmitting ? "REGISTERING ORDER..." : "PLACE ORDER (PAYMENT PENDING VERIFICATION)"}
+                {isSubmitting ? "PROCESSING ORDER..." : "PLACE ORDER"}
               </button>
 
               <div className="flex items-center justify-center space-x-2 text-[10px] uppercase tracking-wider text-[#77716D] pt-4">

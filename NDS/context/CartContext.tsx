@@ -67,48 +67,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch { return []; }
   };
 
-  // Load cart from Supabase, merge with local, push merged back
+  // Load cart from Supabase for authenticated user (clean, user-scoped)
   const syncFromSupabase = async (userId: string) => {
     const supabase = createClient();
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("user_cart")
         .select("product_data, quantity, selected_size")
         .eq("user_id", userId);
 
-      const cloudItems: CartItem[] = (data || []).map((r) => ({
-        product: r.product_data as Product,
-        quantity: r.quantity,
-        selectedSize: r.selected_size,
-      }));
+      if (!error && data) {
+        const cloudItems: CartItem[] = data.map((r) => ({
+          product: r.product_data as Product,
+          quantity: r.quantity,
+          selectedSize: r.selected_size,
+        }));
 
-      const localItems = loadLocal();
-
-      // Merge: start with cloud items, add local-only items on top
-      const merged = [...cloudItems];
-      const localOnly = localItems.filter(
-        (li) =>
-          !cloudItems.some(
-            (ci) => ci.product.id === li.product.id && ci.selectedSize === li.selectedSize
-          )
-      );
-
-      if (localOnly.length > 0) {
-        merged.push(...localOnly);
-        // Push local-only items to Supabase
-        await supabase.from("user_cart").upsert(
-          localOnly.map((item) => ({
-            user_id: userId,
-            product_id: item.product.id,
-            product_data: item.product,
-            quantity: item.quantity,
-            selected_size: item.selectedSize,
-          }))
-        );
+        setItems(cloudItems);
+        saveLocal(cloudItems);
       }
-
-      setItems(merged);
-      saveLocal(merged);
     } catch { /* noop — keep local state */ }
   };
 
@@ -300,7 +277,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const discount = Math.round(subtotal * (discountPercent / 100));
-  const shipping = subtotal > 10000 || subtotal === 0 ? 0 : 1500;
+  const shipping = subtotal >= 8000 || subtotal === 0 ? 0 : 250;
   const tax = Math.round((subtotal - discount) * 0.12);
   const total = subtotal - discount + tax + shipping;
 

@@ -41,37 +41,20 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     } catch { return []; }
   };
 
-  // Load wishlist from Supabase and merge with local items, then push merged
+  // Load wishlist from Supabase for authenticated user (clean, user-scoped)
   const syncFromSupabase = async (userId: string) => {
     const supabase = createClient();
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("user_wishlist")
         .select("product_data")
         .eq("user_id", userId);
 
-      const cloudItems: Product[] = (data || []).map((r) => r.product_data as Product);
-      const localItems = loadLocal();
-
-      // Merge: union of cloud + local (local items not yet in cloud get upserted)
-      const merged = [...cloudItems];
-      const cloudIds = new Set(cloudItems.map((p) => p.id));
-      const localOnly = localItems.filter((p) => !cloudIds.has(p.id));
-
-      if (localOnly.length > 0) {
-        merged.push(...localOnly);
-        // Push local-only items up to Supabase
-        await supabase.from("user_wishlist").upsert(
-          localOnly.map((p) => ({
-            user_id: userId,
-            product_id: p.id,
-            product_data: p,
-          }))
-        );
+      if (!error && data) {
+        const cloudItems: Product[] = data.map((r) => r.product_data as Product);
+        setItems(cloudItems);
+        saveLocal(cloudItems);
       }
-
-      setItems(merged);
-      saveLocal(merged);
     } catch { /* noop — keep local state */ }
   };
 
