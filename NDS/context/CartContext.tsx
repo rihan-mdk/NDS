@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Product } from "@/lib/products-data";
 import { createClient } from "@/lib/supabase/client";
+import { calculateDtdcShipping } from "@/lib/shipping";
 
 export interface CartItem {
   product: Product;
@@ -277,7 +278,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const discount = Math.round(subtotal * (discountPercent / 100));
-  const shipping = subtotal >= 8000 || subtotal === 0 ? 0 : 250;
+  const shipping = calculateDtdcShipping(subtotal).rate;
   const tax = Math.round((subtotal - discount) * 0.12);
   const total = subtotal - discount + tax + shipping;
 

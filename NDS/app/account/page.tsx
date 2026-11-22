@@ -8,6 +8,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { INDIAN_STATES_LIST, detectStateFromPincode } from "@/lib/shipping";
 import {
   User as UserIcon,
   ShoppingBag,
@@ -1495,10 +1496,36 @@ export default function AccountProfilePage() {
                     maxLength={6}
                     required
                     value={addressFormData.pincode}
-                    onChange={(e) => setAddressFormData({ ...addressFormData, pincode: e.target.value })}
+                    onChange={(e) => {
+                      const cleanPin = e.target.value.replace(/\D/g, "").slice(0, 6);
+                      const autoState = cleanPin.length >= 2 ? detectStateFromPincode(cleanPin) : null;
+                      setAddressFormData((prev) => ({
+                        ...prev,
+                        pincode: cleanPin,
+                        state: prev.state && prev.state !== "India" ? prev.state : (autoState || prev.state),
+                      }));
+                    }}
                     className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919]"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-[#77716D] uppercase tracking-wider font-semibold mb-1">
+                  State
+                </label>
+                <select
+                  value={addressFormData.state}
+                  onChange={(e) => setAddressFormData({ ...addressFormData, state: e.target.value })}
+                  className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919] cursor-pointer"
+                >
+                  <option value="">Select State / Territory</option>
+                  {INDIAN_STATES_LIST.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

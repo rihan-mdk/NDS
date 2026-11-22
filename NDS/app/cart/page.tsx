@@ -185,12 +185,24 @@ export default function CartPage() {
                   </span>
                 </div>
 
-                <div className="flex justify-between">
-                  <span>Express Courier (DTDC)</span>
+                <div className="flex justify-between items-baseline">
+                  <div>
+                    <span>Express Courier (DTDC)</span>
+                    {subtotal > 0 && subtotal < 8000 && (
+                      <span className="text-[10px] text-[#77716D] block">
+                        Based on delivery state · Free over ₹8,000
+                      </span>
+                    )}
+                  </div>
                   <span className="text-emerald-700 font-semibold uppercase tracking-wider text-[11px]">
-                    {shipping === 0 ? "Complimentary" : `₹${shipping.toLocaleString("en-IN")}`}
+                    {shipping === 0 ? "Complimentary" : `From ₹${shipping.toLocaleString("en-IN")}`}
                   </span>
                 </div>
+                {subtotal > 0 && subtotal < 8000 && (
+                  <p className="text-[10px] text-[#7B5644] pt-1 leading-snug">
+                    Add ₹{(8000 - subtotal).toLocaleString("en-IN")} more to unlock Complimentary Shipping
+                  </p>
+                )}
               </div>
 
               {/* Total Row */}

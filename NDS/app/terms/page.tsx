@@ -155,8 +155,10 @@ export default function TermsPage() {
                       <strong className="text-[#191919]">Shipping charges:</strong>
                     </p>
                     <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Orders below ₹8,000:</strong> Actual applicable courier charges will be charged.</li>
-                      <li><strong>Orders of ₹8,000 or above:</strong> Free shipping.</li>
+                      <li>
+                        <strong>Orders below ₹8,000:</strong> Standard DTDC courier charges apply based on delivery destination (Karnataka: ₹80, South India: ₹120, Rest of India: ₹180, Remote / Special regions: ₹250).
+                      </li>
+                      <li><strong>Orders of ₹8,000 or above:</strong> Complimentary free shipping across India.</li>
                     </ul>
                     <p>
                       <strong className="text-[#191919]">Courier partner:</strong> DTDC or another suitable courier partner, depending on service availability.

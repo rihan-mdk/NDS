@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCart, CartItem } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { ShieldCheck, Truck, Smartphone, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import { calculateDtdcShipping, INDIAN_STATES_LIST, detectStateFromPincode } from "@/lib/shipping";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -37,16 +38,6 @@ function CheckoutContent() {
     ? (directItem ? [directItem] : [])
     : cartItems;
 
-  // Calculate pricing
-  const subtotal = isBuyNow && directItem
-    ? directItem.product.price * directItem.quantity
-    : cartSubtotal;
-
-  const discount = isBuyNow && directItem ? 0 : cartDiscount;
-  const shipping = subtotal >= 8000 || subtotal === 0 ? 0 : 250;
-  const tax = Math.round((subtotal - discount) * 0.12);
-  const total = subtotal - discount + tax + shipping;
-
   const [formData, setFormData] = useState({
     email: user?.email || "",
     phone: "",
@@ -58,6 +49,17 @@ function CheckoutContent() {
     pincode: "",
     utr: "",
   });
+
+  // Calculate pricing
+  const subtotal = isBuyNow && directItem
+    ? directItem.product.price * directItem.quantity
+    : cartSubtotal;
+
+  const discount = isBuyNow && directItem ? 0 : cartDiscount;
+  const shippingInfo = calculateDtdcShipping(subtotal, formData.state, formData.pincode);
+  const shipping = shippingInfo.rate;
+  const tax = Math.round((subtotal - discount) * 0.12);
+  const total = subtotal - discount + tax + shipping;
 
   useEffect(() => {
     // Only load saved address if the user is authenticated and has explicit addresses for their account
@@ -115,6 +117,8 @@ function CheckoutContent() {
       paymentStatus: "Pending",
       items: [...items],
       total,
+      shipping,
+      shippingZone: shippingInfo.zoneName,
       shippingAddress: `${formData.fullName}, ${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
       customer: {
         name: formData.fullName,
@@ -310,13 +314,19 @@ function CheckoutContent() {
                     <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
                       State *
                     </label>
-                    <input
-                      type="text"
+                    <select
                       required
                       value={formData.state}
                       onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
-                    />
+                      className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644] cursor-pointer"
+                    >
+                      <option value="">Select State / Territory</option>
+                      {INDIAN_STATES_LIST.map((st) => (
+                        <option key={st} value={st}>
+                          {st}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
@@ -325,10 +335,51 @@ function CheckoutContent() {
                     <input
                       type="text"
                       required
+                      maxLength={6}
                       value={formData.pincode}
-                      onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                      onChange={(e) => {
+                        const cleanPin = e.target.value.replace(/\D/g, "").slice(0, 6);
+                        const autoState = cleanPin.length >= 2 ? detectStateFromPincode(cleanPin) : null;
+                        setFormData((prev) => ({
+                          ...prev,
+                          pincode: cleanPin,
+                          state: prev.state || autoState || prev.state,
+                        }));
+                      }}
                       className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
                     />
+                  </div>
+                </div>
+
+                {/* Dynamic DTDC Courier Badge */}
+                <div className="mt-4 p-4 bg-[#F5F3F0] border border-[#EAE5DF] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start sm:items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#191919] text-[#FDFBF8] flex items-center justify-center shrink-0">
+                      <Truck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-[#191919]">
+                          {shippingInfo.zoneName}
+                        </span>
+                        {shippingInfo.isFree && (
+                          <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 tracking-wider uppercase">
+                            Free Shipping
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[#77716D] mt-0.5">
+                        DTDC Express · Estimated transit: {shippingInfo.estimate}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-left sm:text-right sm:border-l sm:border-[#EAE5DF] sm:pl-4">
+                    <span className={`text-xs font-semibold ${shippingInfo.isFree ? "text-emerald-700 font-bold" : "text-[#191919]"}`}>
+                      {shippingInfo.isFree ? "Complimentary" : `₹${shippingInfo.rate}`}
+                    </span>
+                    <span className="block text-[9px] text-[#77716D] uppercase tracking-wider">
+                      {shippingInfo.isFree ? "Orders ₹8,000+" : "Doorstep Express"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -425,12 +476,22 @@ function CheckoutContent() {
                   <span>Estimated GST (12%)</span>
                   <span className="font-semibold text-[#191919]">₹{tax.toLocaleString("en-IN")}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Express Courier (DTDC)</span>
+                <div className="flex justify-between items-baseline">
+                  <div>
+                    <span>Express Courier (DTDC)</span>
+                    <span className="text-[10px] text-[#77716D] block">
+                      {shippingInfo.zoneName}
+                    </span>
+                  </div>
                   <span className="text-emerald-700 font-semibold uppercase text-[11px]">
                     {shipping === 0 ? "Complimentary" : `₹${shipping.toLocaleString("en-IN")}`}
                   </span>
                 </div>
+                {shippingInfo.freeThresholdDiff > 0 && (
+                  <p className="text-[10px] text-[#7B5644] pt-0.5 leading-snug">
+                    Add ₹{shippingInfo.freeThresholdDiff.toLocaleString("en-IN")} more to unlock Complimentary Shipping
+                  </p>
+                )}
               </div>
 
               {/* Total */}
