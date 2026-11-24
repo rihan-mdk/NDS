@@ -32,11 +32,11 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const slug = (params.slug as string) || "zari-embroidered-azure-silk-kurti";
 
-  const [product, setProduct] = useState<Product>(() => {
+  const [product, setProduct] = useState<Product | null>(() => {
     const live = getLiveProductBySlug(slug);
     if (live) return live;
     const all = getAllLiveProducts();
-    return all[0] || PRODUCTS[0];
+    return all.find((p) => p.slug === slug || p.id === slug) || all[0] || null;
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -90,12 +90,12 @@ export default function ProductDetailPage() {
   }, [slug]);
 
   const isAccessory = Boolean(
-    product.isAccessory ||
-    ["bracelets", "clutches", "rings"].includes(product.category) ||
-    product.categoryLabel?.toLowerCase().includes("accessories")
+    product?.isAccessory ||
+    (product?.category && ["bracelets", "clutches", "rings"].includes(product.category)) ||
+    product?.categoryLabel?.toLowerCase().includes("accessories")
   );
 
-  const availableSizes = (product.sizes || []).filter(
+  const availableSizes = (product?.sizes || []).filter(
     (s) => s.toLowerCase() !== "custom atelier"
   );
 
@@ -106,7 +106,7 @@ export default function ProductDetailPage() {
   const [isDragging, setIsDragging] = useState<boolean>(false);
 
   const productImages =
-    product.images && product.images.length > 0 ? product.images : [FALLBACK_IMAGE];
+    product?.images && product.images.length > 0 ? product.images : [FALLBACK_IMAGE];
 
   useEffect(() => {
     setSelectedImage(0);
@@ -161,7 +161,7 @@ export default function ProductDetailPage() {
   };
   const [selectedSize, setSelectedSize] = useState<string>(
     isAccessory
-      ? product.category === "rings"
+      ? product?.category === "rings"
         ? "Adjustable"
         : "One Size"
       : availableSizes[0] || "M"
@@ -174,15 +174,17 @@ export default function ProductDetailPage() {
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
 
-  const isFavorited = isInWishlist(product.id);
+  const isFavorited = product ? isInWishlist(product.id) : false;
 
   const handleAddToCart = () => {
+    if (!product) return;
     addToCart(product, quantity, selectedSize);
     setAddedToast(true);
     setTimeout(() => setAddedToast(false), 2500);
   };
 
   const handleBuyNow = () => {
+    if (!product) return;
     try {
       const directItem = {
         product,
@@ -198,17 +200,19 @@ export default function ProductDetailPage() {
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
-    toggleWishlist(product);
+    if (product) {
+      toggleWishlist(product);
+    }
   };
 
   // Curated pair recommendations (from live, non-deleted catalog)
   const allLive = getAllLiveProducts();
   let relatedProducts = allLive.filter(
-    (p) => p.id !== product.id && (isAccessory ? p.isAccessory : !p.isAccessory)
+    (p) => product && p.id !== product.id && (isAccessory ? p.isAccessory : !p.isAccessory)
   ).slice(0, 4);
 
   if (relatedProducts.length < 4) {
-    relatedProducts = allLive.filter((p) => p.id !== product.id).slice(0, 4);
+    relatedProducts = allLive.filter((p) => product && p.id !== product.id).slice(0, 4);
   }
 
   // ── Luxury Atelier Skeleton (shown while product resolves from cloud) ──
@@ -272,6 +276,24 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </section>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="w-full bg-[#FDFBF8] min-h-[60vh] flex flex-col items-center justify-center px-4 py-16 text-center">
+        <h1 className="font-serif text-2xl text-[#191919] mb-2">Product Not Found</h1>
+        <p className="text-xs text-[#77716D] max-w-sm mb-6">
+          The creation you are looking for is currently unavailable in the atelier catalog.
+        </p>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#191919] text-[#FDFBF8] text-xs uppercase tracking-widest font-semibold hover:bg-[#7B5644] transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Return to Catalog</span>
+        </Link>
       </div>
     );
   }

@@ -7,12 +7,7 @@ const STORAGE_KEY = "nds_custom_products_v1";
 const DELETED_KEY = "nds_deleted_products_v1";
 const SYNC_EVENT = "nds_products_updated";
 
-export const KNOWN_DELETED_BASE_IDS: string[] = [
-  "prod-001", "prod-002", "prod-003", "prod-004",
-  "prod-005", "prod-006", "prod-007", "prod-008",
-  "prod-009", "prod-010", "prod-011", "prod-012",
-  "prod-013", "prod-014", "prod-015", "prod-016",
-];
+export const KNOWN_DELETED_BASE_IDS: string[] = [];
 
 export function getCustomProductsFromStorage(): Product[] {
   if (typeof window === "undefined") return [];
