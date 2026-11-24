@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { PRODUCTS, getProductsByCategory, Product } from "@/lib/products-data";
 import { useLiveProducts } from "@/lib/products-store";
+import { useLiveCategories } from "@/lib/categories-store";
 import { ProductCard } from "@/components/ProductCard";
 import { QuickViewModal } from "@/components/QuickViewModal";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
@@ -62,6 +63,15 @@ export default function HomePage() {
 
   const allLiveProducts = useLiveProducts();
   const newArrivals = allLiveProducts.filter((p) => p.newArrival).slice(0, 4);
+
+  const { categories: liveCategories } = useLiveCategories();
+  const displayCategories = liveCategories.length > 0
+    ? liveCategories.slice(0, 5).map((cat) => ({
+        name: cat.name,
+        href: cat.type === "accessory" ? `/accessories/${cat.slug}` : `/categories/${cat.slug}`,
+        image: cat.image,
+      }))
+    : CURATED_CATEGORIES;
 
   // Hero animation variants — typed as const so framer-motion's Easing type is satisfied
   const heroTextContainer = {
@@ -236,9 +246,9 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {/* Visual Category Cards (5 columns) */}
+        {/* Visual Category Cards (up to 5 columns) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
-          {CURATED_CATEGORIES.map((cat) => (
+          {displayCategories.map((cat) => (
             <Link
               key={cat.name}
               href={cat.href}
