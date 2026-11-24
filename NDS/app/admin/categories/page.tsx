@@ -17,6 +17,7 @@ import {
   ImageIcon,
   UploadCloud,
   Upload,
+  Pencil,
 } from "lucide-react";
 import { useLiveCategories, saveCategoryToStorage, deleteCategoryFromStorage } from "@/lib/categories-store";
 import { AtelierCategory } from "@/lib/products-data";
@@ -26,8 +27,9 @@ export default function AdminCategoriesPage() {
   const [activeTab, setActiveTab] = useState<"clothing" | "accessory">("clothing");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Create modal state
+  // Modal state (Create & Edit)
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<AtelierCategory | null>(null);
   const [formType, setFormType] = useState<"clothing" | "accessory">("clothing");
   const [formName, setFormName] = useState("");
   const [formSlug, setFormSlug] = useState("");
@@ -46,15 +48,17 @@ export default function AdminCategoriesPage() {
   const [categoryToDelete, setCategoryToDelete] = useState<AtelierCategory | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Auto-slugify as name changes
+  // Auto-slugify as name changes (only for new categories to protect existing URLs)
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
     setFormName(name);
-    const slug = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
-    setFormSlug(slug);
+    if (!editingCategory) {
+      const slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "");
+      setFormSlug(slug);
+    }
   };
 
   // Upload helper for category image from file explorer
@@ -114,6 +118,7 @@ export default function AdminCategoriesPage() {
   };
 
   const handleOpenModal = (defaultType?: "clothing" | "accessory") => {
+    setEditingCategory(null);
     setFormType(defaultType || activeTab);
     setFormName("");
     setFormSlug("");
@@ -126,7 +131,21 @@ export default function AdminCategoriesPage() {
     setIsModalOpen(true);
   };
 
-  const handleCreateCategory = async (e: React.FormEvent) => {
+  const handleOpenEditModal = (category: AtelierCategory) => {
+    setEditingCategory(category);
+    setFormType(category.type);
+    setFormName(category.name);
+    setFormSlug(category.slug);
+    setFormDescription(category.description || "");
+    setFormImage(category.image || "");
+    setFormError("");
+    setUploadMode(category.image && category.image.startsWith("http") ? "url" : "file");
+    setIsUploadingImage(false);
+    setIsDragOver(false);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) {
       setFormError("Category name is required.");
@@ -137,34 +156,65 @@ export default function AdminCategoriesPage() {
     setFormError("");
 
     try {
-      const payload = {
-        name: formName.trim(),
-        slug: formSlug.trim() || undefined,
-        type: formType,
-        description: formDescription.trim(),
-        image: formImage.trim() || undefined,
-      };
+      if (editingCategory) {
+        // PUT update flow
+        const payload = {
+          id: editingCategory.id,
+          originalSlug: editingCategory.slug,
+          slug: formSlug.trim() || editingCategory.slug,
+          name: formName.trim(),
+          type: formType,
+          description: formDescription.trim(),
+          image: formImage.trim() || undefined,
+        };
 
-      const res = await fetch("/api/admin/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+        const res = await fetch("/api/admin/categories", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
-      if (!res.ok) {
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to update category");
+        }
+
         const data = await res.json();
-        throw new Error(data.error || "Failed to create category");
-      }
+        if (data.category) {
+          saveCategoryToStorage(data.category);
+        }
+      } else {
+        // POST create flow
+        const payload = {
+          name: formName.trim(),
+          slug: formSlug.trim() || undefined,
+          type: formType,
+          description: formDescription.trim(),
+          image: formImage.trim() || undefined,
+        };
 
-      const data = await res.json();
-      if (data.category) {
-        saveCategoryToStorage(data.category);
+        const res = await fetch("/api/admin/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to create category");
+        }
+
+        const data = await res.json();
+        if (data.category) {
+          saveCategoryToStorage(data.category);
+        }
       }
 
       await refresh();
       setIsModalOpen(false);
+      setEditingCategory(null);
     } catch (err: any) {
-      setFormError(err.message || "Failed to create category");
+      setFormError(err.message || "Failed to save category");
     } finally {
       setIsSubmitting(false);
     }
@@ -365,20 +415,34 @@ export default function AdminCategoriesPage() {
 
                   {/* Actions */}
                   <div className="mt-4 pt-3 border-t border-[#EAE5DF] flex items-center justify-between text-xs">
-                    <Link
-                      href={previewUrl}
-                      target="_blank"
-                      className="text-[11px] uppercase tracking-wider text-[#191919] font-semibold hover:text-[#7B5644] transition-colors flex items-center gap-1"
-                    >
-                      <span>Explore</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(category)}
+                        className="text-[11px] uppercase tracking-wider text-[#191919] font-semibold hover:text-[#7B5644] transition-colors flex items-center gap-1.5 px-2.5 py-1 bg-[#F5F3F0] hover:bg-[#EAE5DF] border border-[#EAE5DF]"
+                        title="Edit Name, Description, or Display Image"
+                      >
+                        <Pencil className="w-3 h-3 text-[#7B5644]" />
+                        <span>Edit</span>
+                      </button>
+
+                      <Link
+                        href={previewUrl}
+                        target="_blank"
+                        className="text-[11px] uppercase tracking-wider text-[#77716D] font-semibold hover:text-[#191919] transition-colors flex items-center gap-1 p-1"
+                        title="View Collection on Storefront"
+                      >
+                        <span>View</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </Link>
+                    </div>
 
                     {category.isCustom ? (
                       <button
                         type="button"
                         onClick={() => setCategoryToDelete(category)}
                         className="text-[11px] uppercase tracking-wider text-red-600 hover:text-red-800 font-semibold transition-colors flex items-center gap-1 p-1"
+                        title="Delete Category"
                       >
                         <Trash2 className="w-3 h-3" />
                         <span>Delete</span>
@@ -403,15 +467,18 @@ export default function AdminCategoriesPage() {
             <div className="flex items-center justify-between pb-4 border-b border-[#EAE5DF] mb-5">
               <div>
                 <span className="font-sans text-[9px] uppercase tracking-[0.25em] text-[#7B5644] font-semibold block mb-0.5">
-                  NEW TAXONOMY
+                  {editingCategory ? "EDIT TAXONOMY" : "NEW TAXONOMY"}
                 </span>
                 <h2 className="font-serif text-xl sm:text-2xl text-[#191919] font-normal">
-                  Create New Category
+                  {editingCategory ? `Edit: ${editingCategory.name}` : "Create New Category"}
                 </h2>
               </div>
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setEditingCategory(null);
+                }}
                 className="text-[#77716D] hover:text-[#191919] p-1.5 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -425,7 +492,7 @@ export default function AdminCategoriesPage() {
               </div>
             )}
 
-            <form onSubmit={handleCreateCategory} className="space-y-4">
+            <form onSubmit={handleSaveCategory} className="space-y-4">
               {/* Type Switcher */}
               <div>
                 <label className="block text-[10px] uppercase tracking-wider text-[#191919] font-semibold mb-2">
@@ -646,7 +713,10 @@ export default function AdminCategoriesPage() {
               <div className="pt-4 border-t border-[#EAE5DF] flex items-center justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEditingCategory(null);
+                  }}
                   disabled={isSubmitting}
                   className="px-4 py-2 text-xs uppercase tracking-wider text-[#77716D] hover:text-[#191919] font-semibold transition-colors"
                 >
@@ -660,10 +730,10 @@ export default function AdminCategoriesPage() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Creating...</span>
+                      <span>{editingCategory ? "Saving Changes..." : "Creating..."}</span>
                     </>
                   ) : (
-                    <span>Create Category</span>
+                    <span>{editingCategory ? "Save Changes" : "Create Category"}</span>
                   )}
                 </button>
               </div>

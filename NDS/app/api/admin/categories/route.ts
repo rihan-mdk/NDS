@@ -229,6 +229,118 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PUT update existing category (clothing or accessory)
+export async function PUT(request: NextRequest) {
+  const isAdmin = await verifyAdmin();
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const {
+      id,
+      originalSlug,
+      slug: customSlug,
+      name,
+      type = "clothing",
+      description = "",
+      image = "",
+      alt = "",
+    } = body;
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return NextResponse.json({ error: "Category name is required" }, { status: 400 });
+    }
+
+    if (type !== "clothing" && type !== "accessory") {
+      return NextResponse.json(
+        { error: "Invalid type. Must be 'clothing' or 'accessory'" },
+        { status: 400 }
+      );
+    }
+
+    const cleanName = name.trim();
+    const cleanSlug = (customSlug || originalSlug || cleanName)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+
+    const categoryId = id || `cat-${type}-${cleanSlug}`;
+
+    const fallbackImage =
+      type === "clothing"
+        ? "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=800&q=80"
+        : "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=80";
+
+    const cleanImage = image && typeof image === "string" && image.trim() ? image.trim() : fallbackImage;
+    const cleanDescription =
+      description && typeof description === "string" && description.trim()
+        ? description.trim()
+        : `${cleanName} collection crafted for the discerning atelier.`;
+    const cleanAlt =
+      alt && typeof alt === "string" && alt.trim() ? alt.trim() : `Artisanal Handcrafted ${cleanName}`;
+
+    const updatedCategory: AtelierCategory = {
+      id: categoryId,
+      name: cleanName,
+      slug: cleanSlug,
+      type,
+      description: cleanDescription,
+      image: cleanImage,
+      alt: cleanAlt,
+      count: 0,
+      isCustom: true,
+    };
+
+    // 1. Save to Supabase (using products table with category = '__category__')
+    const supabase = getSupabaseAdmin();
+    if (supabase) {
+      // If slug was renamed, migrate any products that used the old slug and remove old category record
+      if (originalSlug && originalSlug !== cleanSlug) {
+        try {
+          await supabase.from("products").delete().eq("slug", originalSlug).eq("category", "__category__");
+          await supabase.from("products").update({ category: cleanSlug }).eq("category", originalSlug);
+        } catch (e) {
+          console.warn("Could not migrate products on category slug rename:", e);
+        }
+      }
+
+      const { error: upsertError } = await supabase.from("products").upsert({
+        id: categoryId,
+        slug: cleanSlug,
+        title: cleanName,
+        category: "__category__",
+        category_label: type,
+        sub_category: type === "accessory" ? "Accessory Category" : "Clothing Category",
+        price: 0,
+        images: [cleanImage],
+        description: cleanDescription,
+        fabric: cleanAlt,
+        in_stock: true,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (upsertError) {
+        console.error("Supabase category update error:", upsertError);
+      }
+    }
+
+    // 2. Also save to local file backup
+    const fileCategories = readCustomCategoriesFromFile();
+    const filtered = fileCategories.filter(
+      (c) => c.id !== categoryId && c.slug !== cleanSlug && (originalSlug ? c.slug !== originalSlug : true)
+    );
+    filtered.unshift(updatedCategory);
+    writeCustomCategoriesToFile(filtered);
+
+    return NextResponse.json({ success: true, category: updatedCategory });
+  } catch (error) {
+    console.error("PUT /api/admin/categories error:", error);
+    return NextResponse.json({ error: "Failed to update category" }, { status: 500 });
+  }
+}
+
 // DELETE category
 export async function DELETE(request: NextRequest) {
   const isAdmin = await verifyAdmin();
