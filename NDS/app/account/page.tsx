@@ -26,6 +26,10 @@ import {
   Plus,
   X,
   Check,
+  KeyRound,
+  Lock,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 interface SavedDetails {
@@ -59,15 +63,27 @@ interface Measurements {
 }
 
 export default function AccountProfilePage() {
-  const { user, signOut, isAdmin, loading } = useAuth();
+  const { user, signOut, isAdmin, loading, resetPassword } = useAuth();
   const { totalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
   const router = useRouter();
 
   const [ordersCount, setOrdersCount] = useState<number>(0);
   const [activeModal, setActiveModal] = useState<
-    "details" | "address" | "measurements" | "terms" | "privacy" | "returns" | "deleteAccount" | null
+    "details" | "address" | "measurements" | "terms" | "privacy" | "returns" | "deleteAccount" | "credentials" | null
   >(null);
+
+  // Credentials & Security state (Name, Email, Password edit & reset)
+  const [isEditingCredentials, setIsEditingCredentials] = useState(false);
+  const [credentialName, setCredentialName] = useState("");
+  const [credentialEmail, setCredentialEmail] = useState("");
+  const [credentialNewPassword, setCredentialNewPassword] = useState("");
+  const [credentialConfirmPassword, setCredentialConfirmPassword] = useState("");
+  const [credentialLoading, setCredentialLoading] = useState(false);
+  const [credentialSuccess, setCredentialSuccess] = useState<string | null>(null);
+  const [credentialError, setCredentialError] = useState<string | null>(null);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [resetEmailLoading, setResetEmailLoading] = useState(false);
 
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteAccountError, setDeleteAccountError] = useState("");
@@ -463,6 +479,138 @@ export default function AccountProfilePage() {
   const displayEmail = savedDetails.email || user?.email || "";
   const displayPhone = savedDetails.phone || "";
 
+  useEffect(() => {
+    if (!isEditingCredentials && activeModal !== "credentials") {
+      setCredentialName(displayName);
+      setCredentialEmail(displayEmail);
+    }
+  }, [displayName, displayEmail, isEditingCredentials, activeModal]);
+
+  const handleTriggerPasswordReset = async () => {
+    const targetEmail = credentialEmail.trim() || displayEmail.trim();
+    if (!targetEmail) {
+      setCredentialError("Please provide an email address to send the reset link.");
+      return;
+    }
+
+    setResetEmailLoading(true);
+    setCredentialError(null);
+    try {
+      const { error } = await resetPassword(targetEmail);
+      if (error) {
+        throw error;
+      }
+      setResetEmailSent(true);
+      setTimeout(() => setResetEmailSent(false), 8000);
+    } catch (err: any) {
+      setCredentialError(err.message || "Could not send password reset email. Please try again.");
+    } finally {
+      setResetEmailLoading(false);
+    }
+  };
+
+  const handleSaveCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCredentialLoading(true);
+    setCredentialError(null);
+    setCredentialSuccess(null);
+
+    const supabase = createClient();
+    const cleanName = credentialName.trim();
+    const cleanEmail = credentialEmail.trim().toLowerCase();
+
+    // Validate password if provided
+    if (credentialNewPassword) {
+      if (credentialNewPassword.length < 6) {
+        setCredentialError("New password must be at least 6 characters long.");
+        setCredentialLoading(false);
+        return;
+      }
+      if (credentialNewPassword !== credentialConfirmPassword) {
+        setCredentialError("Passwords do not match. Please verify both fields.");
+        setCredentialLoading(false);
+        return;
+      }
+    }
+
+    try {
+      const successMessages: string[] = [];
+      const authUpdates: {
+        email?: string;
+        password?: string;
+        data?: { full_name?: string };
+      } = {};
+
+      if (cleanName && cleanName !== displayName) {
+        authUpdates.data = { full_name: cleanName };
+      }
+
+      if (cleanEmail && cleanEmail !== displayEmail) {
+        authUpdates.email = cleanEmail;
+      }
+
+      if (credentialNewPassword) {
+        authUpdates.password = credentialNewPassword;
+      }
+
+      // If user is logged in via Supabase, update auth record
+      if (user && Object.keys(authUpdates).length > 0) {
+        const { error: authError } = await supabase.auth.updateUser(authUpdates);
+        if (authError) {
+          throw new Error(authError.message);
+        }
+
+        if (authUpdates.email) {
+          successMessages.push("Verification link dispatched to your new email.");
+        }
+        if (authUpdates.password) {
+          successMessages.push("Password updated successfully.");
+        }
+        if (authUpdates.data?.full_name) {
+          successMessages.push("Name updated successfully.");
+        }
+      }
+
+      // Update local storage & database profile
+      const updatedDetails: SavedDetails = {
+        ...savedDetails,
+        fullName: cleanName || savedDetails.fullName,
+        email: cleanEmail || savedDetails.email,
+      };
+
+      setSavedDetails(updatedDetails);
+      try {
+        localStorage.setItem("nds_saved_details", JSON.stringify(updatedDetails));
+      } catch {}
+
+      if (user?.id) {
+        await supabase.from("profiles").upsert({
+          id: user.id,
+          full_name: cleanName,
+          updated_at: new Date().toISOString(),
+        });
+      }
+
+      setCredentialNewPassword("");
+      setCredentialConfirmPassword("");
+      setCredentialSuccess(
+        successMessages.length > 0
+          ? successMessages.join(" ")
+          : "Profile details updated successfully."
+      );
+
+      setTimeout(() => {
+        setIsEditingCredentials(false);
+        setActiveModal(null);
+        setCredentialSuccess(null);
+      }, 2000);
+    } catch (err: any) {
+      setCredentialError(err.message || "Failed to update profile credentials.");
+    } finally {
+      setCredentialLoading(false);
+    }
+  };
+
   return (
     <div className="w-full bg-[#FDFBF8] min-h-[calc(100vh-3.5rem)] text-[#191919]">
 
@@ -603,6 +751,36 @@ export default function AccountProfilePage() {
                   </span>
                   <span className="font-sans text-[12px] text-[#77716D] block truncate">
                     Name, Email, Phone, Address
+                  </span>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#77716D] group-hover:translate-x-1 transition-transform flex-shrink-0" />
+            </button>
+
+            {/* Login & Security */}
+            <button
+              type="button"
+              onClick={() => {
+                setCredentialName(displayName);
+                setCredentialEmail(displayEmail);
+                setCredentialNewPassword("");
+                setCredentialConfirmPassword("");
+                setCredentialError(null);
+                setCredentialSuccess(null);
+                setActiveModal("credentials");
+              }}
+              className="w-full flex items-center justify-between p-4 hover:bg-[#F5F3F0] transition-colors group text-left"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-[#F5F3F0] flex items-center justify-center text-[#7B5644] group-hover:bg-[#191919] group-hover:text-white transition-colors flex-shrink-0">
+                  <KeyRound className="w-4 h-4 stroke-[1.6]" />
+                </div>
+                <div className="min-w-0 text-left">
+                  <span className="font-sans text-[14px] text-[#191919] font-medium block">
+                    Login &amp; Security
+                  </span>
+                  <span className="font-sans text-[12px] text-[#77716D] block truncate">
+                    Edit Name, Email &amp; Password
                   </span>
                 </div>
               </div>
@@ -955,46 +1133,212 @@ export default function AccountProfilePage() {
           {/* ── Right Content Dossier (col-span-9) ── */}
           <div className="col-span-9 space-y-10">
 
-            {/* SECTION 1: Personal Information */}
+            {/* SECTION 1: Personal Credentials & Security */}
             <section
-              className="border border-[#EAE5DF] bg-white p-6 sm:p-8 rounded-sm shadow-xs"
+              className="border border-[#EAE5DF] bg-white p-6 sm:p-8 rounded-sm shadow-xs space-y-6"
               id="personal-info"
             >
               <div className="flex items-center justify-between pb-6 border-b border-[#EAE5DF]">
                 <div>
+                  <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-[#7B5644] font-semibold block mb-1">
+                    CREDENTIALS &amp; SECURITY
+                  </span>
                   <h2 className="font-serif text-xl md:text-2xl text-[#191919] font-normal">
-                    Personal Information
+                    Account &amp; Security
                   </h2>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveModal("details")}
-                  className="px-5 py-2 border border-[#191919] text-[#191919] hover:bg-[#191919] hover:text-white transition-colors duration-200 text-xs uppercase tracking-widest font-medium"
-                >
-                  Edit Details
-                </button>
+                {!isEditingCredentials ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCredentialName(displayName);
+                      setCredentialEmail(displayEmail);
+                      setCredentialNewPassword("");
+                      setCredentialConfirmPassword("");
+                      setCredentialError(null);
+                      setCredentialSuccess(null);
+                      setIsEditingCredentials(true);
+                    }}
+                    className="px-5 py-2 border border-[#191919] text-[#191919] hover:bg-[#191919] hover:text-white transition-colors duration-200 text-xs uppercase tracking-widest font-medium"
+                  >
+                    Edit Credentials
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingCredentials(false);
+                      setCredentialError(null);
+                      setCredentialSuccess(null);
+                    }}
+                    className="px-5 py-2 border border-[#EAE5DF] text-[#77716D] hover:text-[#191919] transition-colors duration-200 text-xs uppercase tracking-widest font-medium"
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-                <div className="space-y-1.5">
-                  <span className="text-[11px] uppercase tracking-wider text-[#77716D]">
-                    Full Name
-                  </span>
-                  <p className="text-base text-[#191919] font-medium">{displayName}</p>
+              {credentialSuccess && (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2.5">
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{credentialSuccess}</span>
                 </div>
-                <div className="space-y-1.5">
-                  <span className="text-[11px] uppercase tracking-wider text-[#77716D]">
-                    Email Address
-                  </span>
-                  <p className="text-base text-[#191919] font-medium">{displayEmail}</p>
+              )}
+
+              {credentialError && (
+                <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{credentialError}</span>
                 </div>
-                <div className="space-y-1.5">
-                  <span className="text-[11px] uppercase tracking-wider text-[#77716D]">
-                    Mobile Number
-                  </span>
-                  <p className="text-base text-[#191919] font-medium">{displayPhone}</p>
+              )}
+
+              {resetEmailSent && (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2.5">
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="block font-medium">Password Reset Dispatched</strong>
+                    <span className="text-[11px] text-emerald-700">
+                      A secure password reset link has been dispatched to <strong>{credentialEmail || displayEmail}</strong>. Please check your inbox and follow the link to establish your new password.
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {!isEditingCredentials ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] uppercase tracking-wider text-[#77716D]">
+                      Full Name
+                    </span>
+                    <p className="text-base text-[#191919] font-medium">{displayName}</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] uppercase tracking-wider text-[#77716D]">
+                      Email Address
+                    </span>
+                    <p className="text-base text-[#191919] font-medium">{displayEmail}</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] uppercase tracking-wider text-[#77716D]">
+                      Password
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <p className="text-base text-[#191919] font-medium tracking-widest">••••••••••••</p>
+                      <button
+                        type="button"
+                        onClick={handleTriggerPasswordReset}
+                        disabled={resetEmailLoading}
+                        className="text-[11px] text-[#7B5644] hover:underline font-medium transition-colors ml-2"
+                      >
+                        {resetEmailLoading ? "Sending..." : "Reset"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleSaveCredentials} className="space-y-5 pt-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-[10px] text-[#77716D] uppercase tracking-wider font-semibold mb-1.5">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={credentialName}
+                        onChange={(e) => setCredentialName(e.target.value)}
+                        className="w-full px-3.5 py-2.5 text-xs bg-[#FDFBF8] border border-[#EAE5DF] focus:outline-none focus:border-[#191919] text-[#191919]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-[#77716D] uppercase tracking-wider font-semibold mb-1.5">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={credentialEmail}
+                        onChange={(e) => setCredentialEmail(e.target.value)}
+                        className="w-full px-3.5 py-2.5 text-xs bg-[#FDFBF8] border border-[#EAE5DF] focus:outline-none focus:border-[#191919] text-[#191919]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-[#F9F8F5] border border-[#EAE5DF] space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[11px] uppercase tracking-wider font-semibold text-[#191919] block">
+                          Change Password
+                        </span>
+                        <p className="text-[11px] text-[#77716D]">
+                          Leave blank if you wish to retain your existing password.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleTriggerPasswordReset}
+                        disabled={resetEmailLoading}
+                        className="text-[11px] text-[#7B5644] hover:underline font-medium uppercase tracking-wider"
+                      >
+                        {resetEmailLoading ? "Sending Link..." : "Forgot Password?"}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                      <div>
+                        <label className="block text-[10px] text-[#77716D] uppercase tracking-wider font-semibold mb-1.5">
+                          New Password
+                        </label>
+                        <input
+                          type="password"
+                          value={credentialNewPassword}
+                          onChange={(e) => setCredentialNewPassword(e.target.value)}
+                          className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919] text-[#191919]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-[#77716D] uppercase tracking-wider font-semibold mb-1.5">
+                          Confirm New Password
+                        </label>
+                        <input
+                          type="password"
+                          value={credentialConfirmPassword}
+                          onChange={(e) => setCredentialConfirmPassword(e.target.value)}
+                          className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919] text-[#191919]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingCredentials(false);
+                        setCredentialError(null);
+                        setCredentialSuccess(null);
+                      }}
+                      className="px-5 py-2.5 text-xs uppercase tracking-wider text-[#77716D] hover:text-[#191919] font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={credentialLoading}
+                      className="inline-flex items-center gap-2 px-7 py-2.5 bg-[#191919] text-[#FDFBF8] text-xs uppercase tracking-widest font-semibold hover:bg-[#7B5644] transition-colors disabled:opacity-50"
+                    >
+                      {credentialLoading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <span>Save Changes</span>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
             </section>
 
             {/* SECTION 2: Saved Addresses */}
@@ -1399,6 +1743,157 @@ export default function AccountProfilePage() {
                     </>
                   ) : (
                     <span>Save Details</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 1.5 Login Credentials & Security Modal (Name, Email, Password / Reset) */}
+      {activeModal === "credentials" && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          onClick={() => setActiveModal(null)}
+        >
+          <div
+            className="relative bg-[#FDFBF8] border border-[#EAE5DF] max-w-md w-full p-6 sm:p-8 rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setActiveModal(null)}
+              className="absolute top-4 right-4 p-1.5 text-[#77716D] hover:text-[#191919] transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <span className="text-[10px] uppercase tracking-[0.2em] text-[#7B5644] font-semibold block mb-1">
+              LOGIN &amp; SECURITY
+            </span>
+            <h3 className="font-serif text-2xl text-[#191919] mb-4">Edit Account Credentials</h3>
+
+            {credentialSuccess && (
+              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{credentialSuccess}</span>
+              </div>
+            )}
+
+            {credentialError && (
+              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{credentialError}</span>
+              </div>
+            )}
+
+            {resetEmailSent && (
+              <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="block font-medium">Reset Link Sent</strong>
+                  <span className="text-[11px] text-emerald-700">
+                    A secure password reset link has been dispatched to <strong>{credentialEmail || displayEmail}</strong>. Follow the link to create your new password.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveCredentials} className="space-y-4">
+              <div>
+                <label className="block text-[10px] text-[#77716D] uppercase tracking-wider font-semibold mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={credentialName}
+                  onChange={(e) => setCredentialName(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919] text-[#191919]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-[#77716D] uppercase tracking-wider font-semibold mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={credentialEmail}
+                  onChange={(e) => setCredentialEmail(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919] text-[#191919]"
+                />
+              </div>
+
+              <div className="p-3.5 bg-[#F9F8F5] border border-[#EAE5DF] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-[#191919] block">
+                      Change Password
+                    </span>
+                    <span className="text-[10px] text-[#77716D]">
+                      Leave empty to keep existing password
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleTriggerPasswordReset}
+                    disabled={resetEmailLoading}
+                    className="text-[10px] text-[#7B5644] hover:underline font-semibold uppercase tracking-wider"
+                  >
+                    {resetEmailLoading ? "Sending..." : "Forgot Password?"}
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-[#77716D] uppercase tracking-wider font-semibold mb-1">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={credentialNewPassword}
+                    onChange={(e) => setCredentialNewPassword(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919] text-[#191919]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-[#77716D] uppercase tracking-wider font-semibold mb-1">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={credentialConfirmPassword}
+                    onChange={(e) => setCredentialConfirmPassword(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-white border border-[#EAE5DF] focus:outline-none focus:border-[#191919] text-[#191919]"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2.5 text-xs text-[#77716D] hover:text-[#191919] uppercase tracking-wider"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={credentialLoading}
+                  className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-[#191919] text-[#FDFBF8] text-xs font-semibold uppercase tracking-widest hover:bg-[#7B5644] transition-colors disabled:opacity-50"
+                >
+                  {credentialLoading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
                   )}
                 </button>
               </div>
