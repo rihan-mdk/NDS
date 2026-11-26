@@ -35,36 +35,44 @@ function OrdersContent() {
   const [cancelMessage, setCancelMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // 1. Authoritative fetch from Supabase if user is logged in
+    // 1. Initial local load for instant UI feedback
+    let combinedLocal: Order[] = [];
+    try {
+      const localHistory: Order[] = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
+      const sessionStored = sessionStorage.getItem("nds_last_order");
+      const sessionOrder = sessionStored ? [JSON.parse(sessionStored)] : [];
+      combinedLocal = [...sessionOrder, ...localHistory].filter(
+        (o, idx, arr) => arr.findIndex((item) => item.id === o.id) === idx
+      );
+      if (combinedLocal.length > 0) {
+        setOrders(combinedLocal);
+        if (targetOrderId) {
+          const found = combinedLocal.find((o) => o.id === targetOrderId);
+          if (found) setSelectedOrder(found);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load local orders:", e);
+    }
+
+    // 2. Authoritative fetch from Supabase
     if (user?.id) {
-      fetch(`/api/admin/orders?userId=${user.id}`)
+      const emailParam = user.email ? `&email=${encodeURIComponent(user.email)}` : "";
+      fetch(`/api/admin/orders?userId=${user.id}${emailParam}`)
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
-          if (data?.orders?.length > 0) {
-            setOrders(data.orders);
+          if (Array.isArray(data?.orders) && data.orders.length > 0) {
+            const merged = [...data.orders, ...combinedLocal].filter(
+              (o, idx, arr) => arr.findIndex((item) => item.id === o.id) === idx
+            );
+            setOrders(merged);
             if (targetOrderId) {
-              const found = data.orders.find((o: Order) => o.id === targetOrderId);
+              const found = merged.find((o: Order) => o.id === targetOrderId);
               if (found) setSelectedOrder(found);
             }
           }
         })
         .catch(() => {});
-    } else {
-      // 2. For unauthenticated guest sessions, only check the active session's recent order
-      try {
-        const sessionStored = sessionStorage.getItem("nds_last_order");
-        if (sessionStored) {
-          const parsed = JSON.parse(sessionStored);
-          if (parsed && parsed.id) {
-            setOrders([parsed]);
-            if (targetOrderId && parsed.id === targetOrderId) {
-              setSelectedOrder(parsed);
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("Could not load recent session order:", e);
-      }
     }
   }, [targetOrderId, user]);
 
