@@ -141,17 +141,20 @@ export default function PrivacyPage() {
               <span className="font-serif text-xl sm:text-2xl text-[#7B5644] font-medium">3.</span>
               <div className="flex-1">
                 <h2 className="font-serif text-xl sm:text-2xl text-[#191919] mb-4 font-normal">
-                  Payment Information
+                  Payment Information (Direct UPI)
                 </h2>
                 <div className="p-4 bg-[#F5F3F0] border border-[#EAE5DF] space-y-2.5 font-sans text-xs sm:text-sm text-[#77716D] leading-relaxed">
                   <p>
-                    <strong className="text-[#191919]">Neel&apos;s Designer Studio does not intend to collect or store customers&apos; complete card numbers, CVV codes, UPI PINs, or banking passwords on its website.</strong>
+                    <strong className="text-[#191919]">Neel&apos;s Designer Studio does not solicit, collect, or store customers&apos; credit/debit card numbers, CVV codes, net banking passwords, or UPI PINs on its website or databases.</strong>
                   </p>
                   <p>
-                    Payment-related information may include transaction references and payment confirmation details required to manage orders.
+                    All payments are conducted via peer-to-merchant <strong>Direct UPI (Unified Payments Interface)</strong> using bank-grade protocols (dynamic QR code scanning or direct UPI intent through applications such as Google Pay, PhonePe, Paytm, or BHIM).
                   </p>
                   <p>
-                    Payment gateway services, if introduced, will be governed by the relevant provider&apos;s security and privacy practices. Razorpay integration is not currently implemented.
+                    Payment-related information handled by us is strictly limited to transaction references (such as the 12-digit UPI UTR number), order total, and payment verification timestamps required for bank reconciliation and order fulfillment.
+                  </p>
+                  <p>
+                    No intermediary payment gateway tracking or financial profiling scripts are embedded on our website.
                   </p>
                 </div>
               </div>

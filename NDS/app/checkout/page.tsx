@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart, CartItem } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { ShieldCheck, Truck, Smartphone, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import { ShieldCheck, Truck, Smartphone, ArrowLeft, CheckCircle2, AlertCircle, QrCode, Copy, Check, ExternalLink, Sparkles } from "lucide-react";
 import { calculateDtdcShipping, INDIAN_STATES_LIST, detectStateFromPincode } from "@/lib/shipping";
+import QRCode from "qrcode";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -100,6 +101,42 @@ function CheckoutContent() {
 
   const paymentMethod = "upi";
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID || "neelsdesignerstudio@okhdfcbank";
+  const UPI_PAYEE_NAME = process.env.NEXT_PUBLIC_UPI_PAYEE_NAME || "Neel's Designer Studio";
+
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+  const [copiedUpi, setCopiedUpi] = useState(false);
+  const [showQrMobile, setShowQrMobile] = useState(false);
+
+  const upiLink = useMemo(() => {
+    const note = encodeURIComponent(`Order NDS Total Rs ${total}`);
+    const payee = encodeURIComponent(UPI_PAYEE_NAME);
+    return `upi://pay?pa=${UPI_ID}&pn=${payee}&am=${total.toFixed(2)}&cu=INR&tn=${note}`;
+  }, [total, UPI_ID, UPI_PAYEE_NAME]);
+
+  useEffect(() => {
+    if (total > 0 && upiLink) {
+      QRCode.toDataURL(upiLink, {
+        width: 280,
+        margin: 1,
+        color: {
+          dark: "#191919",
+          light: "#FFFFFF",
+        },
+      })
+        .then((url: string) => setQrCodeDataUrl(url))
+        .catch((err: unknown) => console.error("Error generating UPI QR code:", err));
+    }
+  }, [total, upiLink]);
+
+  const handleCopyUpiId = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(UPI_ID);
+      setCopiedUpi(true);
+      setTimeout(() => setCopiedUpi(false), 2200);
+    }
+  };
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -386,27 +423,122 @@ function CheckoutContent() {
 
             {/* Step 3: Payment Method */}
             <div className="bg-[#FDFBF8] border border-[#EAE5DF] p-6 sm:p-8">
-              <h2 className="font-serif text-xl text-[#191919] uppercase tracking-wider mb-6 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-[#191919] text-[#FDFBF8] text-xs flex items-center justify-center font-sans font-medium">3</span>
-                Payment Method
-              </h2>
-              <div className="space-y-4">
-                {/* UPI Option */}
-                <div className="p-4 border border-[#191919] bg-[#F5F3F0] flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Smartphone className="w-5 h-5 text-[#7B5644] flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold text-[#191919]">UPI / QR Transfer</p>
-                      <p className="text-[11px] text-[#77716D]">Google Pay, PhonePe, Paytm, BHIM, or any UPI App</p>
-                    </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+                <h2 className="font-serif text-xl text-[#191919] uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[#191919] text-[#FDFBF8] text-xs flex items-center justify-center font-sans font-medium">3</span>
+                  Payment Method
+                </h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 tracking-wider uppercase">
+                    0% Transaction Fee
+                  </span>
+                  <span className="text-[10px] bg-[#EAE5DF] text-[#191919] font-semibold px-2 py-0.5 tracking-wider uppercase">
+                    100% Prepaid
+                  </span>
+                </div>
+              </div>
+
+              {/* Strict No-COD Policy Alert */}
+              <div className="mb-6 p-4 bg-[#F5F3F0] border-l-2 border-[#7B5644] space-y-1">
+                <p className="text-xs font-semibold text-[#191919] uppercase tracking-wider">
+                  Direct UPI Only · Cash on Delivery (COD) Unavailable
+                </p>
+                <p className="text-[11px] text-[#77716D] leading-relaxed">
+                  Because each bespoke piece is individually prepared, hand-finished, or cut to order by our atelier, we do not accept Cash on Delivery. All orders are processed exclusively through direct bank-grade UPI.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                {/* Mobile Intent CTA (visible on mobile / small screens) */}
+                <div className="block sm:hidden space-y-3">
+                  <a
+                    href={upiLink}
+                    className="w-full py-4 px-4 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-xs font-semibold tracking-widest uppercase transition-colors flex items-center justify-center gap-2 text-center"
+                  >
+                    <Smartphone className="w-4 h-4 text-emerald-400" />
+                    <span>PAY VIA UPI APP</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <p className="text-[10px] text-center text-[#77716D]">
+                    Opens Google Pay, PhonePe, Paytm, or BHIM with amount <strong className="text-[#191919]">₹{total.toLocaleString("en-IN")}</strong> pre-filled.
+                  </p>
+
+                  <div className="text-center pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowQrMobile(!showQrMobile)}
+                      className="text-[11px] text-[#7B5644] underline uppercase tracking-wider font-semibold cursor-pointer"
+                    >
+                      {showQrMobile ? "Hide Dynamic QR Code" : "Prefer scanning? Show Dynamic QR Code"}
+                    </button>
                   </div>
-                  <CheckCircle2 className="w-4 h-4 text-[#191919] flex-shrink-0" />
                 </div>
 
-                {/* Optional UPI Transaction Reference / UTR Input */}
-                <div className="p-4 bg-white border border-[#EAE5DF]">
-                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
-                    UPI Reference ID / UTR (Optional)
+                {/* Dynamic QR Code Box (Always visible on desktop, toggleable on mobile) */}
+                <div className={`${showQrMobile ? "block" : "hidden sm:block"} p-6 bg-white border border-[#EAE5DF] text-center space-y-4`}>
+                  <div className="flex items-center justify-center gap-2 text-xs uppercase tracking-wider font-semibold text-[#191919]">
+                    <QrCode className="w-4 h-4 text-[#7B5644]" />
+                    <span>Scan &amp; Pay via Any UPI App</span>
+                  </div>
+
+                  <div className="inline-block p-3 bg-white border-2 border-[#191919] shadow-sm">
+                    {qrCodeDataUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={qrCodeDataUrl}
+                        alt="Direct UPI QR Code"
+                        className="w-48 h-48 sm:w-56 sm:h-56 mx-auto object-contain"
+                      />
+                    ) : (
+                      <div className="w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center text-xs text-[#77716D]">
+                        Generating Dynamic QR...
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="block font-serif text-lg font-bold text-[#191919]">
+                      ₹{total.toLocaleString("en-IN")}
+                    </span>
+                    <p className="text-[11px] text-[#77716D]">
+                      Scan with Google Pay, PhonePe, Paytm, BHIM, CRED, or any banking app.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Verified UPI ID / VPA with 1-Click Copy */}
+                <div className="p-4 bg-[#F5F3F0] border border-[#EAE5DF] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <span className="block text-[10px] uppercase tracking-wider font-semibold text-[#77716D]">
+                      Verified Atelier UPI ID / VPA
+                    </span>
+                    <span className="text-xs font-mono font-semibold text-[#191919]">
+                      {UPI_ID}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyUpiId}
+                    className="px-4 py-2 bg-white border border-[#191919] hover:bg-[#191919] hover:text-[#FDFBF8] text-[#191919] text-[10px] uppercase tracking-wider font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    {copiedUpi ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>COPIED TO CLIPBOARD</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>COPY UPI ID</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Optional UTR / Reference ID Input */}
+                <div className="p-4 bg-white border border-[#EAE5DF] space-y-2">
+                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919]">
+                    12-Digit UPI Transaction ID / UTR (Optional / Recommended)
                   </label>
                   <input
                     type="text"
@@ -415,8 +547,8 @@ function CheckoutContent() {
                     maxLength={30}
                     className="w-full p-2.5 bg-[#FAF8F5] border border-[#EAE5DF] text-xs font-mono focus:outline-none focus:border-[#7B5644]"
                   />
-                  <p className="text-[10px] text-[#77716D] mt-1.5 leading-relaxed">
-                    Payment details will also be shared on your order confirmation and official WhatsApp concierge.
+                  <p className="text-[10px] text-[#77716D] leading-relaxed">
+                    Once you complete the payment in your UPI app, enter the 12-digit UTR / UPI Ref number above. You can also send your payment receipt to our official WhatsApp concierge after placing the order.
                   </p>
                 </div>
               </div>
@@ -505,7 +637,7 @@ function CheckoutContent() {
                 disabled={isSubmitting}
                 className="w-full mt-6 py-4 px-6 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-[11px] font-semibold tracking-[0.24em] uppercase transition-all duration-300 disabled:opacity-50 cursor-pointer"
               >
-                {isSubmitting ? "PROCESSING ORDER..." : "PLACE ORDER"}
+                {isSubmitting ? "REGISTERING ORDER..." : "CONFIRM UPI PAYMENT & PLACE ORDER"}
               </button>
 
               <div className="flex items-center justify-center space-x-2 text-[10px] uppercase tracking-wider text-[#77716D] pt-4">

@@ -279,7 +279,7 @@ export function Footer() {
                     Neel&apos;s Designer Studio respects your personal privacy. We do not sell personal information and collect only information required to fulfill orders, support customer inquiries, and comply with legal obligations.
                   </p>
                   <p>
-                    We do not collect or store full credit card numbers, CVV codes, UPI PINs, or banking passwords on our website.
+                    We do not collect or store full credit card numbers, CVV codes, UPI PINs, or banking passwords on our website. Payments are completed directly via bank-grade peer-to-merchant UPI transfer protocols (0% intermediary fees).
                   </p>
                   <p className="pt-2">
                     <Link
@@ -302,7 +302,7 @@ export function Footer() {
                 <h3 className="font-serif text-2xl text-[#191919] mb-4">Terms &amp; Conditions</h3>
                 <div className="space-y-3 font-sans text-xs text-[#77716D] leading-relaxed">
                   <p>
-                    By accessing our website or placing an order, you agree to our terms regarding prepaid order processing, delivery via DTDC or suitable couriers, 24-hour cancellation window, and conditional exchanges.
+                    By accessing our website or placing an order, you agree to our terms regarding direct UPI prepaid order processing (Cash on Delivery is unavailable due to bespoke cutting), delivery via DTDC express courier, 24-hour cancellation window, and conditional exchanges.
                   </p>
                   <p className="pt-2">
                     <Link

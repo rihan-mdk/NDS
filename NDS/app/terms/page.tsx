@@ -123,16 +123,26 @@ export default function TermsPage() {
               <span className="font-serif text-xl sm:text-2xl text-[#7B5644] font-medium">4.</span>
               <div className="flex-1">
                 <h2 className="font-serif text-xl sm:text-2xl text-[#191919] mb-4 font-normal flex items-center gap-2">
-                  <span>Pricing and Payments</span>
+                  <span>Pricing and Payments (Direct UPI &amp; No COD)</span>
                 </h2>
                 <ul className="list-disc pl-5 space-y-2.5 font-sans text-xs sm:text-sm text-[#77716D] leading-relaxed">
-                  <li>All displayed prices are in Indian Rupees (INR).</li>
-                  <li>Applicable shipping charges will be displayed or communicated before order confirmation.</li>
+                  <li>All displayed prices are in Indian Rupees (INR) and represent direct atelier pricing.</li>
+                  <li>Applicable DTDC courier shipping charges are calculated and displayed transparently before order placement.</li>
                   <li>
-                    <strong>Cash on Delivery (COD) is currently not available.</strong> Orders are accepted on a prepaid basis.
+                    <strong className="text-[#191919]">Direct UPI Payment Method:</strong> Payments are processed directly via Unified Payments Interface (UPI). Patrons can pay seamlessly via dynamic QR code or direct UPI intent through Google Pay, PhonePe, Paytm, BHIM, CRED, or any authorized banking UPI application directly into our bank account.
                   </li>
-                  <li>Available payment methods will be displayed at checkout or communicated through our official ordering channels.</li>
-                  <li>Orders will be processed after successful payment confirmation.</li>
+                  <li>
+                    <strong className="text-[#191919]">Zero Transaction Fee:</strong> We do not levy any gateway convenience charges or intermediary transaction fees. 100% of your payment is credited directly toward your order.
+                  </li>
+                  <li>
+                    <strong className="text-[#191919]">Strict No Cash on Delivery (COD) Policy:</strong> Cash on Delivery is strictly unavailable across our entire catalog. Because each bespoke piece is individually prepared, hand-finished, or tailored upon order placement, all purchases are accepted strictly on a prepaid basis.
+                  </li>
+                  <li>
+                    <strong className="text-[#191919]">Order Confirmation &amp; Verification:</strong> Order placement records an initial status of <em>Payment Pending</em>. Orders proceed to tailoring, cutting, and packaging once our accounts desk verifies and reconciles the UPI transaction reference (UTR) against our bank statement.
+                  </li>
+                  <li>
+                    <strong className="text-[#191919]">Direct UPI Refunds:</strong> Any approved cancellations (within the 24-hour placement window) or eligible return refunds are remitted directly to the patron&apos;s originating bank account or source UPI ID within 3–5 business days.
+                  </li>
                 </ul>
               </div>
             </div>

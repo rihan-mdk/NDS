@@ -207,12 +207,25 @@ function OrdersContent() {
 
             {/* Status Informational Callout */}
             {selectedOrder.status === "Payment Pending" && (
-              <div className="p-4 bg-amber-50 border border-amber-200 text-amber-950 text-xs mb-6">
-                <p className="font-semibold text-amber-900 mb-1 uppercase tracking-wider text-[10px]">
-                  Payment Pending Verification
+              <div className="p-4 bg-amber-50 border border-amber-200 text-amber-950 text-xs mb-6 space-y-2">
+                <p className="font-semibold text-amber-900 uppercase tracking-wider text-[10px]">
+                  Direct UPI Payment Pending Verification
                 </p>
                 <p className="leading-relaxed">
-                  Your order is registered under UPI. Selecting UPI does not constitute proof of payment. Please transfer the total to our verified accounts VPA or WhatsApp concierge (<strong className="font-medium">+91 8123200215</strong>). Once verified by our accounts desk, your order status will be marked <em>Confirmed</em>.
+                  All orders are processed strictly on a prepaid basis via direct bank-grade UPI (Cash on Delivery is unavailable). Please ensure your transfer of the order total has been completed to our verified accounts VPA: <strong className="font-mono font-semibold">{process.env.NEXT_PUBLIC_UPI_ID || "neelsdesignerstudio@okhdfcbank"}</strong>.
+                </p>
+                <p className="text-[11px] text-amber-800">
+                  Share your 12-digit UTR or payment confirmation screenshot with our accounts concierge on WhatsApp:{" "}
+                  <a
+                    href={`https://wa.me/918123200215?text=${encodeURIComponent(
+                      `Hello Neel's Designer Studio, I would like to submit payment verification for Order ID: ${selectedOrder.id}. Total amount: ₹${selectedOrder.total}.`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-semibold hover:text-[#7B5644]"
+                  >
+                    +91 8123200215
+                  </a>. Once reconciled, your order will be marked <em>Confirmed</em>.
                 </p>
               </div>
             )}

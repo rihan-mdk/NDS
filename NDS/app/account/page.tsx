@@ -2270,7 +2270,7 @@ export default function AccountProfilePage() {
                 <strong>Information We Collect:</strong> To tailor bespoke garments and fulfill couture commissions, Neel&apos;s Designer Studio collects your full name, email address, mobile number, delivery address, city, state, PIN code, tailored measurements, and commission history.
               </p>
               <p>
-                <strong>Payment Security:</strong> We process orders via direct UPI transfer. We never solicit, process, or store credit/debit card numbers or net banking credentials. Orders remain in <em>Payment Pending</em> until verified by our accounts desk.
+                <strong>Payment Security &amp; No-COD Policy:</strong> We process orders via direct UPI transfer (Cash on Delivery is unavailable due to custom bespoke cutting). We never solicit, process, or store credit/debit card numbers or net banking credentials. Orders remain in <em>Payment Pending</em> until verified by our accounts desk.
               </p>
               <p>
                 <strong>Data Retention &amp; Rights:</strong> You may request complete erasure of your patron profile, addresses, bag, and wishlist at any time. In accordance with statutory Indian commercial regulations, historical order ledgers are retained for mandatory regulatory audit periods.

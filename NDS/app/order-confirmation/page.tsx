@@ -1,13 +1,24 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React, { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, PackageCheck, Truck, Home, Download, ArrowRight, Clock } from "lucide-react";
+import { CheckCircle2, PackageCheck, Truck, Home, Download, ArrowRight, Clock, Smartphone, MessageCircle, Copy, Check } from "lucide-react";
 
 function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId") || "NDS-2025-849201";
+  const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID || "neelsdesignerstudio@okhdfcbank";
+  const [copiedUpi, setCopiedUpi] = useState(false);
+
+  const handleCopyUpiId = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(UPI_ID);
+      setCopiedUpi(true);
+      setTimeout(() => setCopiedUpi(false), 2200);
+    }
+  };
+
   const [orderDetails, setOrderDetails] = React.useState<{
     id?: string;
     shippingAddress?: string | {
@@ -152,18 +163,47 @@ function OrderConfirmationContent() {
           {/* Payment & Action Recap */}
           <div className="p-6 bg-[#F5F3F0] border border-[#EAE5DF] flex flex-col justify-between">
             <div>
-              <h3 className="text-xs uppercase tracking-[0.2em] font-semibold text-[#191919] mb-4">
-                Atelier Guarantee
-              </h3>
-              <p className="text-xs text-[#77716D] leading-relaxed mb-4">
-                Every bespoke piece includes our signature tamper-proof seal, an authenticated craftsman certificate, and breathable archival storage casing.
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs uppercase tracking-[0.2em] font-semibold text-[#191919]">
+                  Direct UPI Verification
+                </h3>
+                <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 uppercase tracking-wider">
+                  0% Fee Prepaid
+                </span>
+              </div>
+              <p className="text-xs text-[#77716D] leading-relaxed mb-3">
+                Your order is registered on a prepaid basis. Cash on Delivery (COD) is not supported. If you haven&apos;t transferred via UPI yet, transfer to:
               </p>
+              
+              <div className="p-2.5 bg-white border border-[#EAE5DF] flex items-center justify-between gap-2 mb-3">
+                <span className="text-xs font-mono font-semibold text-[#191919] truncate">{UPI_ID}</span>
+                <button
+                  type="button"
+                  onClick={handleCopyUpiId}
+                  className="px-2.5 py-1 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-[9px] uppercase tracking-wider font-semibold transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
+                >
+                  {copiedUpi ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedUpi ? "COPIED" : "COPY"}</span>
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-3 pt-4 border-t border-[#EAE5DF]">
+            <div className="space-y-2.5 pt-4 border-t border-[#EAE5DF]">
+              <a
+                href={`https://wa.me/918123200215?text=${encodeURIComponent(
+                  `Hello Neel's Designer Studio, I placed order ${orderId} and would like to share my UPI payment confirmation.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 px-4 bg-[#25D366] hover:bg-[#20ba5a] text-white text-[10px] uppercase tracking-widest font-semibold transition-colors flex items-center justify-center gap-2 text-center"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>CONFIRM PAYMENT ON WHATSAPP</span>
+              </a>
+
               <button
                 onClick={() => alert(`Downloading order invoice receipt for ${orderId}...`)}
-                className="w-full py-3 px-4 bg-[#FDFBF8] border border-[#191919] text-[#191919] text-[10px] uppercase tracking-widest font-semibold hover:bg-[#191919] hover:text-[#FDFBF8] transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 bg-[#FDFBF8] border border-[#191919] text-[#191919] text-[10px] uppercase tracking-widest font-semibold hover:bg-[#191919] hover:text-[#FDFBF8] transition-colors flex items-center justify-center gap-2"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>DOWNLOAD INVOICE RECEIPT (PDF)</span>
@@ -171,7 +211,7 @@ function OrderConfirmationContent() {
 
               <Link
                 href="/orders"
-                className="w-full py-3 px-4 bg-[#191919] text-[#FDFBF8] text-[10px] uppercase tracking-widest font-semibold hover:bg-[#7B5644] transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 bg-[#191919] text-[#FDFBF8] text-[10px] uppercase tracking-widest font-semibold hover:bg-[#7B5644] transition-colors flex items-center justify-center gap-2"
               >
                 <span>VIEW ORDER HISTORY</span>
                 <ArrowRight className="w-3.5 h-3.5" />
