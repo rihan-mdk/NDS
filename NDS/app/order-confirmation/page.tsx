@@ -8,7 +8,7 @@ import { CheckCircle2, PackageCheck, Truck, Home, Download, ArrowRight, Clock, S
 function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId") || "NDS-2025-849201";
-  const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID || "neelsdesignerstudio@okhdfcbank";
+  const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID || "paytmqr6owt0k@ptys";
   const [copiedUpi, setCopiedUpi] = useState(false);
 
   const handleCopyUpiId = () => {

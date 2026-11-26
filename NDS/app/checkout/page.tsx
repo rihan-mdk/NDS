@@ -102,7 +102,7 @@ function CheckoutContent() {
   const paymentMethod = "upi";
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID || "neelsdesignerstudio@okhdfcbank";
+  const UPI_ID = process.env.NEXT_PUBLIC_UPI_ID || "paytmqr6owt0k@ptys";
   const UPI_PAYEE_NAME = process.env.NEXT_PUBLIC_UPI_PAYEE_NAME || "Neel's Designer Studio";
 
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");

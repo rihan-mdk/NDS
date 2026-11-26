@@ -212,7 +212,7 @@ function OrdersContent() {
                   Direct UPI Payment Pending Verification
                 </p>
                 <p className="leading-relaxed">
-                  All orders are processed strictly on a prepaid basis via direct bank-grade UPI (Cash on Delivery is unavailable). Please ensure your transfer of the order total has been completed to our verified accounts VPA: <strong className="font-mono font-semibold">{process.env.NEXT_PUBLIC_UPI_ID || "neelsdesignerstudio@okhdfcbank"}</strong>.
+                  All orders are processed strictly on a prepaid basis via direct bank-grade UPI (Cash on Delivery is unavailable). Please ensure your transfer of the order total has been completed to our verified accounts VPA: <strong className="font-mono font-semibold">{process.env.NEXT_PUBLIC_UPI_ID || "paytmqr6owt0k@ptys"}</strong>.
                 </p>
                 <p className="text-[11px] text-amber-800">
                   Share your 12-digit UTR or payment confirmation screenshot with our accounts concierge on WhatsApp:{" "}
