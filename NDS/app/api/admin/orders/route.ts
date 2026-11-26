@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import crypto from "crypto";
-import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { getSupabaseAdmin, getSupabaseServerClient } from "@/lib/supabase/admin";
 import { verifyAdminFromCookies } from "@/lib/auth-server";
 import { sanitizeText } from "@/lib/security";
 
@@ -151,7 +151,7 @@ export async function GET(request: Request) {
 
 // ── POST ─────────────────────────────────────────────────────────────────────
 export async function POST(request: Request) {
-  const supabase = getSupabaseAdmin();
+  const supabase = getSupabaseServerClient();
   if (!supabase) {
     // Supabase not configured — checkout still succeeds via localStorage
     return NextResponse.json({ success: true, fallback: true }, { status: 200 });

@@ -35,6 +35,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
+  const syncUserProfileToSupabase = async (u: any, explicitName?: string) => {
+    if (!u?.id || u.id === "admin-usr-neels" || u.id === "usr-mock-1") return;
+    try {
+      const name =
+        explicitName ||
+        u.user_metadata?.full_name ||
+        u.user_metadata?.name ||
+        (u.email ? u.email.split("@")[0] : "Atelier Patron");
+      const phone = u.user_metadata?.phone || null;
+      await supabase.from("profiles").upsert({
+        id: u.id,
+        full_name: name,
+        phone: phone,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn("Could not sync user profile to Supabase:", err);
+    }
+  };
+
   useEffect(() => {
     // Check active session from Supabase & verify admin session
     async function getInitialSession() {
@@ -63,6 +83,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
+        if (currentSession?.user?.id) {
+          syncUserProfileToSupabase(currentSession.user);
+        }
+
         // 3. If Supabase user, check their role (may elevate to admin)
         if (currentSession?.user?.id) {
           try {
@@ -85,6 +109,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
+      if (currentSession?.user?.id) {
+        syncUserProfileToSupabase(currentSession.user);
+      }
       setLoading(false);
     });
 
@@ -202,6 +229,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(data.user);
       setSession(data.session);
+      if (data.user) {
+        syncUserProfileToSupabase(data.user, fullName);
+      }
       return { error: null };
     } catch (err: any) {
       if (email && password.length >= 6) {

@@ -232,6 +232,17 @@ export default function AccountProfilePage() {
             setMeasurements(data.measurements);
             try { localStorage.setItem("nds_measurements", JSON.stringify(data.measurements)); } catch { /* noop */ }
           }
+        } else {
+          // Auto-seed patron profile in Supabase if not yet present
+          const defaultName =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            (user.email ? user.email.split("@")[0] : "Atelier Patron");
+          await supabase.from("profiles").upsert({
+            id: user.id,
+            full_name: defaultName,
+            updated_at: new Date().toISOString(),
+          });
         }
       } catch { /* noop */ }
 
@@ -257,6 +268,25 @@ export default function AccountProfilePage() {
           }));
           setAddresses(mapped);
           try { localStorage.setItem("nds_saved_addresses", JSON.stringify(mapped)); } catch { /* noop */ }
+        } else {
+          // If Supabase has no addresses but local storage does, sync them up
+          const localAddrs = JSON.parse(localStorage.getItem("nds_saved_addresses") || "[]");
+          if (Array.isArray(localAddrs) && localAddrs.length > 0) {
+            for (const addr of localAddrs) {
+              await supabase.from("user_addresses").upsert({
+                id: addr.id || `addr-${Date.now()}`,
+                user_id: user.id,
+                name: addr.name,
+                street: addr.street,
+                area: addr.area || "",
+                city: addr.city,
+                state: addr.state || "India",
+                pincode: addr.pincode,
+                phone: addr.phone,
+                is_default: addr.isDefault || false,
+              });
+            }
+          }
         }
       } catch { /* noop */ }
 

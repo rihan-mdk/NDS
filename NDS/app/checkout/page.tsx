@@ -7,6 +7,7 @@ import { useCart, CartItem } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { ShieldCheck, Truck, Smartphone, ArrowLeft, CheckCircle2, AlertCircle, QrCode, Copy, Check, ExternalLink, Sparkles } from "lucide-react";
 import { calculateDtdcShipping, INDIAN_STATES_LIST, detectStateFromPincode } from "@/lib/shipping";
+import { createClient } from "@/lib/supabase/client";
 import QRCode from "qrcode";
 
 function CheckoutContent() {
@@ -179,6 +180,73 @@ function CheckoutContent() {
       }
     } catch (err) {
       console.warn("Could not save temporary order reference:", err);
+    }
+
+    // Save shipping address to user_addresses if authenticated
+    if (user?.id && user.id !== "admin-usr-neels") {
+      try {
+        const supabase = createClient();
+        const addressId = `addr-${Date.now()}`;
+        supabase
+          .from("user_addresses")
+          .upsert({
+            id: addressId,
+            user_id: user.id,
+            name: formData.fullName.trim(),
+            street: formData.address.trim(),
+            area: formData.city.trim(),
+            city: formData.city.trim(),
+            state: formData.state.trim() || "India",
+            pincode: formData.pincode.trim(),
+            phone: formData.phone.trim(),
+            is_default: true,
+          })
+          .then(() => {});
+      } catch (err) {
+        console.warn("Could not save address to user_addresses:", err);
+      }
+    }
+
+    // Direct client sync to Supabase orders & order_items for instant persistence
+    try {
+      const supabase = createClient();
+      const cleanUtr = formData.utr.trim().replace(/[^a-zA-Z0-9]/g, "").slice(0, 30) || null;
+      supabase
+        .from("orders")
+        .insert({
+          id: generatedOrderId,
+          user_id: user?.id || null,
+          customer_name: formData.fullName.trim() || null,
+          customer_email: formData.email.trim() || user?.email || null,
+          customer_phone: formData.phone.trim() || null,
+          shipping_address: formData.address.trim() || null,
+          shipping_city: formData.city.trim() || null,
+          shipping_state: formData.state.trim() || null,
+          shipping_pincode: formData.pincode.trim() || null,
+          payment_method: "UPI",
+          status: "Payment Pending",
+          payment_status: "Pending",
+          utr: cleanUtr,
+          total: Number(total),
+          gift_packaging: false,
+          gift_message: cleanUtr ? `UTR: ${cleanUtr}` : null,
+        })
+        .then(() => {
+          if (Array.isArray(items) && items.length > 0) {
+            const itemRows = items.map((item) => ({
+              order_id: generatedOrderId,
+              product_id: item.product.id || null,
+              product_title: item.product.title || null,
+              product_image: item.product.images?.[0] || "",
+              size: item.selectedSize || null,
+              quantity: Number(item.quantity) || 1,
+              unit_price: Number(item.product.price) || 0,
+            }));
+            supabase.from("order_items").insert(itemRows).then(() => {});
+          }
+        });
+    } catch (err) {
+      console.warn("Direct client order sync notice:", err);
     }
 
     // POST to Supabase via server route
