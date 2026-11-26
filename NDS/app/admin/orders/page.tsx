@@ -33,7 +33,7 @@ interface OrderItem {
 interface OrderRecord {
   id: string;
   date: string;
-  status: "Pending" | "Confirmed" | "Shipped" | "Delivered" | "Cancelled";
+  status: "Payment Pending" | "Pending" | "Confirmed" | "Shipped" | "Delivered" | "Cancelled";
   paymentStatus?: "Pending" | "Paid" | "Refund Pending" | "Refunded" | "No Refund Due";
   utr?: string;
   items: OrderItem[];
@@ -52,6 +52,7 @@ interface OrderRecord {
 }
 
 const ORDER_STATUSES: OrderRecord["status"][] = [
+  "Payment Pending",
   "Pending",
   "Confirmed",
   "Shipped",
@@ -172,6 +173,8 @@ function OrdersManagementContent() {
 
   const getStatusBadge = (status: OrderRecord["status"]) => {
     switch (status) {
+      case "Payment Pending":
+        return "bg-amber-100 text-amber-900 border-amber-300 font-bold";
       case "Delivered":
         return "bg-emerald-50 text-emerald-800 border-emerald-200";
       case "Shipped":
@@ -326,7 +329,12 @@ function OrdersManagementContent() {
                   return (
                     <tr key={order.id} className="hover:bg-[#FDFBF8] transition-colors">
                       <td className="py-4 px-4 sm:px-6 font-mono text-xs text-[#191919] font-semibold">
-                        {order.id}
+                        <div>{order.id}</div>
+                        {order.utr && (
+                          <div className="mt-1 text-[9px] font-mono text-amber-900 bg-amber-50 px-1.5 py-0.5 border border-amber-200 inline-block font-normal">
+                            UTR: {order.utr}
+                          </div>
+                        )}
                       </td>
 
                       <td className="py-4 px-4 sm:px-6 text-[#77716D] whitespace-nowrap">
@@ -405,6 +413,32 @@ function OrdersManagementContent() {
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Customer Submitted UTR Card */}
+            {selectedOrder.utr && (
+              <div className="p-4 bg-amber-50 border border-amber-200 flex items-center justify-between gap-3">
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider font-semibold text-amber-800">
+                    Customer Submitted UPI UTR / Ref Number
+                  </span>
+                  <span className="text-sm font-mono font-bold text-[#191919] tracking-wider">
+                    {selectedOrder.utr}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof navigator !== "undefined" && navigator.clipboard) {
+                      navigator.clipboard.writeText(selectedOrder.utr || "");
+                      alert(`UTR copied: ${selectedOrder.utr}`);
+                    }
+                  }}
+                  className="px-3 py-1.5 bg-white border border-amber-300 text-[10px] font-semibold text-amber-900 uppercase tracking-wider hover:bg-amber-100 transition-colors cursor-pointer shrink-0"
+                >
+                  Copy UTR
+                </button>
+              </div>
+            )}
 
             {/* Status & Payment Update Controls */}
             <div className="p-4 sm:p-5 bg-[#FFFFFF] border border-[#EAE5DF] space-y-4">

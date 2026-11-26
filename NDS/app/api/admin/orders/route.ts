@@ -182,7 +182,7 @@ export async function POST(request: Request) {
       cancellationTokenHash = crypto.createHash("sha256").update(guestCancellationToken).digest("hex");
     }
 
-    const { error: orderError } = await supabase.from("orders").insert({
+    let { error: orderError } = await supabase.from("orders").insert({
       id,
       user_id: userId || null,
       customer_name: customerName || null,
@@ -201,6 +201,27 @@ export async function POST(request: Request) {
       gift_packaging: giftPackaging || false,
       gift_message: giftMessage || null,
     });
+
+    if (orderError) {
+      console.warn("Full order insert failed, attempting resilient fallback insert:", orderError);
+      const fallbackResult = await supabase.from("orders").insert({
+        id,
+        user_id: userId || null,
+        customer_name: customerName || null,
+        customer_email: customerEmail || null,
+        customer_phone: customerPhone || null,
+        shipping_address: shippingAddress || null,
+        shipping_city: shippingCity || null,
+        shipping_state: shippingState || null,
+        shipping_pincode: shippingPincode || null,
+        payment_method: "UPI",
+        status: "Payment Pending",
+        total: Number(total),
+        gift_packaging: giftPackaging || false,
+        gift_message: cleanUtr ? `UTR: ${cleanUtr}` : (giftMessage || null),
+      });
+      orderError = fallbackResult.error;
+    }
 
     if (orderError) {
       console.error("Error inserting order:", orderError);

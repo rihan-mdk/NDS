@@ -36,7 +36,7 @@ export default function AdminLayout({
       const local = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
       const localPending = local.filter(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (o: any) => o.status === "Pending" || o.status === "Confirmed" || o.status === "Processing"
+        (o: any) => o.status === "Payment Pending" || o.status === "Pending" || o.status === "Confirmed" || o.status === "Processing"
       ).length;
       setPendingOrdersCount(localPending);
 
@@ -47,7 +47,7 @@ export default function AdminLayout({
         if (Array.isArray(data.orders)) {
           const pending = data.orders.filter(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (o: any) => o.status === "Pending" || o.status === "Confirmed" || o.status === "Processing"
+            (o: any) => o.status === "Payment Pending" || o.status === "Pending" || o.status === "Confirmed" || o.status === "Processing"
           ).length;
           setPendingOrdersCount(pending);
         }
@@ -217,7 +217,15 @@ export default function AdminLayout({
               >
                 <div className="flex items-center gap-3">
                   <Icon className={`w-4 h-4 ${active ? "text-[#C9A96E]" : "text-[#77716D]"}`} />
-                  <span>{item.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span>{item.name}</span>
+                    {item.href === "/admin/orders" && pendingOrdersCount > 0 && (
+                      <span className="relative flex h-2 w-2" title={`${pendingOrdersCount} new order${pendingOrdersCount === 1 ? "" : "s"}`}>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {item.href === "/admin/orders" && pendingOrdersCount > 0 && (
                   <span
@@ -301,7 +309,15 @@ export default function AdminLayout({
               >
                 <div className="flex items-center gap-3">
                   <Icon className="w-4 h-4" />
-                  <span>{item.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span>{item.name}</span>
+                    {item.href === "/admin/orders" && pendingOrdersCount > 0 && (
+                      <span className="relative flex h-2 w-2" title={`${pendingOrdersCount} new order${pendingOrdersCount === 1 ? "" : "s"}`}>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {item.href === "/admin/orders" && pendingOrdersCount > 0 && (
                   <span className="flex items-center justify-center min-w-[18px] h-4.5 px-1.5 text-[9px] font-bold font-mono bg-[#C9A96E] text-[#191919] rounded-full">

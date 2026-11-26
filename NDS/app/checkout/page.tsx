@@ -171,6 +171,12 @@ function CheckoutContent() {
     // Store ephemeral copy in sessionStorage solely for the immediate confirmation view
     try {
       sessionStorage.setItem("nds_last_order", JSON.stringify(newOrder));
+      const existingHistory = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
+      const updatedHistory = [newOrder, ...existingHistory.filter((o: any) => o.id !== newOrder.id)];
+      localStorage.setItem("nds_orders_history", JSON.stringify(updatedHistory));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("nds_orders_updated"));
+      }
     } catch (err) {
       console.warn("Could not save temporary order reference:", err);
     }
@@ -250,17 +256,20 @@ function CheckoutContent() {
     <div className="w-full bg-[#FDFBF8] min-h-screen">
       {/* Header */}
       <section className="w-full px-6 sm:px-10 lg:px-14 pt-8 pb-6 border-b border-[#EAE5DF]">
-        <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-[10px] uppercase tracking-widest text-[#77716D] mb-3">
-          <Link href={isBuyNow ? "/categories" : "/cart"} className="hover:text-[#191919] transition-colors flex items-center gap-1">
+        <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-[10px] font-sans uppercase tracking-[0.2em] text-[#77716D] mb-3">
+          <Link href={isBuyNow ? "/categories" : "/cart"} className="hover:text-[#191919] transition-colors flex items-center gap-1 font-medium">
             <ArrowLeft className="w-3 h-3" />
             <span>{isBuyNow ? "Return to Collections" : "Return to Bag"}</span>
           </Link>
           <span>/</span>
-          <span className="text-[#191919]">Secure Checkout</span>
+          <span className="text-[#191919] font-semibold">Secure Checkout</span>
         </nav>
-        <h1 className="font-serif text-3xl sm:text-4xl text-[#191919]">
+        <h1 className="font-serif text-3xl sm:text-4xl text-[#191919] tracking-tight font-normal">
           {isBuyNow ? "Direct Purchase & Order Placement" : "Checkout & Order Placement"}
         </h1>
+        <p className="font-sans text-[11px] uppercase tracking-[0.18em] text-[#77716D] mt-1.5 font-medium">
+          Direct Atelier Acquisition · 100% Prepaid via Direct UPI · Complimentary DTDC Express
+        </p>
       </section>
 
       {/* Main Checkout Grid */}
@@ -270,13 +279,13 @@ function CheckoutContent() {
           <div className="lg:col-span-7 space-y-10">
             {/* Step 1: Contact Details */}
             <div className="bg-[#FDFBF8] border border-[#EAE5DF] p-6 sm:p-8">
-              <h2 className="font-serif text-xl text-[#191919] uppercase tracking-wider mb-6 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-[#191919] text-[#FDFBF8] text-xs flex items-center justify-center font-sans font-medium">1</span>
-                Contact &amp; Identification
+              <h2 className="font-serif text-xl sm:text-2xl text-[#191919] font-normal tracking-wide mb-6 flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-[#191919] text-[#FDFBF8] text-[11px] flex items-center justify-center font-sans font-medium">1</span>
+                <span>Contact &amp; Identification</span>
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                  <label className="block font-sans text-[11px] uppercase tracking-[0.14em] font-semibold text-[#191919] mb-1.5">
                     Email Address *
                   </label>
                   <input
@@ -284,11 +293,11 @@ function CheckoutContent() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                    className="w-full p-3.5 bg-white border border-[#EAE5DF] font-sans text-xs text-[#191919] focus:outline-none focus:border-[#7B5644] focus:ring-1 focus:ring-[#7B5644]/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                  <label className="block font-sans text-[11px] uppercase tracking-[0.14em] font-semibold text-[#191919] mb-1.5">
                     Phone Number (for DTDC Delivery SMS) *
                   </label>
                   <input
@@ -296,7 +305,7 @@ function CheckoutContent() {
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                    className="w-full p-3.5 bg-white border border-[#EAE5DF] font-sans text-xs text-[#191919] focus:outline-none focus:border-[#7B5644] focus:ring-1 focus:ring-[#7B5644]/20 transition-all"
                   />
                 </div>
               </div>
@@ -304,13 +313,13 @@ function CheckoutContent() {
 
             {/* Step 2: Shipping Destination */}
             <div className="bg-[#FDFBF8] border border-[#EAE5DF] p-6 sm:p-8">
-              <h2 className="font-serif text-xl text-[#191919] uppercase tracking-wider mb-6 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-[#191919] text-[#FDFBF8] text-xs flex items-center justify-center font-sans font-medium">2</span>
-                Shipping Destination
+              <h2 className="font-serif text-xl sm:text-2xl text-[#191919] font-normal tracking-wide mb-6 flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-[#191919] text-[#FDFBF8] text-[11px] flex items-center justify-center font-sans font-medium">2</span>
+                <span>Shipping Destination</span>
               </h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                  <label className="block font-sans text-[11px] uppercase tracking-[0.14em] font-semibold text-[#191919] mb-1.5">
                     Recipient Full Name *
                   </label>
                   <input
@@ -318,11 +327,11 @@ function CheckoutContent() {
                     required
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                    className="w-full p-3.5 bg-white border border-[#EAE5DF] font-sans text-xs text-[#191919] focus:outline-none focus:border-[#7B5644] focus:ring-1 focus:ring-[#7B5644]/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                  <label className="block font-sans text-[11px] uppercase tracking-[0.14em] font-semibold text-[#191919] mb-1.5">
                     Street Address / Apartment Suite *
                   </label>
                   <input
@@ -330,12 +339,12 @@ function CheckoutContent() {
                     required
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                    className="w-full p-3.5 bg-white border border-[#EAE5DF] font-sans text-xs text-[#191919] focus:outline-none focus:border-[#7B5644] focus:ring-1 focus:ring-[#7B5644]/20 transition-all"
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                    <label className="block font-sans text-[11px] uppercase tracking-[0.14em] font-semibold text-[#191919] mb-1.5">
                       City *
                     </label>
                     <input
@@ -343,18 +352,18 @@ function CheckoutContent() {
                       required
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                      className="w-full p-3.5 bg-white border border-[#EAE5DF] font-sans text-xs text-[#191919] focus:outline-none focus:border-[#7B5644] focus:ring-1 focus:ring-[#7B5644]/20 transition-all"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                    <label className="block font-sans text-[11px] uppercase tracking-[0.14em] font-semibold text-[#191919] mb-1.5">
                       State *
                     </label>
                     <select
                       required
                       value={formData.state}
                       onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644] cursor-pointer"
+                      className="w-full p-3.5 bg-white border border-[#EAE5DF] font-sans text-xs text-[#191919] focus:outline-none focus:border-[#7B5644] focus:ring-1 focus:ring-[#7B5644]/20 transition-all cursor-pointer"
                     >
                       <option value="">Select State / Territory</option>
                       {INDIAN_STATES_LIST.map((st) => (
@@ -365,7 +374,7 @@ function CheckoutContent() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[11px] uppercase tracking-wider font-semibold text-[#191919] mb-1">
+                    <label className="block font-sans text-[11px] uppercase tracking-[0.14em] font-semibold text-[#191919] mb-1.5">
                       Postal Code / PIN *
                     </label>
                     <input
@@ -382,7 +391,7 @@ function CheckoutContent() {
                           state: prev.state || autoState || prev.state,
                         }));
                       }}
-                      className="w-full p-3 bg-white border border-[#EAE5DF] text-xs focus:outline-none focus:border-[#7B5644]"
+                      className="w-full p-3.5 bg-white border border-[#EAE5DF] font-sans text-xs text-[#191919] focus:outline-none focus:border-[#7B5644] focus:ring-1 focus:ring-[#7B5644]/20 transition-all"
                     />
                   </div>
                 </div>
