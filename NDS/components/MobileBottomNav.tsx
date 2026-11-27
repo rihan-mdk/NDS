@@ -9,8 +9,8 @@ import { motion } from "framer-motion";
 export function MobileBottomNav() {
   const pathname = usePathname();
 
-  // Hide customer bottom nav on admin routes
-  if (pathname.startsWith("/admin")) {
+  // Hide customer bottom nav on admin routes and login page
+  if (pathname.startsWith("/admin") || pathname === "/login") {
     return null;
   }
 

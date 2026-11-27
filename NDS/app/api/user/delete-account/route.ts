@@ -2,15 +2,28 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const {
+    let {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    // Also support Authorization header Bearer token
+    if (!user) {
+      const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.replace("Bearer ", "").trim();
+        const tokenRes = await supabase.auth.getUser(token);
+        if (tokenRes.data?.user) {
+          user = tokenRes.data.user;
+          authError = null;
+        }
+      }
+    }
+
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthorized. Please log in to request account deletion." },
         { status: 401 }

@@ -63,7 +63,7 @@ interface Measurements {
 }
 
 export default function AccountProfilePage() {
-  const { user, signOut, isAdmin, loading, resetPassword } = useAuth();
+  const { user, session, signOut, isAdmin, loading, resetPassword } = useAuth();
   const { totalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
   const router = useRouter();
@@ -110,6 +110,10 @@ export default function AccountProfilePage() {
     try {
       const res = await fetch("/api/user/delete-account", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -1084,36 +1088,6 @@ export default function AccountProfilePage() {
           </div>
         </section>
 
-        {/* Mobile: Privacy & Device Security Section */}
-        <section className="mb-5">
-          <span className="font-sans text-[10px] uppercase text-[#77716D] tracking-[0.2em] font-semibold block mb-2 px-1">
-            PRIVACY &amp; DEVICE SECURITY
-          </span>
-          <div className="bg-white rounded-xl shadow-xs border border-[#EAE5DF]/70 p-4 space-y-3">
-            <p className="text-xs text-[#77716D]">
-              Clears locally cached autofill data (saved addresses, name, phone, measurements) from this browser. Authoritative records remain secure in your cloud profile.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2 pt-1">
-              <button
-                type="button"
-                onClick={handleClearLocalData}
-                className="w-full py-2.5 px-3 border border-[#EAE5DF] text-[#191919] hover:bg-[#F5F3F0] text-[10px] uppercase tracking-wider font-semibold transition-colors"
-              >
-                {localDataCleared ? "Device Data Cleared ✓" : "Clear Device Cache"}
-              </button>
-              {user && (
-                <button
-                  type="button"
-                  onClick={() => setActiveModal("deleteAccount")}
-                  className="w-full py-2.5 px-3 border border-rose-200 bg-rose-50/50 text-rose-800 hover:bg-rose-100 text-[10px] uppercase tracking-wider font-semibold transition-colors"
-                >
-                  Delete Account &amp; Data
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
-
         {/* Follow Us Section */}
         <section className="mb-6">
           <div className="bg-white rounded-xl shadow-xs border border-[#EAE5DF]/70 p-4 flex items-center justify-between">
@@ -1149,6 +1123,19 @@ export default function AccountProfilePage() {
             </div>
           </div>
         </section>
+
+        {/* Repositioned Delete Account Button at Very End of Profile Page */}
+        {user && (
+          <div className="pt-2 pb-8 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setActiveModal("deleteAccount")}
+              className="w-full py-3 px-4 rounded-[2px] border border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:border-rose-300 text-xs font-semibold tracking-[0.14em] uppercase transition-colors shadow-2xs"
+            >
+              Delete Account
+            </button>
+          </div>
+        )}
 
       </>)}
       </div>
@@ -1893,41 +1880,6 @@ export default function AccountProfilePage() {
               </div>
             </section>
 
-            {/* SECTION 4: Data Privacy & Security */}
-            <section className="border border-[#EAE5DF] bg-white p-6 sm:p-8 rounded-sm shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#EAE5DF]">
-                <div>
-                  <h2 className="font-serif text-xl md:text-2xl text-[#191919] font-normal">
-                    Privacy &amp; Data Rights
-                  </h2>
-                  <p className="text-xs text-[#77716D] mt-1">
-                    Purge locally cached browser autofill data or exercise your statutory data deletion rights.
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleClearLocalData}
-                    className="px-4 py-2 border border-[#EAE5DF] text-[#191919] hover:bg-[#F5F3F0] text-xs uppercase tracking-wider font-medium transition-colors"
-                  >
-                    {localDataCleared ? "Device Cache Cleared ✓" : "Clear Device Cache"}
-                  </button>
-                  {user && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveModal("deleteAccount")}
-                      className="px-4 py-2 border border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 text-xs uppercase tracking-wider font-semibold transition-colors"
-                    >
-                      Delete Account &amp; Data
-                    </button>
-                  )}
-                </div>
-              </div>
-              <p className="text-xs text-[#77716D] pt-4 leading-relaxed">
-                Authoritative patron profile and order details are securely managed in protected cloud storage. In accordance with statutory Indian tax and accounting regulations, historical financial invoices and tax registers are legally preserved even upon personal account erasure.
-              </p>
-            </section>
-
             {/* Quick Policies / Atelier Assurance row */}
             <div className="flex items-center justify-between p-4 border border-[#EAE5DF] bg-[#F5F3F0]/60 rounded-sm">
               <span className="text-xs uppercase tracking-widest text-[#77716D]">
@@ -1957,6 +1909,19 @@ export default function AccountProfilePage() {
                 </button>
               </div>
             </div>
+
+            {/* Repositioned Delete Account Button at Very End of Desktop Profile */}
+            {user && (
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal("deleteAccount")}
+                  className="py-2.5 px-6 rounded-[2px] border border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:border-rose-300 text-xs font-semibold tracking-[0.14em] uppercase transition-colors shadow-2xs"
+                >
+                  Delete Account
+                </button>
+              </div>
+            )}
 
           </div>
         </div>
