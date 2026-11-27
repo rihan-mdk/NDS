@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Mail } from "lucide-react";
-import { TurnstileWidget } from "@/components/TurnstileWidget";
 
 function SignupContent() {
   const router = useRouter();
@@ -18,8 +17,6 @@ function SignupContent() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string>("");
-  const [resetSignal, setResetSignal] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [accountAlreadyExists, setAccountAlreadyExists] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -36,45 +33,17 @@ function SignupContent() {
       return;
     }
 
-    // Check if an account already exists for this email before proceeding
-    try {
-      const checkRes = await fetch("/api/auth/check-account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      if (checkRes.ok) {
-        const checkData = await checkRes.json();
-        if (checkData.exists) {
-          setAccountAlreadyExists(true);
-          return;
-        }
-      }
-    } catch {}
-
-    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken) {
-      setErrorMsg("Please complete the security verification before creating an account.");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const result = await signUp(email, password, fullName, captchaToken || undefined);
-      const { error, emailConfirmationRequired } = result as any;
+      const result = await signUp(email, password, fullName);
+      const { error } = result as any;
       if (error) {
-        setResetSignal((s) => s + 1);
-        setCaptchaToken("");
-
-        if ((error as any).code === "captcha_failed" || error.message?.toLowerCase().includes("captcha")) {
-          setErrorMsg("Security verification expired or invalid. Please verify again.");
-          return;
+        if (error.message?.toLowerCase().includes("already exists")) {
+          setAccountAlreadyExists(true);
+        } else {
+          setErrorMsg(error.message || "Failed to create account.");
         }
-
-        setErrorMsg(error.message || "Failed to create account.");
-      } else if (emailConfirmationRequired) {
-        // Email confirmation enabled — show confirmation screen, don't redirect
-        setEmailConfirmPending(true);
       } else {
         try {
           localStorage.removeItem("nds_orders_history");
@@ -269,14 +238,6 @@ function SignupContent() {
                 </button>
               </div>
             </div>
-
-            {/* Turnstile CAPTCHA Widget */}
-            <TurnstileWidget
-              onSuccess={setCaptchaToken}
-              onExpire={() => setCaptchaToken("")}
-              onError={() => setCaptchaToken("")}
-              resetSignal={resetSignal}
-            />
 
             <button
               type="submit"

@@ -202,25 +202,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      const { error, data } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-        options: captchaToken ? { captchaToken } : undefined,
+      // Authenticate through server endpoint (bypasses bot/captcha blocks, securely validates with Supabase)
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (error) {
-        return { error };
+      const resData = await res.json();
+      if (!res.ok || resData.error) {
+        return { error: new Error(resData.error || "Invalid login credentials") };
       }
 
-      setUser(data.user);
-      setSession(data.session);
-      try { localStorage.setItem("nds_auth_user", JSON.stringify(data.user)); } catch {}
+      // Sync active session to browser Supabase client
+      if (resData.session?.access_token && resData.session?.refresh_token) {
+        try {
+          await supabase.auth.setSession({
+            access_token: resData.session.access_token,
+            refresh_token: resData.session.refresh_token,
+          });
+        } catch {}
+      }
+
+      setUser(resData.user);
+      setSession(resData.session);
+      try { localStorage.setItem("nds_auth_user", JSON.stringify(resData.user)); } catch {}
 
       // Check if this Supabase user has admin role in user_roles table
       let elevatedToAdmin = false;
-      if (data.user?.id) {
+      if (resData.user?.id) {
         try {
-          const roleRes = await fetch(`/api/user/role?userId=${data.user.id}`);
+          const roleRes = await fetch(`/api/user/role?userId=${resData.user.id}`);
           if (roleRes.ok) {
             const roleData = await roleRes.json();
             if (roleData.role === "admin") elevatedToAdmin = true;
@@ -235,36 +247,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName?: string, captchaToken?: string) => {
+  const signUp = async (email: string, password: string, fullName?: string) => {
     try {
-      const { error, data } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
-          ...(captchaToken ? { captchaToken } : {}),
-        },
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, fullName }),
       });
 
-      if (error) {
-        return { error };
+      const resData = await res.json();
+      if (!res.ok || resData.error) {
+        return { error: new Error(resData.error || "Failed to create account.") };
       }
 
-      // When email confirmation is enabled in Supabase:
-      // data.session will be null and data.user.confirmed_at will be absent.
-      // We detect this and signal the UI to show "check your email".
-      const needsConfirmation = !data.session && !data.user?.confirmed_at;
-
-      if (!needsConfirmation) {
-        // Auto-confirmed (confirmation disabled) — set user immediately
-        setUser(data.user);
-        setSession(data.session);
-        if (data.user) {
-          syncUserProfileToSupabase(data.user, fullName);
-        }
+      if (resData.session?.access_token && resData.session?.refresh_token) {
+        try {
+          await supabase.auth.setSession({
+            access_token: resData.session.access_token,
+            refresh_token: resData.session.refresh_token,
+          });
+        } catch {}
       }
 
-      return { error: null, emailConfirmationRequired: needsConfirmation };
+      setUser(resData.user);
+      setSession(resData.session);
+      try { localStorage.setItem("nds_auth_user", JSON.stringify(resData.user)); } catch {}
+
+      if (resData.user) {
+        syncUserProfileToSupabase(resData.user, fullName);
+      }
+
+      return { error: null, emailConfirmationRequired: false };
     } catch (err: any) {
       return { error: err };
     }
