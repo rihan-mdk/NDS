@@ -41,7 +41,25 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // ── 2. Admin UI Routes Protection (/admin, /admin/*) ───────────────────────
+  // ── 2. Checkout Route Protection — Guests must log in ──────────────────────
+  if (pathname === "/checkout") {
+    // Check for active Supabase session via cookie
+    // Supabase stores its session in sb-<ref>-auth-token cookie
+    const hasSupabaseSession = Array.from(request.cookies.getAll()).some(
+      (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token") && c.value
+    );
+    // Also allow admin session holders
+    const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const isValidAdmin = sessionToken ? await verifyAdminSessionToken(sessionToken) : false;
+
+    if (!hasSupabaseSession && !isValidAdmin) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", "/checkout");
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // ── 3. Admin UI Routes Protection (/admin, /admin/*) ───────────────────────
   if (pathname.startsWith("/admin")) {
     const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
     const isValidAdmin = await verifyAdminSessionToken(sessionToken);
@@ -95,12 +113,12 @@ export async function proxy(request: NextRequest) {
 
   const cspDirectives = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://accounts.google.com${isDev ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://accounts.google.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self' data:",
     "img-src 'self' data: blob: https://lh3.googleusercontent.com https://images.unsplash.com https://cdn.21st.dev https://placehold.co https://*.supabase.co https://pqlmjejlgtvnuuiwllre.supabase.co",
-    "connect-src 'self' https://*.supabase.co https://pqlmjejlgtvnuuiwllre.supabase.co https://accounts.google.com",
-    "frame-src https://accounts.google.com",
+    "connect-src 'self' https://*.supabase.co https://pqlmjejlgtvnuuiwllre.supabase.co https://accounts.google.com https://challenges.cloudflare.com",
+    "frame-src https://accounts.google.com https://challenges.cloudflare.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
