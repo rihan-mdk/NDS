@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { Trash2, ArrowRight, ShieldCheck, Tag, ArrowLeft } from "lucide-react";
 
 export default function CartPage() {
@@ -19,6 +20,7 @@ export default function CartPage() {
     removePromoCode,
     total,
   } = useCart();
+  const { user } = useAuth();
 
   const [inputCode, setInputCode] = useState("");
   const [promoMessage, setPromoMessage] = useState<{ success: boolean; message: string } | null>(null);
@@ -252,7 +254,7 @@ export default function CartPage() {
               {/* Checkout CTA */}
               <div className="pt-6 space-y-3">
                 <Link
-                  href="/checkout"
+                  href={user ? "/checkout" : "/login?redirect=/checkout"}
                   className="w-full py-4 px-6 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-[11px] font-semibold tracking-[0.24em] uppercase transition-all duration-300 flex items-center justify-center space-x-2"
                 >
                   <span>PROCEED TO CHECKOUT</span>

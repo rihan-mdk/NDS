@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Mail } from "lucide-react";
 
-export default function SignupPage() {
+function SignupContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
   const { signUp } = useAuth();
 
   const [fullName, setFullName] = useState("");
@@ -64,7 +66,7 @@ export default function SignupPage() {
         } catch { /* noop */ }
         setSuccessMsg("Account created successfully! Welcome to Neel's Atelier.");
         setTimeout(() => {
-          router.push("/account");
+          router.push(redirectParam || "/account");
         }, 1200);
       }
     } catch (err: any) {
@@ -96,7 +98,7 @@ export default function SignupPage() {
         </p>
         <div className="mt-8 flex flex-col sm:flex-row gap-3">
           <a
-            href="/login"
+            href={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : "/login"}
             className="px-6 py-3 bg-[#191919] text-[#FDFBF8] text-[11px] font-semibold tracking-[0.2em] uppercase hover:bg-[#7B5644] transition-colors"
           >
             Go to Sign In
@@ -256,7 +258,7 @@ export default function SignupPage() {
           <div className="mt-8 pt-6 border-t border-[#EAE5DF] text-center">
             <p className="text-xs text-[#77716D]">
               Already registered?{" "}
-              <Link href="/login" className="font-semibold text-[#191919] hover:text-[#7B5644] underline underline-offset-4 ml-1">
+              <Link href={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : "/login"} className="font-semibold text-[#191919] hover:text-[#7B5644] underline underline-offset-4 ml-1">
                 Log In to Your Account
               </Link>
             </p>
@@ -264,6 +266,14 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FDFBF8]" />}>
+      <SignupContent />
+    </Suspense>
   );
 }
 

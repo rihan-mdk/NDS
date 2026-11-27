@@ -16,7 +16,7 @@ function CheckoutContent() {
   const isBuyNow = searchParams.get("buyNow") === "true";
 
   const { items: cartItems, subtotal: cartSubtotal, tax: cartTax, shipping: cartShipping, discount: cartDiscount, total: cartTotal, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [directItem, setDirectItem] = useState<CartItem | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -34,6 +34,14 @@ function CheckoutContent() {
       }
     }
   }, [isBuyNow]);
+
+  // Guest Protection: Guests cannot checkout until logged in
+  useEffect(() => {
+    if (mounted && !authLoading && !user) {
+      const redirectTarget = isBuyNow ? "/checkout?buyNow=true" : "/checkout";
+      router.push(`/login?redirect=${encodeURIComponent(redirectTarget)}`);
+    }
+  }, [mounted, authLoading, user, isBuyNow, router]);
 
   // Determine active checkout items
   const items: CartItem[] = isBuyNow
@@ -61,6 +69,16 @@ function CheckoutContent() {
   const shippingInfo = calculateDtdcShipping(subtotal, formData.state, formData.pincode);
   const shipping = shippingInfo.rate;
   const total = subtotal - discount + shipping;
+
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        email: prev.email || user.email || "",
+        fullName: prev.fullName || user.user_metadata?.full_name || user.user_metadata?.name || "",
+      }));
+    }
+  }, [user]);
 
   useEffect(() => {
     // Only load saved address if the user is authenticated and has explicit addresses for their account
@@ -141,6 +159,11 @@ function CheckoutContent() {
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      const redirectTarget = isBuyNow ? "/checkout?buyNow=true" : "/checkout";
+      router.push(`/login?redirect=${encodeURIComponent(redirectTarget)}`);
+      return;
+    }
     setIsSubmitting(true);
 
     const generatedOrderId = `NDS-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -324,6 +347,23 @@ function CheckoutContent() {
       router.push(`/order-confirmation?orderId=${generatedOrderId}`);
     }, 1200);
   };
+
+  if (mounted && !authLoading && !user) {
+    return (
+      <div className="w-full min-h-[60vh] bg-[#FDFBF8] flex flex-col items-center justify-center px-6 py-20 text-center">
+        <h2 className="font-serif text-2xl text-[#191919] mb-3">Atelier Account Required</h2>
+        <p className="font-sans text-xs sm:text-sm text-[#77716D] max-w-sm leading-relaxed mb-6">
+          Please sign in to your privileged account to proceed with your order placement and secure delivery.
+        </p>
+        <Link
+          href={`/login?redirect=${encodeURIComponent(isBuyNow ? "/checkout?buyNow=true" : "/checkout")}`}
+          className="px-8 py-3.5 bg-[#191919] hover:bg-[#7B5644] text-[#FDFBF8] text-[11px] font-semibold tracking-[0.24em] uppercase transition-all duration-300"
+        >
+          Sign In to Continue
+        </Link>
+      </div>
+    );
+  }
 
   if (mounted && items.length === 0) {
     return (

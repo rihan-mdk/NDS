@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
+  const isAdminRef = React.useRef(false);
   const supabase = createClient();
 
   const syncUserProfileToSupabase = async (u: any, explicitName?: string) => {
@@ -56,6 +57,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // 1. Immediately hydrate cached user to prevent logout flash on refresh
+    try {
+      const cachedUser = localStorage.getItem("nds_auth_user");
+      if (cachedUser) {
+        const parsed = JSON.parse(cachedUser);
+        setUser(parsed);
+        if (parsed.id === "admin-usr-neels" || parsed.user_metadata?.role === "admin") {
+          setIsAdmin(true);
+          isAdminRef.current = true;
+        }
+      }
+    } catch {}
+
     // Check active session from Supabase & verify admin session
     async function getInitialSession() {
       try {
@@ -65,37 +79,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const adminData = await adminRes.json();
           if (adminData.authenticated && adminData.user) {
             setIsAdmin(true);
-            setUser({
+            isAdminRef.current = true;
+            const adminUser: any = {
               id: "admin-usr-neels",
               email: adminData.user.email,
               user_metadata: {
                 full_name: adminData.user.fullName,
                 role: "admin",
               },
-            } as any);
+            };
+            setUser(adminUser);
+            try { localStorage.setItem("nds_auth_user", JSON.stringify(adminUser)); } catch {}
             setLoading(false);
             return;
+          } else {
+            if (isAdminRef.current) {
+              setIsAdmin(false);
+              isAdminRef.current = false;
+            }
           }
         }
 
         // 2. Check Supabase session
         const { data: { session: currentSession } } = await supabase.auth.getSession();
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+        if (currentSession?.user) {
+          setSession(currentSession);
+          setUser(currentSession.user);
+          try { localStorage.setItem("nds_auth_user", JSON.stringify(currentSession.user)); } catch {}
 
-        if (currentSession?.user?.id) {
-          syncUserProfileToSupabase(currentSession.user);
-        }
+          if (currentSession.user?.id) {
+            syncUserProfileToSupabase(currentSession.user);
+          }
 
-        // 3. If Supabase user, check their role (may elevate to admin)
-        if (currentSession?.user?.id) {
+          // 3. If Supabase user, check their role (may elevate to admin)
           try {
             const roleRes = await fetch(`/api/user/role?userId=${currentSession.user.id}`);
             if (roleRes.ok) {
               const roleData = await roleRes.json();
-              if (roleData.role === "admin") setIsAdmin(true);
+              if (roleData.role === "admin") {
+                setIsAdmin(true);
+                isAdminRef.current = true;
+              }
             }
           } catch { /* noop */ }
+        } else if (!isAdminRef.current) {
+          // If neither admin nor Supabase session exists, check local cache
+          const cached = localStorage.getItem("nds_auth_user");
+          if (!cached) {
+            setUser(null);
+            setSession(null);
+          }
         }
       } catch (err) {
         console.warn("Supabase auth session check notice:", err);
@@ -106,13 +139,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getInitialSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      if (currentSession?.user?.id) {
-        syncUserProfileToSupabase(currentSession.user);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      if (isAdminRef.current && !currentSession) {
+        return; // Don't let empty Supabase event overwrite active admin session
       }
-      setLoading(false);
+      if (currentSession) {
+        setSession(currentSession);
+        setUser(currentSession.user);
+        try { localStorage.setItem("nds_auth_user", JSON.stringify(currentSession.user)); } catch {}
+        if (currentSession.user?.id) {
+          syncUserProfileToSupabase(currentSession.user);
+        }
+        setLoading(false);
+      } else if (event === "SIGNED_OUT") {
+        setSession(null);
+        setUser(null);
+        try { localStorage.removeItem("nds_auth_user"); } catch {}
+        setLoading(false);
+      } else {
+        const cached = localStorage.getItem("nds_auth_user");
+        if (!cached) {
+          setSession(null);
+          setUser(null);
+        }
+        setLoading(false);
+      }
     });
 
     return () => {
@@ -144,6 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
           setUser(adminUser);
           setIsAdmin(true);
+          try { localStorage.setItem("nds_auth_user", JSON.stringify(adminUser)); } catch {}
           return { error: null };
         } else {
           return { error: new Error(data.error || "Invalid administrator credentials") };
@@ -166,6 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
           setUser(mockUser);
           setIsAdmin(false);
+          try { localStorage.setItem("nds_auth_user", JSON.stringify(mockUser)); } catch {}
           return { error: null };
         }
         return { error };
@@ -173,6 +226,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(data.user);
       setSession(data.session);
+      try { localStorage.setItem("nds_auth_user", JSON.stringify(data.user)); } catch {}
 
       // Check if this Supabase user has admin role in user_roles table
       let elevatedToAdmin = false;
@@ -267,6 +321,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     if (typeof window !== "undefined") {
       try {
+        localStorage.removeItem("nds_auth_user");
         localStorage.removeItem("nds_orders_history");
         localStorage.removeItem("nds_saved_details");
         localStorage.removeItem("nds_saved_addresses");
@@ -277,6 +332,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setSession(null);
     setIsAdmin(false);
+    isAdminRef.current = false;
   };
 
   const resetPassword = async (email: string) => {

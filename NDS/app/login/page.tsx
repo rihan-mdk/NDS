@@ -250,7 +250,7 @@ function LoginForm() {
           <div className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-[#EAE5DF] text-center">
             <p className="text-xs text-[#77716D]">
               New to Neel&apos;s ?{" "}
-              <Link href="/signup" className="font-semibold text-[#191919] hover:text-[#7B5644] underline underline-offset-4 ml-1">
+              <Link href={redirectParam ? `/signup?redirect=${encodeURIComponent(redirectParam)}` : "/signup"} className="font-semibold text-[#191919] hover:text-[#7B5644] underline underline-offset-4 ml-1">
                 Create a new account
               </Link>
             </p>

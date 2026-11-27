@@ -8,6 +8,7 @@ import { getLiveProductBySlug, getAllLiveProducts } from "@/lib/products-store";
 import { ProductCard } from "@/components/ProductCard";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Heart,
@@ -173,6 +174,7 @@ export default function ProductDetailPage() {
 
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { user } = useAuth();
 
   const isFavorited = product ? isInWishlist(product.id) : false;
 
@@ -195,7 +197,11 @@ export default function ProductDetailPage() {
     } catch (e) {
       console.warn("Could not set direct checkout session:", e);
     }
-    router.push("/checkout?buyNow=true");
+    if (!user) {
+      router.push(`/login?redirect=${encodeURIComponent("/checkout?buyNow=true")}`);
+    } else {
+      router.push("/checkout?buyNow=true");
+    }
   };
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
