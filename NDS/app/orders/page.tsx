@@ -35,14 +35,25 @@ function OrdersContent() {
   const [cancelMessage, setCancelMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // 1. Initial local load for instant UI feedback
+    const isOrderOwnedByUser = (order: any) => {
+      if (!user || !user.id) return false;
+      const orderUserId = order.user_id || order.userId;
+      const orderEmail = order.customer_email || order.customer?.email || order.email;
+      if (orderUserId && orderUserId !== user.id) return false;
+      if (orderEmail && user.email && orderEmail.trim().toLowerCase() !== user.email.trim().toLowerCase()) return false;
+      if (orderUserId === user.id) return true;
+      if (orderEmail && user.email && orderEmail.trim().toLowerCase() === user.email.trim().toLowerCase()) return true;
+      return false;
+    };
+
+    // 1. Initial local load for instant UI feedback - strictly for current user
     let combinedLocal: Order[] = [];
     try {
       const localHistory: Order[] = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
       const sessionStored = sessionStorage.getItem("nds_last_order");
       const sessionOrder = sessionStored ? [JSON.parse(sessionStored)] : [];
       combinedLocal = [...sessionOrder, ...localHistory].filter(
-        (o, idx, arr) => arr.findIndex((item) => item.id === o.id) === idx
+        (o, idx, arr) => arr.findIndex((item) => item.id === o.id) === idx && isOrderOwnedByUser(o)
       );
       if (combinedLocal.length > 0) {
         setOrders(combinedLocal);
@@ -50,6 +61,8 @@ function OrdersContent() {
           const found = combinedLocal.find((o) => o.id === targetOrderId);
           if (found) setSelectedOrder(found);
         }
+      } else {
+        setOrders([]);
       }
     } catch (e) {
       console.warn("Could not load local orders:", e);
@@ -61,13 +74,10 @@ function OrdersContent() {
       fetch(`/api/admin/orders?userId=${user.id}${emailParam}`)
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
-          if (Array.isArray(data?.orders) && data.orders.length > 0) {
-            const merged = [...data.orders, ...combinedLocal].filter(
-              (o, idx, arr) => arr.findIndex((item) => item.id === o.id) === idx
-            );
-            setOrders(merged);
+          if (Array.isArray(data?.orders)) {
+            setOrders(data.orders);
             if (targetOrderId) {
-              const found = merged.find((o: Order) => o.id === targetOrderId);
+              const found = data.orders.find((o: Order) => o.id === targetOrderId);
               if (found) setSelectedOrder(found);
             }
           }

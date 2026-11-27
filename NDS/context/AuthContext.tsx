@@ -265,6 +265,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.warn("SignOut notice:", err);
     }
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("nds_orders_history");
+        localStorage.removeItem("nds_saved_details");
+        localStorage.removeItem("nds_saved_addresses");
+        localStorage.removeItem("nds_measurements");
+        sessionStorage.removeItem("nds_last_order");
+      } catch { /* noop */ }
+    }
     setUser(null);
     setSession(null);
     setIsAdmin(false);

@@ -168,7 +168,22 @@ export default function AccountProfilePage() {
     try {
       const storedDetails = localStorage.getItem("nds_saved_details");
       if (storedDetails) {
-        setSavedDetails(JSON.parse(storedDetails));
+        const parsed = JSON.parse(storedDetails);
+        if (!user?.email || !parsed?.email || parsed.email.toLowerCase() === user.email.toLowerCase()) {
+          setSavedDetails(parsed);
+        } else if (user) {
+          const uName =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            (user.email ? user.email.split("@")[0] : "");
+          const formatted = uName ? uName.charAt(0).toUpperCase() + uName.slice(1) : "";
+          setSavedDetails((prev) => ({
+            ...prev,
+            fullName: formatted,
+            email: user.email || "",
+            phone: user.user_metadata?.phone || prev.phone || "",
+          }));
+        }
       } else if (user) {
         const uName =
           user.user_metadata?.full_name ||
@@ -191,16 +206,27 @@ export default function AccountProfilePage() {
       console.warn("Could not load stored account data:", e);
     }
 
-    // Load orders from localStorage and sessionStorage for instant UI
+    // Load orders from localStorage and sessionStorage for instant UI - strictly isolated to current user
     try {
+      const isOrderOwnedByUser = (order: any) => {
+        if (!user || !user.id) return false;
+        const orderUserId = order.user_id || order.userId;
+        const orderEmail = order.customer_email || order.customer?.email || order.email;
+        if (orderUserId && orderUserId !== user.id) return false;
+        if (orderEmail && user.email && orderEmail.trim().toLowerCase() !== user.email.trim().toLowerCase()) return false;
+        if (orderUserId === user.id) return true;
+        if (orderEmail && user.email && orderEmail.trim().toLowerCase() === user.email.trim().toLowerCase()) return true;
+        return false;
+      };
+
       const savedOrders = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
       const sessionStored = sessionStorage.getItem("nds_last_order");
       const sessionOrder = sessionStored ? [JSON.parse(sessionStored)] : [];
-      const combined = [...sessionOrder, ...savedOrders].filter(
-        (o, idx, arr) => arr.findIndex((item) => item.id === o.id) === idx
+      const userMatchedOrders = [...sessionOrder, ...savedOrders].filter(
+        (o, idx, arr) => arr.findIndex((item) => item.id === o.id) === idx && isOrderOwnedByUser(o)
       );
-      setUserOrders(combined);
-      setOrdersCount(combined.length);
+      setUserOrders(userMatchedOrders);
+      setOrdersCount(userMatchedOrders.length);
     } catch (e) {
       console.warn("Could not load orders count:", e);
     }
@@ -297,13 +323,9 @@ export default function AccountProfilePage() {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.orders)) {
-            setUserOrders((prev) => {
-              const merged = [...data.orders, ...prev].filter(
-                (o, idx, arr) => arr.findIndex((item) => item.id === o.id) === idx
-              );
-              setOrdersCount(merged.length);
-              return merged;
-            });
+            // Authoritative orders for this user from Supabase
+            setUserOrders(data.orders);
+            setOrdersCount(data.orders.length);
           }
         }
       } catch { /* noop */ }

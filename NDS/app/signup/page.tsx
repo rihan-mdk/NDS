@@ -55,6 +55,13 @@ export default function SignupPage() {
         // Email confirmation enabled — show confirmation screen, don't redirect
         setEmailConfirmPending(true);
       } else {
+        try {
+          localStorage.removeItem("nds_orders_history");
+          localStorage.removeItem("nds_saved_details");
+          localStorage.removeItem("nds_saved_addresses");
+          localStorage.removeItem("nds_measurements");
+          sessionStorage.removeItem("nds_last_order");
+        } catch { /* noop */ }
         setSuccessMsg("Account created successfully! Welcome to Neel's Atelier.");
         setTimeout(() => {
           router.push("/account");

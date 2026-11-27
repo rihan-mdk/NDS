@@ -219,12 +219,6 @@ export default function AdminLayout({
                   <Icon className={`w-4 h-4 ${active ? "text-[#C9A96E]" : "text-[#77716D]"}`} />
                   <div className="flex items-center gap-2">
                     <span>{item.name}</span>
-                    {item.href === "/admin/orders" && pendingOrdersCount > 0 && (
-                      <span className="relative flex h-2 w-2" title={`${pendingOrdersCount} new order${pendingOrdersCount === 1 ? "" : "s"}`}>
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                      </span>
-                    )}
                   </div>
                 </div>
                 {item.href === "/admin/orders" && pendingOrdersCount > 0 && (
@@ -282,9 +276,6 @@ export default function AdminLayout({
           aria-label="Toggle Menu"
           className="relative p-2 text-[#D6D0C8] hover:text-[#FDFBF8]"
         >
-          {pendingOrdersCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#C9A96E] rounded-full ring-2 ring-[#191919]" />
-          )}
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </header>
@@ -311,12 +302,6 @@ export default function AdminLayout({
                   <Icon className="w-4 h-4" />
                   <div className="flex items-center gap-2">
                     <span>{item.name}</span>
-                    {item.href === "/admin/orders" && pendingOrdersCount > 0 && (
-                      <span className="relative flex h-2 w-2" title={`${pendingOrdersCount} new order${pendingOrdersCount === 1 ? "" : "s"}`}>
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                      </span>
-                    )}
                   </div>
                 </div>
                 {item.href === "/admin/orders" && pendingOrdersCount > 0 && (

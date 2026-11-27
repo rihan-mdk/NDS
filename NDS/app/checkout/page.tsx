@@ -148,6 +148,9 @@ function CheckoutContent() {
     // Build order record with separated payment status
     const newOrder = {
       id: generatedOrderId,
+      user_id: user?.id || null,
+      userId: user?.id || null,
+      customer_email: formData.email.trim() || user?.email || null,
       date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
       createdAt: new Date().toISOString(),
       status: "Payment Pending",

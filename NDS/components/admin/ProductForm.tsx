@@ -42,7 +42,7 @@ const ACCESSORY_CATEGORIES = [
   { label: "Rings", value: "rings" },
 ];
 
-const CLOTHING_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+const CLOTHING_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL"];
 
 export function ProductForm({ initialData, isEdit = false }: ProductFormProps) {
   const router = useRouter();
