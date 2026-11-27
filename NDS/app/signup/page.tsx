@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Mail } from "lucide-react";
@@ -15,9 +16,20 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [emailConfirmPending, setEmailConfirmPending] = useState(false);
+
+  // Register global Turnstile callback
+  useEffect(() => {
+    (window as any).onTurnstileSignupSuccess = (token: string) => setCaptchaToken(token);
+    (window as any).onTurnstileSignupExpired = () => setCaptchaToken("");
+    return () => {
+      delete (window as any).onTurnstileSignupSuccess;
+      delete (window as any).onTurnstileSignupExpired;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,10 +44,13 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const result = await signUp(email, password, fullName);
+      const result = await signUp(email, password, fullName, captchaToken || undefined);
       const { error, emailConfirmationRequired } = result as any;
       if (error) {
         setErrorMsg(error.message || "Failed to create account.");
+        // Reset Turnstile on error so user can try again
+        (window as any).turnstile?.reset();
+        setCaptchaToken("");
       } else if (emailConfirmationRequired) {
         // Email confirmation enabled — show confirmation screen, don't redirect
         setEmailConfirmPending(true);
@@ -204,6 +219,22 @@ export default function SignupPage() {
                 </button>
               </div>
             </div>
+
+            {/* Turnstile CAPTCHA Widget */}
+            <div className="flex justify-center">
+              <div
+                className="cf-turnstile"
+                data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                data-callback="onTurnstileSignupSuccess"
+                data-expired-callback="onTurnstileSignupExpired"
+                data-theme="light"
+                data-size="flexible"
+              />
+            </div>
+            <Script
+              src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+              strategy="lazyOnload"
+            />
 
             <button
               type="submit"
