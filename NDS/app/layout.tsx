@@ -9,6 +9,7 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
+import { Analytics } from "@vercel/analytics/next";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -61,6 +62,7 @@ export default async function RootLayout({
             </WishlistProvider>
           </CartProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );

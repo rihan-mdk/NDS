@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Mail } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -17,6 +17,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [emailConfirmPending, setEmailConfirmPending] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +32,13 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const { error } = await signUp(email, password, fullName);
+      const result = await signUp(email, password, fullName);
+      const { error, emailConfirmationRequired } = result as any;
       if (error) {
         setErrorMsg(error.message || "Failed to create account.");
+      } else if (emailConfirmationRequired) {
+        // Email confirmation enabled — show confirmation screen, don't redirect
+        setEmailConfirmPending(true);
       } else {
         setSuccessMsg("Account created successfully! Welcome to Neel's Atelier.");
         setTimeout(() => {
@@ -46,6 +51,38 @@ export default function SignupPage() {
       setLoading(false);
     }
   };
+
+  // ── Email confirmation pending screen ──────────────────────────────────────
+  if (emailConfirmPending) {
+    return (
+      <div className="w-full min-h-[calc(100vh-80px)] flex flex-col items-center justify-center bg-[#FDFBF8] px-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-[#EAE5DF] flex items-center justify-center mb-6">
+          <Mail className="w-8 h-8 text-[#7B5644]" />
+        </div>
+        <span className="text-[10px] tracking-[0.28em] text-[#7B5644] uppercase font-semibold block mb-3">
+          CONFIRMATION REQUIRED
+        </span>
+        <h1 className="font-serif text-2xl sm:text-3xl text-[#191919] tracking-tight mb-3">
+          Check Your Email
+        </h1>
+        <p className="font-sans text-sm text-[#77716D] max-w-sm leading-relaxed mb-2">
+          We sent a confirmation link to
+        </p>
+        <p className="font-semibold text-sm text-[#191919] mb-6">{email}</p>
+        <p className="font-sans text-xs text-[#77716D] max-w-sm leading-relaxed">
+          Click the link in the email to activate your account, then return here to sign in. Check your spam folder if you don&apos;t see it within a minute.
+        </p>
+        <div className="mt-8 flex flex-col sm:flex-row gap-3">
+          <a
+            href="/login"
+            className="px-6 py-3 bg-[#191919] text-[#FDFBF8] text-[11px] font-semibold tracking-[0.2em] uppercase hover:bg-[#7B5644] transition-colors"
+          >
+            Go to Sign In
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-[calc(100vh-80px)] flex flex-col lg:flex-row bg-[#FDFBF8] text-[#191919]">

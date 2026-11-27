@@ -10,7 +10,7 @@ interface AuthContextType {
   isAdmin: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null; emailConfirmationRequired?: boolean }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<void>;
@@ -227,12 +227,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error };
       }
 
-      setUser(data.user);
-      setSession(data.session);
-      if (data.user) {
-        syncUserProfileToSupabase(data.user, fullName);
+      // When email confirmation is enabled in Supabase:
+      // data.session will be null and data.user.confirmed_at will be absent.
+      // We detect this and signal the UI to show "check your email".
+      const needsConfirmation = !data.session && !data.user?.confirmed_at;
+
+      if (!needsConfirmation) {
+        // Auto-confirmed (confirmation disabled) — set user immediately
+        setUser(data.user);
+        setSession(data.session);
+        if (data.user) {
+          syncUserProfileToSupabase(data.user, fullName);
+        }
       }
-      return { error: null };
+
+      return { error: null, emailConfirmationRequired: needsConfirmation };
     } catch (err: any) {
       if (email && password.length >= 6) {
         const mockUser: any = {
