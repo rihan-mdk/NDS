@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import Script from "next/script";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Mail } from "lucide-react";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 
 function SignupContent() {
   const router = useRouter();
@@ -19,19 +19,10 @@ function SignupContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string>("");
+  const [resetSignal, setResetSignal] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [emailConfirmPending, setEmailConfirmPending] = useState(false);
-
-  // Register global Turnstile callback
-  useEffect(() => {
-    (window as any).onTurnstileSignupSuccess = (token: string) => setCaptchaToken(token);
-    (window as any).onTurnstileSignupExpired = () => setCaptchaToken("");
-    return () => {
-      delete (window as any).onTurnstileSignupSuccess;
-      delete (window as any).onTurnstileSignupExpired;
-    };
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,16 +34,26 @@ function SignupContent() {
       return;
     }
 
+    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken) {
+      setErrorMsg("Please complete the security verification before creating an account.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const result = await signUp(email, password, fullName, captchaToken || undefined);
       const { error, emailConfirmationRequired } = result as any;
       if (error) {
-        setErrorMsg(error.message || "Failed to create account.");
-        // Reset Turnstile on error so user can try again
-        (window as any).turnstile?.reset();
+        setResetSignal((s) => s + 1);
         setCaptchaToken("");
+
+        if ((error as any).code === "captcha_failed" || error.message?.toLowerCase().includes("captcha")) {
+          setErrorMsg("Security verification expired or invalid. Please verify again.");
+          return;
+        }
+
+        setErrorMsg(error.message || "Failed to create account.");
       } else if (emailConfirmationRequired) {
         // Email confirmation enabled — show confirmation screen, don't redirect
         setEmailConfirmPending(true);
@@ -230,19 +231,11 @@ function SignupContent() {
             </div>
 
             {/* Turnstile CAPTCHA Widget */}
-            <div className="flex justify-center">
-              <div
-                className="cf-turnstile"
-                data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-                data-callback="onTurnstileSignupSuccess"
-                data-expired-callback="onTurnstileSignupExpired"
-                data-theme="light"
-                data-size="flexible"
-              />
-            </div>
-            <Script
-              src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-              strategy="lazyOnload"
+            <TurnstileWidget
+              onSuccess={setCaptchaToken}
+              onExpire={() => setCaptchaToken("")}
+              onError={() => setCaptchaToken("")}
+              resetSignal={resetSignal}
             />
 
             <button

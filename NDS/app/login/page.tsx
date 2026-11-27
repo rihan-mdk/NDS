@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import Script from "next/script";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 
 function LoginForm() {
   const router = useRouter();
@@ -20,33 +20,34 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string>("");
+  const [resetSignal, setResetSignal] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(
     oauthError === "oauth" ? "Google sign-in failed. Please try again." : null
   );
   const [noAccountPrompt, setNoAccountPrompt] = useState(false);
 
-  // Register global Turnstile callback
-  useEffect(() => {
-    (window as any).onTurnstileLoginSuccess = (token: string) => setCaptchaToken(token);
-    (window as any).onTurnstileLoginExpired = () => setCaptchaToken("");
-    return () => {
-      delete (window as any).onTurnstileLoginSuccess;
-      delete (window as any).onTurnstileLoginExpired;
-    };
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setNoAccountPrompt(false);
+
+    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken) {
+      setErrorMsg("Please complete the security verification before logging in.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { error } = await signIn(email, password, captchaToken || undefined);
       if (error) {
-        // Reset Turnstile on error so user can try again
-        (window as any).turnstile?.reset();
+        setResetSignal((s) => s + 1);
         setCaptchaToken("");
+
+        if ((error as any).code === "captcha_failed" || error.message?.toLowerCase().includes("captcha")) {
+          setErrorMsg("Security verification expired or invalid. Please verify again.");
+          return;
+        }
 
         // Check whether an account exists for this email address
         try {
@@ -73,6 +74,8 @@ function LoginForm() {
         router.push(target);
       }
     } catch (err: any) {
+      setResetSignal((s) => s + 1);
+      setCaptchaToken("");
       setErrorMsg(err.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
@@ -235,19 +238,11 @@ function LoginForm() {
             {/* Action Buttons: Mobile Horizontal Side-by-Side | Desktop Original Stacked with Divider */}
             <div className="flex flex-row lg:flex-col gap-2.5 lg:gap-0 pt-2 lg:pt-0">
               {/* Turnstile CAPTCHA Widget */}
-              <div className="w-full">
-                <div
-                  className="cf-turnstile"
-                  data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-                  data-callback="onTurnstileLoginSuccess"
-                  data-expired-callback="onTurnstileLoginExpired"
-                  data-theme="light"
-                  data-size="flexible"
-                />
-              </div>
-              <Script
-                src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-                strategy="lazyOnload"
+              <TurnstileWidget
+                onSuccess={setCaptchaToken}
+                onExpire={() => setCaptchaToken("")}
+                onError={() => setCaptchaToken("")}
+                resetSignal={resetSignal}
               />
 
               <button
