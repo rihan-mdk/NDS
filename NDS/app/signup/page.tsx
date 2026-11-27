@@ -21,6 +21,7 @@ function SignupContent() {
   const [captchaToken, setCaptchaToken] = useState<string>("");
   const [resetSignal, setResetSignal] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [accountAlreadyExists, setAccountAlreadyExists] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [emailConfirmPending, setEmailConfirmPending] = useState(false);
 
@@ -28,11 +29,28 @@ function SignupContent() {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
+    setAccountAlreadyExists(false);
 
     if (password.length < 6) {
       setErrorMsg("Password must be at least 6 characters.");
       return;
     }
+
+    // Check if an account already exists for this email before proceeding
+    try {
+      const checkRes = await fetch("/api/auth/check-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        if (checkData.exists) {
+          setAccountAlreadyExists(true);
+          return;
+        }
+      }
+    } catch {}
 
     if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken) {
       setErrorMsg("Please complete the security verification before creating an account.");
@@ -151,12 +169,34 @@ function SignupContent() {
             </p>
           </div>
 
-          {errorMsg && (
+          {accountAlreadyExists ? (
+            <div className="mb-6 p-4 bg-[#FAF7F2] border border-[#EAE5DF] text-[#191919]">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-[#7B5644] flex-shrink-0 mt-0.5" />
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-[#191919] uppercase tracking-[0.1em]">
+                    Account Already Exists
+                  </p>
+                  <p className="text-xs text-[#77716D] leading-relaxed">
+                    An atelier account is already registered under <span className="font-medium text-[#191919]">{email}</span>. Please sign in to access your orders and account.
+                  </p>
+                  <div className="pt-1.5">
+                    <Link
+                      href={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : "/login"}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#7B5644] hover:text-[#191919] uppercase tracking-[0.12em] underline underline-offset-4 transition-colors"
+                    >
+                      Sign In to Your Account &rarr;
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : errorMsg ? (
             <div className="mb-6 p-3.5 bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span>{errorMsg}</span>
             </div>
-          )}
+          ) : null}
 
           {successMsg && (
             <div className="mb-6 p-3.5 bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2">
