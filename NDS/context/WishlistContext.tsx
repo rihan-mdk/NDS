@@ -72,11 +72,20 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       if (session?.user && session.user.id !== "admin-usr-neels") {
         userIdRef.current = session.user.id;
         syncFromSupabase(session.user.id);
+      } else if (!session) {
+        // No session — clear stale data
+        try { localStorage.removeItem(WISHLIST_STORAGE_KEY); } catch { /* noop */ }
+        setItems([]);
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === "SIGNED_IN") && session?.user && session.user.id !== "admin-usr-neels") {
+        // Clear previous user's wishlist before loading this user's cloud wishlist
+        if (userIdRef.current && userIdRef.current !== session.user.id) {
+          try { localStorage.removeItem(WISHLIST_STORAGE_KEY); } catch { /* noop */ }
+          setItems([]);
+        }
         userIdRef.current = session.user.id;
         syncFromSupabase(session.user.id);
       } else if (event === "SIGNED_OUT") {

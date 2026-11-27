@@ -93,10 +93,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // ── auth listener ─────────────────────────────────────────────────────────
 
   useEffect(() => {
-    // Load local immediately so cart icon count shows instantly
-    const local = loadLocal();
-    if (local.length > 0) setItems(local);
-
+    // Only load local items if there's likely an active session
+    // (avoids flashing another user's cart to a fresh visitor)
     const supabase = createClient();
 
     // Check existing session on mount
@@ -104,11 +102,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (session?.user && session.user.id !== "admin-usr-neels") {
         userIdRef.current = session.user.id;
         syncFromSupabase(session.user.id);
+      } else if (!session) {
+        // No session — clear any stale guest/previous-user data
+        try { localStorage.removeItem(CART_STORAGE_KEY); } catch { /* noop */ }
+        setItems([]);
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session?.user && session.user.id !== "admin-usr-neels") {
+        // Clear previous user's local data before loading this user's cloud cart
+        if (userIdRef.current && userIdRef.current !== session.user.id) {
+          try { localStorage.removeItem(CART_STORAGE_KEY); } catch { /* noop */ }
+          setItems([]);
+          setPromoCode("");
+          setDiscountPercent(0);
+        }
         userIdRef.current = session.user.id;
         syncFromSupabase(session.user.id);
       } else if (event === "SIGNED_OUT") {

@@ -125,12 +125,22 @@ async function verifyAdmin(): Promise<boolean> {
 }
 
 // GET all products or single product by ?id= / ?slug= (Supabase + base catalog fallback)
+// Admin-only flag: ?admin=true requires authentication; public requests get filtered catalog only
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const targetId = searchParams.get("id");
     const targetSlug = searchParams.get("slug");
+    const isAdminRequest = searchParams.get("admin") === "true";
     const identifier = targetId || targetSlug;
+
+    // Admin-scoped requests (tombstones, full meta) require authentication
+    if (isAdminRequest) {
+      const isAdmin = await verifyAdmin();
+      if (!isAdmin) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
 
     const supabase = getSupabaseAdmin();
 
@@ -179,7 +189,8 @@ export async function GET(request: Request) {
         return NextResponse.json({
           products: all,
           customCount: custom.length,
-          deletedIds: Array.from(serverDeletedIds),
+          // Only expose deletion meta to authenticated admin requests
+          ...(isAdminRequest ? { deletedIds: Array.from(serverDeletedIds) } : {}),
         });
       }
     }
@@ -205,7 +216,8 @@ export async function GET(request: Request) {
     return NextResponse.json({
       products: all,
       customCount: custom.length,
-      deletedIds: Array.from(localDeletedIds),
+      // Only expose deletion meta to authenticated admin requests
+      ...(isAdminRequest ? { deletedIds: Array.from(localDeletedIds) } : {}),
     });
   } catch (error) {
     console.error("GET /api/admin/products error:", error);

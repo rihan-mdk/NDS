@@ -42,9 +42,9 @@ export default function AdminProductsPage() {
     // 1. Immediate local state for instant rendering
     setProducts(getAllLiveProducts());
 
-    // 2. Fetch live data from Supabase API
+    // 2. Fetch live data from Supabase API (admin-scoped — includes deletedIds)
     try {
-      const res = await fetch("/api/admin/products");
+      const res = await fetch("/api/admin/products?admin=true");
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.products)) {

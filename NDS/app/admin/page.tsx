@@ -46,7 +46,7 @@ export default function AdminDashboardPage() {
 
     // 1. Fetch live products from Supabase API (authoritative live count)
     try {
-      const prodRes = await fetch("/api/admin/products");
+      const prodRes = await fetch("/api/admin/products?admin=true");
       if (prodRes.ok) {
         const prodData = await prodRes.json();
         if (Array.isArray(prodData.products)) {

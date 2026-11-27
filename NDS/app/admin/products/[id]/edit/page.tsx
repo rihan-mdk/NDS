@@ -30,7 +30,7 @@ export default function EditProductPage() {
 
       // 2. Fetch live authoritative product from Supabase / cloud API
       try {
-        const res = await fetch(`/api/admin/products?id=${encodeURIComponent(id)}`);
+        const res = await fetch(`/api/admin/products?admin=true&id=${encodeURIComponent(id)}`);
         if (res.ok) {
           const data = await res.json();
           const cloudProduct: Product | undefined =
@@ -48,7 +48,7 @@ export default function EditProductPage() {
         }
 
         // Fallback: fetch complete product list if single lookup wasn't matched
-        const resAll = await fetch("/api/admin/products");
+        const resAll = await fetch("/api/admin/products?admin=true");
         if (resAll.ok) {
           const data = await resAll.json();
           if (Array.isArray(data.products)) {

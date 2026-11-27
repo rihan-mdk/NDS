@@ -54,16 +54,29 @@ export async function proxy(request: NextRequest) {
   }
 
   // ── 3. Admin API Routes Protection (/api/admin/* except /api/admin/auth) ──
-  // Note: GET /api/admin/products and GET /api/admin/categories also support public store catalog loading.
-  // Sensitive write methods (POST, PUT, DELETE) and admin-only endpoints (roles, upload, admin orders list) are restricted.
+  // Note: GET /api/admin/products and GET /api/admin/categories support public store catalog loading.
+  // Sensitive write methods (POST, PUT, DELETE), admin-flagged GET requests (?admin=true),
+  // and admin-only endpoints (roles, upload, promos, full orders list) are restricted.
   if (pathname.startsWith("/api/admin/") && pathname !== "/api/admin/auth") {
     const isWrite = ["POST", "PUT", "DELETE", "PATCH"].includes(request.method);
     const isAdminOnlyRoute =
       pathname.startsWith("/api/admin/roles") ||
       pathname.startsWith("/api/admin/upload") ||
       pathname.startsWith("/api/admin/promos");
+    
+    // GET /api/admin/orders without userId/email param is admin-only (full orders list)
+    const isAdminOrdersList =
+      pathname.startsWith("/api/admin/orders") &&
+      request.method === "GET" &&
+      !request.nextUrl.searchParams.has("userId") &&
+      !request.nextUrl.searchParams.has("email");
 
-    if (isWrite || isAdminOnlyRoute) {
+    // GET ?admin=true flag on products/categories requires admin session
+    const isAdminFlaggedGet =
+      request.method === "GET" &&
+      request.nextUrl.searchParams.get("admin") === "true";
+
+    if (isWrite || isAdminOnlyRoute || isAdminOrdersList || isAdminFlaggedGet) {
       const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
       const isValidAdmin = await verifyAdminSessionToken(sessionToken);
 
