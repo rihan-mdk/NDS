@@ -104,14 +104,19 @@ export async function GET(request: Request) {
       .select("*")
       .order("created_at", { ascending: false });
 
+    const isValidUuid = (val: any): boolean =>
+      typeof val === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val);
+
+    const hasValidUuid = isValidUuid(userId);
     const targetEmail = (email || authenticatedUserEmail || "").trim().toLowerCase();
 
-    if (userId && targetEmail) {
-      query = query.or(`user_id.eq.${userId},customer_email.eq.${targetEmail}`);
-    } else if (userId) {
+    if (hasValidUuid && targetEmail) {
+      query = query.or(`user_id.eq.${userId},customer_email.ilike.${targetEmail}`);
+    } else if (hasValidUuid) {
       query = query.eq("user_id", userId);
     } else if (targetEmail) {
-      query = query.eq("customer_email", targetEmail);
+      query = query.ilike("customer_email", targetEmail);
     }
 
     const { data: ordersData, error: ordersError } = await query;
@@ -184,18 +189,23 @@ export async function POST(request: Request) {
       );
     }
 
+    const isValidUuid = (val: any): boolean =>
+      typeof val === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val);
+    const safeUserId = isValidUuid(userId) ? userId : null;
+
     const cleanUtr = utr && typeof utr === "string" ? utr.trim().replace(/[^a-zA-Z0-9]/g, "").slice(0, 30) : null;
     let guestCancellationToken: string | null = null;
     let cancellationTokenHash: string | null = null;
 
-    if (!userId) {
+    if (!safeUserId) {
       guestCancellationToken = crypto.randomBytes(24).toString("hex");
       cancellationTokenHash = crypto.createHash("sha256").update(guestCancellationToken).digest("hex");
     }
 
     let { error: orderError } = await supabase.from("orders").insert({
       id,
-      user_id: userId || null,
+      user_id: safeUserId,
       customer_name: customerName || null,
       customer_email: customerEmail || null,
       customer_phone: customerPhone || null,
@@ -217,7 +227,7 @@ export async function POST(request: Request) {
       console.warn("Full order insert failed, attempting resilient fallback insert:", orderError);
       const fallbackResult = await supabase.from("orders").insert({
         id,
-        user_id: userId || null,
+        user_id: safeUserId,
         customer_name: customerName || null,
         customer_email: customerEmail || null,
         customer_phone: customerPhone || null,

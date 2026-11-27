@@ -207,6 +207,7 @@ export default function AccountProfilePage() {
     }
 
     // Load orders from localStorage and sessionStorage for instant UI - strictly isolated to current user
+    let userMatchedOrders: any[] = [];
     try {
       const isOrderOwnedByUser = (order: any) => {
         if (!user || !user.id) return false;
@@ -222,7 +223,7 @@ export default function AccountProfilePage() {
       const savedOrders = JSON.parse(localStorage.getItem("nds_orders_history") || "[]");
       const sessionStored = sessionStorage.getItem("nds_last_order");
       const sessionOrder = sessionStored ? [JSON.parse(sessionStored)] : [];
-      const userMatchedOrders = [...sessionOrder, ...savedOrders].filter(
+      userMatchedOrders = [...sessionOrder, ...savedOrders].filter(
         (o, idx, arr) => arr.findIndex((item) => item.id === o.id) === idx && isOrderOwnedByUser(o)
       );
       setUserOrders(userMatchedOrders);
@@ -319,13 +320,24 @@ export default function AccountProfilePage() {
       // Fetch orders and items from server API
       try {
         const emailParam = user.email ? `&email=${encodeURIComponent(user.email)}` : "";
-        const res = await fetch(`/api/admin/orders?userId=${user.id}${emailParam}`);
+        let res = await fetch(`/api/orders?userId=${user.id}${emailParam}`);
+        if (!res.ok) {
+          res = await fetch(`/api/admin/orders?userId=${user.id}${emailParam}`);
+        }
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.orders)) {
-            // Authoritative orders for this user from Supabase
-            setUserOrders(data.orders);
-            setOrdersCount(data.orders.length);
+            // Keep fresh local orders (placed within last 15 mins) that match this user
+            const recentCutoff = Date.now() - 15 * 60 * 1000;
+            const freshLocalOrders = userMatchedOrders.filter((lo: any) => {
+              const orderTime = lo.createdAt ? new Date(lo.createdAt).getTime() : 0;
+              return orderTime > recentCutoff;
+            });
+            const merged = [...data.orders, ...freshLocalOrders].filter(
+              (o, idx, arr) => arr.findIndex((item) => item.id === o.id) === idx
+            );
+            setUserOrders(merged);
+            setOrdersCount(merged.length);
           }
         }
       } catch { /* noop */ }

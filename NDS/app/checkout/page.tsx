@@ -210,6 +210,11 @@ function CheckoutContent() {
       }
     }
 
+    const isValidUuid = (val: any): boolean =>
+      typeof val === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val);
+    const safeUserId = isValidUuid(user?.id) ? user!.id : null;
+
     // Direct client sync to Supabase orders & order_items for instant persistence
     try {
       const supabase = createClient();
@@ -218,7 +223,7 @@ function CheckoutContent() {
         .from("orders")
         .insert({
           id: generatedOrderId,
-          user_id: user?.id || null,
+          user_id: safeUserId,
           customer_name: formData.fullName.trim() || null,
           customer_email: formData.email.trim() || user?.email || null,
           customer_phone: formData.phone.trim() || null,
@@ -252,38 +257,49 @@ function CheckoutContent() {
       console.warn("Direct client order sync notice:", err);
     }
 
-    // POST to Supabase via server route
+    // Authoritative POST to Supabase via server route
     try {
-      const res = await fetch("/api/admin/orders", {
+      const orderPayload = {
+        id: generatedOrderId,
+        userId: safeUserId,
+        customerName: formData.fullName,
+        customerEmail: formData.email || user?.email,
+        customerPhone: formData.phone,
+        shippingAddress: formData.address,
+        shippingCity: formData.city,
+        shippingState: formData.state,
+        shippingPincode: formData.pincode,
+        paymentMethod: "UPI",
+        status: "Payment Pending",
+        paymentStatus: "Pending",
+        utr: formData.utr.trim() || null,
+        total,
+        giftPackaging: false,
+        giftMessage: null,
+        items: items.map((item) => ({
+          productId: item.product.id,
+          productTitle: item.product.title,
+          productImage: item.product.images?.[0] || "",
+          size: item.selectedSize,
+          quantity: item.quantity,
+          unitPrice: item.product.price,
+        })),
+      };
+
+      let res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: generatedOrderId,
-          userId: user?.id || null,
-          customerName: formData.fullName,
-          customerEmail: formData.email || user?.email,
-          customerPhone: formData.phone,
-          shippingAddress: formData.address,
-          shippingCity: formData.city,
-          shippingState: formData.state,
-          shippingPincode: formData.pincode,
-          paymentMethod: "UPI",
-          status: "Payment Pending",
-          paymentStatus: "Pending",
-          utr: formData.utr.trim() || null,
-          total,
-          giftPackaging: false,
-          giftMessage: null,
-          items: items.map((item) => ({
-            productId: item.product.id,
-            productTitle: item.product.title,
-            productImage: item.product.images?.[0] || "",
-            size: item.selectedSize,
-            quantity: item.quantity,
-            unitPrice: item.product.price,
-          })),
-        }),
+        body: JSON.stringify(orderPayload),
       });
+
+      if (!res.ok) {
+        // Fallback to /api/admin/orders
+        res = await fetch("/api/admin/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(orderPayload),
+        });
+      }
 
       if (res.ok) {
         const data = await res.json();

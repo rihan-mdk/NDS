@@ -55,10 +55,12 @@ export async function proxy(request: NextRequest) {
 
   // ── 3. Admin API Routes Protection (/api/admin/* except /api/admin/auth) ──
   // Note: GET /api/admin/products and GET /api/admin/categories support public store catalog loading.
+  // POST /api/admin/orders is the customer checkout order creation endpoint.
   // Sensitive write methods (POST, PUT, DELETE), admin-flagged GET requests (?admin=true),
   // and admin-only endpoints (roles, upload, promos, full orders list) are restricted.
   if (pathname.startsWith("/api/admin/") && pathname !== "/api/admin/auth") {
-    const isWrite = ["POST", "PUT", "DELETE", "PATCH"].includes(request.method);
+    const isCustomerOrderPlacement = pathname === "/api/admin/orders" && request.method === "POST";
+    const isWrite = ["POST", "PUT", "DELETE", "PATCH"].includes(request.method) && !isCustomerOrderPlacement;
     const isAdminOnlyRoute =
       pathname.startsWith("/api/admin/roles") ||
       pathname.startsWith("/api/admin/upload") ||

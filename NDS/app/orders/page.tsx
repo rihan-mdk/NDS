@@ -71,18 +71,33 @@ function OrdersContent() {
     // 2. Authoritative fetch from Supabase
     if (user?.id) {
       const emailParam = user.email ? `&email=${encodeURIComponent(user.email)}` : "";
-      fetch(`/api/admin/orders?userId=${user.id}${emailParam}`)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (Array.isArray(data?.orders)) {
-            setOrders(data.orders);
-            if (targetOrderId) {
-              const found = data.orders.find((o: Order) => o.id === targetOrderId);
-              if (found) setSelectedOrder(found);
+      const fetchOrders = async () => {
+        try {
+          let res = await fetch(`/api/orders?userId=${user.id}${emailParam}`);
+          if (!res.ok) {
+            res = await fetch(`/api/admin/orders?userId=${user.id}${emailParam}`);
+          }
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data?.orders)) {
+              const recentCutoff = Date.now() - 15 * 60 * 1000;
+              const freshLocalOrders = combinedLocal.filter((lo: any) => {
+                const orderTime = lo.createdAt ? new Date(lo.createdAt).getTime() : 0;
+                return orderTime > recentCutoff;
+              });
+              const merged = [...data.orders, ...freshLocalOrders].filter(
+                (o, idx, arr) => arr.findIndex((item) => item.id === o.id) === idx
+              );
+              setOrders(merged);
+              if (targetOrderId) {
+                const found = merged.find((o: Order) => o.id === targetOrderId);
+                if (found) setSelectedOrder(found);
+              }
             }
           }
-        })
-        .catch(() => {});
+        } catch {}
+      };
+      fetchOrders();
     }
   }, [targetOrderId, user]);
 
