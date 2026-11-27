@@ -23,6 +23,7 @@ function LoginForm() {
   const [errorMsg, setErrorMsg] = useState<string | null>(
     oauthError === "oauth" ? "Google sign-in failed. Please try again." : null
   );
+  const [noAccountPrompt, setNoAccountPrompt] = useState(false);
 
   // Register global Turnstile callback
   useEffect(() => {
@@ -37,15 +38,35 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setNoAccountPrompt(false);
     setLoading(true);
 
     try {
       const { error } = await signIn(email, password, captchaToken || undefined);
       if (error) {
-        setErrorMsg(error.message || "Failed to sign in. Please verify your credentials.");
         // Reset Turnstile on error so user can try again
         (window as any).turnstile?.reset();
         setCaptchaToken("");
+
+        // Check whether an account exists for this email address
+        try {
+          const checkRes = await fetch("/api/auth/check-account", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          });
+          if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            if (checkData.exists === false) {
+              setNoAccountPrompt(true);
+              return;
+            }
+          }
+        } catch {
+          // If check fails, fall through to display standard error message
+        }
+
+        setErrorMsg(error.message || "Failed to sign in. Please verify your credentials.");
       } else {
         const isAdminUser = email.trim().toLowerCase() === "neels9589@gmail.com";
         const target = redirectParam || (isAdminUser ? "/admin" : "/account");
@@ -114,12 +135,47 @@ function LoginForm() {
             </p>
           </div>
 
-          {errorMsg && (
+          {noAccountPrompt ? (
+            <div className="mb-6 p-4 bg-[#FAF7F2] border border-[#EAE5DF] text-[#191919]">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-[#7B5644] flex-shrink-0 mt-0.5" />
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-[#191919] uppercase tracking-[0.1em]">
+                    No Account Found
+                  </p>
+                  <p className="text-xs text-[#77716D] leading-relaxed">
+                    We couldn&apos;t find an atelier account registered under <span className="font-medium text-[#191919]">{email}</span>. Please create an account to start shopping and view your orders.
+                  </p>
+                  <div className="pt-1.5">
+                    <Link
+                      href={redirectParam ? `/signup?redirect=${encodeURIComponent(redirectParam)}` : "/signup"}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#7B5644] hover:text-[#191919] uppercase tracking-[0.12em] underline underline-offset-4 transition-colors"
+                    >
+                      Create a New Account &rarr;
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : errorMsg ? (
             <div className="mb-6 p-3.5 bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>{errorMsg}</span>
+              <div className="flex-1">
+                <span>{errorMsg}</span>
+                {errorMsg.toLowerCase().includes("invalid") && (
+                  <div className="mt-1.5 text-[11px]">
+                    Don&apos;t have an account yet?{" "}
+                    <Link
+                      href={redirectParam ? `/signup?redirect=${encodeURIComponent(redirectParam)}` : "/signup"}
+                      className="font-semibold underline underline-offset-2 text-red-800 hover:text-red-950"
+                    >
+                      Create a new account
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          ) : null}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>

@@ -209,18 +209,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        // If placeholder credentials, check demo local login
-        if (email && password.length >= 6) {
-          const mockUser: any = {
-            id: "usr-mock-1",
-            email,
-            user_metadata: { full_name: email.split("@")[0] },
-          };
-          setUser(mockUser);
-          setIsAdmin(false);
-          try { localStorage.setItem("nds_auth_user", JSON.stringify(mockUser)); } catch {}
-          return { error: null };
-        }
         return { error };
       }
 
@@ -243,16 +231,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAdmin(elevatedToAdmin);
       return { error: null };
     } catch (err: any) {
-      if (email && password.length >= 6) {
-        const mockUser: any = {
-          id: "usr-mock-1",
-          email,
-          user_metadata: { full_name: email.split("@")[0] },
-        };
-        setUser(mockUser);
-        setIsAdmin(false);
-        return { error: null };
-      }
       return { error: err };
     }
   };
@@ -269,15 +247,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        if (email && password.length >= 6) {
-          const mockUser: any = {
-            id: "usr-mock-1",
-            email,
-            user_metadata: { full_name: fullName || email.split("@")[0] },
-          };
-          setUser(mockUser);
-          return { error: null };
-        }
         return { error };
       }
 
@@ -297,15 +266,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { error: null, emailConfirmationRequired: needsConfirmation };
     } catch (err: any) {
-      if (email && password.length >= 6) {
-        const mockUser: any = {
-          id: "usr-mock-1",
-          email,
-          user_metadata: { full_name: fullName || email.split("@")[0] },
-        };
-        setUser(mockUser);
-        return { error: null };
-      }
       return { error: err };
     }
   };
