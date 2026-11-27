@@ -41,25 +41,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // ── 2. Checkout Route Protection — Guests must log in ──────────────────────
-  if (pathname === "/checkout") {
-    // Check for active Supabase session via cookie
-    // Supabase stores its session in sb-<ref>-auth-token cookie
-    const hasSupabaseSession = Array.from(request.cookies.getAll()).some(
-      (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token") && c.value
-    );
-    // Also allow admin session holders
-    const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-    const isValidAdmin = sessionToken ? await verifyAdminSessionToken(sessionToken) : false;
-
-    if (!hasSupabaseSession && !isValidAdmin) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", "/checkout");
-      return NextResponse.redirect(loginUrl);
-    }
-  }
-
-  // ── 3. Admin UI Routes Protection (/admin, /admin/*) ───────────────────────
+  // ── 2. Admin UI Routes Protection (/admin, /admin/*) ───────────────────────
   if (pathname.startsWith("/admin")) {
     const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
     const isValidAdmin = await verifyAdminSessionToken(sessionToken);
