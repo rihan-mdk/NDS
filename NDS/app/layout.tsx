@@ -35,23 +35,25 @@ export const metadata: Metadata = {
     template: "%s | Neel's Designer Studio",
   },
   description:
-    "Impeccably tailored luxury fashion boutique in Moodbiri featuring imperial lehengas, bridal couture, evening drape gowns, artisanal short kurtis, and fine jewels.",
+    "Impeccably tailored luxury fashion boutique in Moodbidri featuring imperial lehengas, bridal couture, evening drape gowns, artisanal short kurtis, and fine jewels.",
   keywords: [
     "NEEL'S DESIGNER STUDIO",
     "Neel's Designer Studio",
     "Neels Designer Studio",
     "Neels",
     "Neel's",
-    "Neels Moodbiri",
-    "Neel's Designer Studio Moodbiri",
-    "Luxury Fashion Boutique Moodbiri",
+    "Neels Moodbidri",
+    "Neel's Designer Studio Moodbidri",
+    "Luxury Fashion Boutique Moodbidri",
     "Bridal Couture Karnataka",
     "Imperial Lehengas",
     "Designer Gowns",
     "Artisanal Short Kurtis",
-    "Fine Jewellery Moodbiri",
+    "Fine Jewellery Moodbidri",
     "Indian High Couture",
-    "Iruvail Road Boutique Moodbiri",
+    "Iruvail Road Boutique Moodbidri",
+    "Neels Moodbiri",
+    "Neel's Designer Studio Moodbiri",
   ],
   authors: [{ name: "Neel's Designer Studio", url: siteUrl }],
   creator: "Neel's Designer Studio",
@@ -71,13 +73,13 @@ export const metadata: Metadata = {
     siteName: "Neel's Designer Studio",
     title: "Neel's Designer Studio | Luxury Fashion Boutique & Imperial Couture",
     description:
-      "Impeccably tailored luxury fashion boutique in Moodbiri featuring imperial lehengas, bridal couture, evening drape gowns, artisanal short kurtis, and fine jewels.",
+      "Impeccably tailored luxury fashion boutique in Moodbidri featuring imperial lehengas, bridal couture, evening drape gowns, artisanal short kurtis, and fine jewels.",
     images: [
       {
         url: "/images/hero.jpg",
         width: 1200,
         height: 630,
-        alt: "Neel's Designer Studio - Luxury Fashion Boutique in Moodbiri",
+        alt: "Neel's Designer Studio - Luxury Fashion Boutique in Moodbidri",
       },
     ],
   },
@@ -85,7 +87,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Neel's Designer Studio | Luxury Fashion Boutique & Imperial Couture",
     description:
-      "Impeccably tailored luxury fashion boutique in Moodbiri featuring imperial lehengas, bridal couture, evening drape gowns, artisanal short kurtis, and fine jewels.",
+      "Impeccably tailored luxury fashion boutique in Moodbidri featuring imperial lehengas, bridal couture, evening drape gowns, artisanal short kurtis, and fine jewels.",
     images: ["/images/hero.jpg"],
   },
   robots: {
@@ -126,13 +128,13 @@ export default async function RootLayout({
         logo: `${siteUrl}/images/hero.jpg`,
         image: `${siteUrl}/images/hero.jpg`,
         description:
-          "Impeccably tailored luxury fashion boutique in Moodbiri featuring imperial lehengas, bridal couture, evening drape gowns, artisanal short kurtis, and fine jewels.",
+          "Impeccably tailored luxury fashion boutique in Moodbidri featuring imperial lehengas, bridal couture, evening drape gowns, artisanal short kurtis, and fine jewels.",
         telephone: "+918123200215",
         priceRange: "₹₹₹₹",
         address: {
           "@type": "PostalAddress",
           streetAddress: "Iruvail Road",
-          addressLocality: "Moodbiri",
+          addressLocality: "Moodbidri",
           addressRegion: "Karnataka",
           postalCode: "574227",
           addressCountry: "IN",
@@ -161,7 +163,7 @@ export default async function RootLayout({
         sameAs: [
           "https://www.instagram.com/neels_designer_studio?avpt=aDk1emZ3aHVicDZl",
         ],
-        hasMap: "https://maps.google.com/?q=Moodbiri+Iruvail+Road+574227",
+        hasMap: "https://maps.google.com/?q=Moodbidri+Iruvail+Road+574227",
       },
       {
         "@type": "WebSite",
