@@ -32,8 +32,10 @@ export function Header() {
   const LOGO_SRC =
     "https://lh3.googleusercontent.com/aida-public/AB6AXuD-qvxpcDQDfN_hyWQSp6-axmw-zI6r2sMCopsEWgMwpIW1l836LYw7eAjJWhvz_9qzv6HS_CYwQ6okK4KCNrUr1R1rLTPmWuHP0V5eeA7ghrQy0yroXhdqfhaFMmarcYYrpw0hkCnxf6Mrbs-dInUqYYJC5okwFDHRylOMXiQ_EsdReVkrGmUqjoD5-ieEQXAmzsEEpxCubZsb9rVtvJcivrnJz3WWK-wiwte35kbh2kuw96_4UkuKtA";
 
+  const isLoginPage = pathname === "/login" || pathname?.startsWith("/login/");
+
   return (
-    <header className="fixed top-0 w-full z-50 bg-[#FDFBF8]/95 backdrop-blur-md border-b border-[#EAE5DF] transition-all">
+    <header className={`fixed top-0 w-full z-50 bg-[#FDFBF8]/95 backdrop-blur-md border-b border-[#EAE5DF] transition-all ${isLoginPage ? "lg:hidden" : ""}`}>
       <div className="h-14 w-full px-4 sm:px-10 lg:px-14 flex items-center justify-between">
 
         {/* ── LEFT: Logo ── */}

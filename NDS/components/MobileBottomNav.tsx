@@ -10,7 +10,7 @@ export function MobileBottomNav() {
   const pathname = usePathname();
 
   // Hide customer bottom nav on admin routes and login page
-  if (pathname.startsWith("/admin") || pathname === "/login") {
+  if (pathname.startsWith("/admin") || pathname === "/login" || pathname.startsWith("/login/")) {
     return null;
   }
 

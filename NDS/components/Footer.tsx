@@ -2,10 +2,17 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 
 export function Footer() {
+  const pathname = usePathname();
   const [activeModal, setActiveModal] = useState<"shipping" | "returns" | "privacy" | "terms" | null>(null);
+
+  // Hide footer on Create New Account page
+  if (pathname === "/signup" || pathname?.startsWith("/signup/")) {
+    return null;
+  }
 
   return (
     <footer className="w-full bg-[#F5F3F0] border-t border-[#EAE5DF] hidden lg:block">

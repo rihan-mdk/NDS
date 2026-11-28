@@ -79,7 +79,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-80px)] flex flex-col lg:flex-row bg-[#FDFBF8] text-[#191919]">
+    <div className="w-full min-h-[calc(100vh-80px)] lg:min-h-screen lg:-mt-14 flex flex-col lg:flex-row bg-[#FDFBF8] text-[#191919]">
       {/* Visual Showcase (Desktop: Left Column, Mobile: Top Banner) */}
       <div className="relative w-full lg:w-1/2 h-56 sm:h-72 lg:h-auto lg:min-h-full bg-[#EFEEEB] overflow-hidden flex flex-col justify-end p-6 lg:p-14">
         {/* eslint-disable-next-line @next/next/no-img-element */}
