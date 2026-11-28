@@ -9,8 +9,13 @@ export function Footer() {
   const pathname = usePathname();
   const [activeModal, setActiveModal] = useState<"shipping" | "returns" | "privacy" | "terms" | null>(null);
 
-  // Hide footer on Create New Account page
-  if (pathname === "/signup" || pathname?.startsWith("/signup/")) {
+  // Hide footer on Create New Account and Login pages
+  if (
+    pathname === "/signup" ||
+    pathname?.startsWith("/signup/") ||
+    pathname === "/login" ||
+    pathname?.startsWith("/login/")
+  ) {
     return null;
   }
 

@@ -7,8 +7,14 @@ export function WhatsAppButton() {
   const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
 
-  // Hide on admin routes and login page so it doesn't obstruct credentials or forms
-  if (pathname?.startsWith("/admin") || pathname === "/login" || pathname?.startsWith("/login/")) {
+  // Hide on admin routes, login page, and signup page
+  if (
+    pathname?.startsWith("/admin") ||
+    pathname === "/login" ||
+    pathname?.startsWith("/login/") ||
+    pathname === "/signup" ||
+    pathname?.startsWith("/signup/")
+  ) {
     return null;
   }
 
