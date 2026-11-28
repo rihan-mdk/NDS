@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
+import { isSafeRedirect } from "@/lib/security";
 
 function LoginForm() {
   const router = useRouter();
@@ -53,8 +54,10 @@ function LoginForm() {
         setErrorMsg(error.message || "Failed to sign in. Please verify your credentials.");
       } else {
         const isAdminUser = email.trim().toLowerCase() === "neels9589@gmail.com";
-        const target = redirectParam || (isAdminUser ? "/admin" : "/account");
-        router.push(target);
+        const safeTarget = isSafeRedirect(redirectParam)
+          ? redirectParam!
+          : (isAdminUser ? "/admin" : "/account");
+        router.push(safeTarget);
       }
     } catch (err: any) {
       setErrorMsg(err.message || "An unexpected error occurred.");

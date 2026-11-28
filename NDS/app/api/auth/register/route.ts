@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { checkRateLimit, getClientIp } from "@/lib/security";
+
+const RESERVED_ADMIN_EMAIL = "neels9589@gmail.com";
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
+    const rateLimit = checkRateLimit(`register:${clientIp}`, 5, 600);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: `Too many registration attempts. Please wait ${rateLimit.resetInSeconds} seconds.` },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const password = typeof body.password === "string" ? body.password : "";
@@ -12,6 +24,14 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Email and password are required." },
         { status: 400 }
+      );
+    }
+
+    // Strictly prevent public registration of the designated administrative address
+    if (email === RESERVED_ADMIN_EMAIL) {
+      return NextResponse.json(
+        { error: "This email address is reserved for atelier administration and cannot be registered publicly." },
+        { status: 403 }
       );
     }
 

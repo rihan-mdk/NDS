@@ -8,9 +8,22 @@ import {
   verifyAdminSessionToken,
   verifyAdminCredentials,
 } from "@/lib/auth-server";
+import { checkRateLimit, getClientIp } from "@/lib/security";
 
 export async function POST(request: Request) {
   try {
+    // Enforce strict rate limiting on admin authentication: 5 attempts per 5 minutes per IP
+    const clientIp = getClientIp(request);
+    const rateLimit = checkRateLimit(`admin-auth:${clientIp}`, 5, 300);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: `Too many authentication attempts. Please try again in ${rateLimit.resetInSeconds} seconds.`,
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { email, password } = body;
 

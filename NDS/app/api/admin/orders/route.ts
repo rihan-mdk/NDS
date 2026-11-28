@@ -69,26 +69,51 @@ export async function GET(request: Request) {
       );
     }
   } else {
-    // If not admin, verify that requester is authenticated
+    // If not admin, verify that requester is authenticated and owns the requested records
     if (!isAdmin) {
       try {
         const { createClient } = await import("@/lib/supabase/server");
         const supabaseServer = await createClient();
-        const { data: { user } } = await supabaseServer.auth.getUser();
+        let {
+          data: { user },
+        } = await supabaseServer.auth.getUser();
+
+        // Also check Authorization header for Bearer token
         if (!user) {
-          // If server cookie is missing in local dev/proxy, but request is for specific user ID/email,
-          // verify consistency or continue
-        } else {
-          authenticatedUserEmail = user.email || null;
-          if (userId && user.id !== userId && (!email || user.email !== email)) {
-            return NextResponse.json(
-              { error: "Unauthorized. You may only view your own order records." },
-              { status: 403 }
-            );
+          const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+          if (authHeader && authHeader.startsWith("Bearer ")) {
+            const token = authHeader.replace("Bearer ", "").trim();
+            const tokenRes = await supabaseServer.auth.getUser(token);
+            if (tokenRes.data?.user) {
+              user = tokenRes.data.user;
+            }
           }
         }
+
+        if (!user) {
+          return NextResponse.json(
+            { error: "Authentication required to view order history." },
+            { status: 401 }
+          );
+        }
+
+        authenticatedUserEmail = user.email ? user.email.toLowerCase() : null;
+
+        // Verify that caller only requests their own orders
+        const isOwnerById = userId ? user.id === userId : false;
+        const isOwnerByEmail = email ? (authenticatedUserEmail && authenticatedUserEmail === email.trim().toLowerCase()) : false;
+
+        if (!isOwnerById && !isOwnerByEmail) {
+          return NextResponse.json(
+            { error: "Unauthorized. You may only view your own order records." },
+            { status: 403 }
+          );
+        }
       } catch {
-        // Fallback
+        return NextResponse.json(
+          { error: "Authentication verification failed." },
+          { status: 401 }
+        );
       }
     }
   }

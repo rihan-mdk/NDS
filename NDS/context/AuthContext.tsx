@@ -57,15 +57,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // 1. Immediately hydrate cached user to prevent logout flash on refresh
+    // 1. Immediately hydrate cached customer to prevent logout flash on refresh
+    // (Never trust localStorage for admin privileges; admin requires server verification below)
     try {
       const cachedUser = localStorage.getItem("nds_auth_user");
       if (cachedUser) {
         const parsed = JSON.parse(cachedUser);
-        setUser(parsed);
-        if (parsed.id === "admin-usr-neels" || parsed.user_metadata?.role === "admin") {
-          setIsAdmin(true);
-          isAdminRef.current = true;
+        // Only restore basic customer identity from cache
+        if (parsed.id !== "admin-usr-neels" && parsed.user_metadata?.role !== "admin") {
+          setUser(parsed);
         }
       }
     } catch {}

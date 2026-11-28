@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Mail } from "lucide-react";
+import { isSafeRedirect } from "@/lib/security";
 
 function SignupContent() {
   const router = useRouter();
@@ -53,8 +54,9 @@ function SignupContent() {
           sessionStorage.removeItem("nds_last_order");
         } catch { /* noop */ }
         setSuccessMsg("Account created successfully! Welcome to Neel's Atelier.");
+        const safeTarget = isSafeRedirect(redirectParam) ? redirectParam! : "/account";
         setTimeout(() => {
-          router.push(redirectParam || "/account");
+          router.push(safeTarget);
         }, 1200);
       }
     } catch (err: any) {
@@ -102,9 +104,9 @@ function SignupContent() {
       <div className="relative w-full lg:w-[55%] min-h-[400px] lg:min-h-auto bg-[#EFEEEB] overflow-hidden flex flex-col justify-between p-8 lg:p-14">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          alt="High-fashion bridal couture editorial photography"
-          className="absolute inset-0 w-full h-full object-cover object-top filter contrast-[1.02] brightness-[0.98] transition-transform duration-1000 ease-out hover:scale-105"
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSRoFIyTRiLouO77pUfuYJFhQ4O-bErCwcb46mAro95Rjwkyxu9VICndxflW1DaxmTBf76kf5vW7nQQGOJ5AZ4ScZCpacCwUf49bQkNNAyUsu2NnPzoMQFsAqHzJbDXuk8e3KaV3Geq1bZQiFDapXSDnWfXzkXVPBLjj3AyUjtNJVyXpLF5w4vnKO72eRBzNpPKbUl59ccOcP57Ua1fa5YFLzI-hpHAIRXvr03vBC45noD3MOrvY6XAA"
+          alt="Neel's Designer Studio Boutique"
+          className="absolute inset-0 w-full h-full object-cover object-center filter contrast-[1.02] brightness-[0.98] transition-transform duration-1000 ease-out hover:scale-105"
+          src="/images/signup_page.jpg"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none"></div>
 
